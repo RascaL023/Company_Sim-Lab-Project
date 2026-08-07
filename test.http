@@ -1,0 +1,122 @@
+### Item API Tests
+# Base URL - adjust if needed
+@baseUrl = http://localhost:8000/api
+@timeout = 5000
+
+### Get all items
+GET {{baseUrl}}/items
+Accept: application/json
+
+### Get item with pagination
+GET {{baseUrl}}/items?per_page=10&page=1
+Accept: application/json
+
+### Filter items by type
+GET {{baseUrl}}/items?type=alat
+Accept: application/json
+
+### Filter items by condition
+GET {{baseUrl}}/items?condition_status=baik
+Accept: application/json
+
+### Search items
+GET {{baseUrl}}/items?search=laptop
+Accept: application/json
+
+### Sort items
+GET {{baseUrl}}/items?sort_by=name&sort_order=asc
+Accept: application/json
+
+### Get low stock items
+GET {{baseUrl}}/items?low_stock=true
+Accept: application/json
+
+### Get items needing calibration
+GET {{baseUrl}}/items?needs_calibration=true
+Accept: application/json
+
+### Get expired items
+GET {{baseUrl}}/items?expired=true
+Accept: application/json
+
+### Create a new item
+# You'll need to create a category and user first for foreign keys
+POST {{baseUrl}}/items
+Content-Type: application/json
+Accept: application/json
+
+{
+    "category_id": 1,
+    "code": "IT-0001",
+    "name": "Laptop Dell",
+    "type": "alat",
+    "unit": "pcs",
+    "stock_quantity": 10,
+    "minimum_stock": 2,
+    "location": "Ruang Server",
+    "condition_status": "baik",
+    "manufacturer": "Dell",
+    "serial_number": "DL123456789",
+    "purchase_date": "2023-01-15",
+    "expiry_date": "2026-01-15",
+    "next_calibration_date": "2024-01-15",
+    "description": "Laptop untuk keperluan pengembangan",
+    "created_by": 1
+}
+
+### Get a specific item
+GET {{baseUrl}}/items/1
+Accept: application/json
+
+### Update an item
+PUT {{baseUrl}}/items/1
+Content-Type: application/json
+Accept: application/json
+
+{
+    "name": "Laptop Dell Updated",
+    "stock_quantity": 8,
+    "condition_status": "rusak",
+    "description": "Laptop untuk keperluan pengembangan - diperbarui"
+}
+
+### Partially update an item (PATCH)
+PATCH {{baseUrl}}/items/1
+Content-Type: application/json
+Accept: application/json
+
+{
+    "stock_quantity": 5
+}
+
+### Delete an item
+DELETE {{baseUrl}}/items/1
+Accept: application/json
+
+### Get item with relationships (test eager loading)
+GET {{baseUrl}}/items/1
+Accept: application/json
+
+### Test validation - duplicate code
+POST {{baseUrl}}/items
+Content-Type: application/json
+Accept: application/json
+
+{
+    "category_id": 1,
+    "code": "IT-0001",  # Duplicate code
+    "name": "Laptop HP",
+    "type": "alat",
+    "unit": "pcs",
+    "stock_quantity": 5,
+    "minimum_stock": 1,
+    "location": "Ruang IT",
+    "condition_status": "baik",
+    "manufacturer": "HP",
+    "serial_number": "HP987654321",
+    "purchase_date": "2023-02-01",
+    "expiry_date": "2026-02-01",
+    "next_calibration_date": "2024-02-01",
+    "description": "Laptop untuk keperluan kantor",
+    "created_by": 1
+}
