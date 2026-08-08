@@ -61,29 +61,35 @@ class AuthorizationTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
         $staff = User::factory()->staf()->create();
-        $borrowingRequest = BorrowingRequest::factory()->diajukan()->create([
+        $requestToApprove = BorrowingRequest::factory()->diajukan()->create([
             'requested_by' => $staff->id,
         ]);
-        $usage = Usage::factory()->dicatat()->create([
+        $requestToReject = BorrowingRequest::factory()->diajukan()->create([
+            'requested_by' => $staff->id,
+        ]);
+        $usageToVerify = Usage::factory()->dicatat()->create([
+            'user_id' => $staff->id,
+        ]);
+        $usageToReject = Usage::factory()->dicatat()->create([
             'user_id' => $staff->id,
         ]);
 
         $this->withToken($this->bearerTokenFor($admin))
-            ->patchJson("/api/borrowing-requests/{$borrowingRequest->id}/approve")
+            ->patchJson("/api/borrowing-requests/{$requestToApprove->id}/approve")
             ->assertSuccessful();
 
         $this->withToken($this->bearerTokenFor($admin))
-            ->patchJson("/api/borrowing-requests/{$borrowingRequest->id}/reject", [
+            ->patchJson("/api/borrowing-requests/{$requestToReject->id}/reject", [
                 'rejection_reason' => 'Tidak tersedia.',
             ])
             ->assertSuccessful();
 
         $this->withToken($this->bearerTokenFor($admin))
-            ->patchJson("/api/usages/{$usage->id}/verify")
+            ->patchJson("/api/usages/{$usageToVerify->id}/verify")
             ->assertSuccessful();
 
         $this->withToken($this->bearerTokenFor($admin))
-            ->patchJson("/api/usages/{$usage->id}/reject", [
+            ->patchJson("/api/usages/{$usageToReject->id}/reject", [
                 'rejection_reason' => 'Data tidak lengkap.',
             ])
             ->assertSuccessful();
