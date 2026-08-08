@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\AuditTrailController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BorrowingRequestController;
 use App\Http\Controllers\Api\CalibrationController;
 use App\Http\Controllers\Api\CategoryController;
@@ -10,7 +11,6 @@ use App\Http\Controllers\Api\ItemUnitController;
 use App\Http\Controllers\Api\MaintenanceController;
 use App\Http\Controllers\Api\StockMovementController;
 use App\Http\Controllers\Api\UsageController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,10 +24,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::post('/login', [AuthController::class, 'login']);
+
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
+    Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/logout', [AuthController::class, 'logout']);
 
     // Item API endpoints
     Route::apiResource('items', ItemController::class);
