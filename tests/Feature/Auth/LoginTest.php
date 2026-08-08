@@ -108,4 +108,23 @@ class LoginTest extends TestCase
             ->getJson('/api/user')
             ->assertUnauthorized();
     }
+
+    public function test_login_is_rate_limited_after_too_many_failed_attempts(): void
+    {
+        User::factory()->create([
+            'email' => 'bruteforce@example.com',
+            'password' => 'password',
+        ]);
+
+        $payload = [
+            'email' => 'bruteforce@example.com',
+            'password' => 'salah',
+        ];
+
+        foreach (range(1, 5) as $attempt) {
+            $this->postJson('/api/login', $payload)->assertUnprocessable();
+        }
+
+        $this->postJson('/api/login', $payload)->assertTooManyRequests();
+    }
 }
