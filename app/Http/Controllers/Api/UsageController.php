@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UsageResource;
 use App\Models\Item;
+use App\Models\StockMovement;
 use App\Models\Usage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -43,15 +44,31 @@ class UsageController extends Controller
             'purpose' => 'required|string',
         ]);
 
-        $item = Item::find($validated['item_id']);
+        $item = Item::findOrFail($validated['item_id']);
+        $quantityBefore = $item->stock_quantity;
+        $quantityAfter = max(0, $quantityBefore - $validated['quantity_used']);
+
         $validated['user_id'] = $request->user()->id;
-        $validated['quantity_before'] = $item->stock_quantity;
-        $validated['quantity_after'] = max(0, $item->stock_quantity - $validated['quantity_used']);
+        $validated['quantity_before'] = $quantityBefore;
+        $validated['quantity_after'] = $quantityAfter;
         $validated['status'] = 'dicatat';
+        $validated['usage_date'] = now();
 
         $usage = Usage::create($validated);
 
-        $item->decrement('stock_quantity', $validated['quantity_used']);
+        StockMovement::create([
+            'item_id' => $usage->item_id,
+            'item_unit_id' => $usage->item_unit_id,
+            'type' => 'out_usage',
+            'quantity' => $validated['quantity_used'],
+            'quantity_before' => $quantityBefore,
+            'quantity_after' => $quantityAfter,
+            'reference_type' => Usage::class,
+            'reference_id' => $usage->id,
+            'performed_by' => $request->user()->id,
+            'notes' => $validated['purpose'],
+            'occurred_at' => now(),
+        ]);
 
         return (new UsageResource($usage))->response()->setStatusCode(201);
     }

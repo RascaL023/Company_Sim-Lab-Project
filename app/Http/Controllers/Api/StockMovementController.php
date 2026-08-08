@@ -12,7 +12,7 @@ class StockMovementController extends Controller
 {
     public function index(Request $request)
     {
-        $query = StockMovement::with(['item', 'itemUnit', 'performedBy']);
+        $query = StockMovement::with(['item', 'itemUnit', 'performer']);
 
         if ($request->filled('type')) {
             $types = explode(',', $request->get('type'));
@@ -36,20 +36,21 @@ class StockMovementController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $item = Item::find($validated['item_id']);
+        $item = Item::findOrFail($validated['item_id']);
         $quantityBefore = $item->stock_quantity;
 
-        $isIncoming = in_array($validated['type'], ['in_purchase', 'in_return', 'in_adjustment', 'transfer_in']);
-        $quantityAfter = $isIncoming ? $quantityBefore + $validated['quantity'] : max(0, $quantityBefore - $validated['quantity']);
+        $isIncoming = in_array($validated['type'], ['in_purchase', 'in_return', 'in_adjustment', 'transfer_in'], true);
+        $quantityAfter = $isIncoming
+            ? $quantityBefore + $validated['quantity']
+            : max(0, $quantityBefore - $validated['quantity']);
 
-        $validated['quantity_before'] = $quantityBefore;
-        $validated['quantity_after'] = $quantityAfter;
-        $validated['performed_by'] = $request->user()->id;
-        $validated['occurred_at'] = $validated['occurred_at'] ?? now();
-
-        $movement = StockMovement::create($validated);
-
-        $item->update(['stock_quantity' => $quantityAfter]);
+        $movement = StockMovement::create([
+            ...$validated,
+            'quantity_before' => $quantityBefore,
+            'quantity_after' => $quantityAfter,
+            'performed_by' => $request->user()->id,
+            'occurred_at' => now(),
+        ]);
 
         return (new StockMovementResource($movement))->response()->setStatusCode(201);
     }
@@ -61,15 +62,26 @@ class StockMovementController extends Controller
 
     public function update(Request $request, StockMovement $stockMovement)
     {
-        return $stockMovement->update($request->only(['quantity', 'notes', 'occurred_at']))
-            ? new StockMovementResource($stockMovement)
-            : response()->json(['message' => 'Update failed'], 500);
+        if ($request->exists('quantity') || $request->exists('quantity_before') || $request->exists('quantity_after')) {
+            return response()->json([
+                'message' => 'Field kuantitas pada stock movement bersifat immutable (ledger append-only).',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'notes' => 'sometimes|nullable|string',
+            'occurred_at' => 'sometimes|date',
+        ]);
+
+        $stockMovement->update($validated);
+
+        return new StockMovementResource($stockMovement);
     }
 
     public function destroy(StockMovement $stockMovement)
     {
-        $stockMovement->delete();
-
-        return response()->json(null, 204);
+        return response()->json([
+            'message' => 'Stock movement tidak boleh dihapus karena ledger bersifat append-only.',
+        ], 405);
     }
 }

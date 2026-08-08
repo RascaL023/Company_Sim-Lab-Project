@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\BorrowingRequest;
+use App\Models\StockMovement;
 use App\Models\Usage;
+use App\Observers\StockMovementObserver;
 use App\Policies\BorrowingRequestPolicy;
 use App\Policies\UsagePolicy;
 use Illuminate\Support\Facades\Gate;
@@ -26,5 +28,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(BorrowingRequest::class, BorrowingRequestPolicy::class);
         Gate::policy(Usage::class, UsagePolicy::class);
+
+        StockMovement::observe(StockMovementObserver::class);
     }
 }
