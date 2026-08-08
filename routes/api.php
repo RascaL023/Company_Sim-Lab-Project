@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\AuditTrailController;
+use App\Http\Controllers\Api\BorrowingItemController;
 use App\Http\Controllers\Api\BorrowingRequestController;
 use App\Http\Controllers\Api\CalibrationController;
 use App\Http\Controllers\Api\CategoryController;
@@ -46,6 +47,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('borrowing-requests', BorrowingRequestController::class);
     Route::patch('borrowing-requests/{borrowingRequest}/approve', [BorrowingRequestController::class, 'approve']);
     Route::patch('borrowing-requests/{borrowingRequest}/reject', [BorrowingRequestController::class, 'reject']);
+    Route::patch('borrowing-requests/{borrowingRequest}/cancel', [BorrowingRequestController::class, 'cancel']);
+    Route::patch('borrowing-items/{borrowingItem}/checkout', [BorrowingItemController::class, 'checkout']);
+    Route::patch('borrowing-items/{borrowingItem}/return', [BorrowingItemController::class, 'returnItem']);
 
     // Stock Movements API
     Route::apiResource('stock-movements', StockMovementController::class);
