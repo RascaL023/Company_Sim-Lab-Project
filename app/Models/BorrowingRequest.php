@@ -11,6 +11,15 @@ class BorrowingRequest extends Model
 {
     use HasFactory;
 
+    private const array TRANSITIONS = [
+        'diajukan' => ['disetujui', 'ditolak', 'batal'],
+        'disetujui' => ['diproses', 'batal'],
+        'diproses' => ['selesai'],
+        'ditolak' => [],
+        'selesai' => [],
+        'batal' => [],
+    ];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -164,5 +173,10 @@ class BorrowingRequest extends Model
     public function isCompleted(): bool
     {
         return $this->status === 'selesai';
+    }
+
+    public function canTransitionTo(string $status): bool
+    {
+        return in_array($status, self::TRANSITIONS[$this->status] ?? [], true);
     }
 }

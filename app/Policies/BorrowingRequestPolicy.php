@@ -41,4 +41,9 @@ class BorrowingRequestPolicy
     {
         return $user->isAdmin();
     }
+
+    public function cancel(User $user, BorrowingRequest $borrowingRequest): bool
+    {
+        return $user->isAdmin() || $borrowingRequest->requested_by === $user->id;
+    }
 }

@@ -9,7 +9,9 @@ use App\Models\ItemMaintenance;
 use App\Models\StockMovement;
 use App\Models\Usage;
 use App\Observers\AuditableObserver;
+use App\Observers\BorrowingItemObserver;
 use App\Observers\StockMovementObserver;
+use App\Policies\BorrowingItemPolicy;
 use App\Policies\BorrowingRequestPolicy;
 use App\Policies\UsagePolicy;
 use Illuminate\Support\Facades\Gate;
@@ -31,9 +33,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(BorrowingRequest::class, BorrowingRequestPolicy::class);
+        Gate::policy(BorrowingItem::class, BorrowingItemPolicy::class);
         Gate::policy(Usage::class, UsagePolicy::class);
 
         StockMovement::observe(StockMovementObserver::class);
+        BorrowingItem::observe(BorrowingItemObserver::class);
 
         $auditableObserver = AuditableObserver::class;
 

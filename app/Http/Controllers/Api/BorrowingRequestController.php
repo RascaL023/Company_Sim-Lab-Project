@@ -63,13 +63,18 @@ class BorrowingRequestController extends Controller
     {
         Gate::authorize('update', $borrowingRequest);
 
-        $request->validate([
-            'status' => 'sometimes|in:diajukan,disetujui,ditolak,diproses,selesai,batal',
-            'approved_by' => 'sometimes|exists:users,id',
-            'rejection_reason' => 'nullable|string',
+        if ($request->exists('status')) {
+            return response()->json([
+                'message' => 'Field status tidak bisa diubah lewat endpoint update. Gunakan approve, reject, atau cancel.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'purpose' => 'sometimes|string',
+            'notes' => 'nullable|string',
         ]);
 
-        $borrowingRequest->update($request->only(['status', 'approved_by', 'rejection_reason']));
+        $borrowingRequest->update($validated);
 
         return new BorrowingRequestResource($borrowingRequest);
     }
@@ -87,6 +92,12 @@ class BorrowingRequestController extends Controller
     {
         Gate::authorize('approve', $borrowingRequest);
 
+        if (! $borrowingRequest->canTransitionTo('disetujui')) {
+            return response()->json([
+                'message' => 'Permintaan dengan status saat ini tidak bisa disetujui.',
+            ], 422);
+        }
+
         $borrowingRequest->approved_by = $request->user()->id;
         $borrowingRequest->approved_at = now();
         $borrowingRequest->status = 'disetujui';
@@ -99,6 +110,12 @@ class BorrowingRequestController extends Controller
     {
         Gate::authorize('reject', $borrowingRequest);
 
+        if (! $borrowingRequest->canTransitionTo('ditolak')) {
+            return response()->json([
+                'message' => 'Permintaan dengan status saat ini tidak bisa ditolak.',
+            ], 422);
+        }
+
         $validated = $request->validate([
             'rejection_reason' => 'required|string',
         ]);
@@ -108,6 +125,21 @@ class BorrowingRequestController extends Controller
         $borrowingRequest->status = 'ditolak';
         $borrowingRequest->rejection_reason = $validated['rejection_reason'];
         $borrowingRequest->save();
+
+        return new BorrowingRequestResource($borrowingRequest);
+    }
+
+    public function cancel(Request $request, BorrowingRequest $borrowingRequest)
+    {
+        Gate::authorize('cancel', $borrowingRequest);
+
+        if (! $borrowingRequest->canTransitionTo('batal')) {
+            return response()->json([
+                'message' => 'Permintaan dengan status saat ini tidak bisa dibatalkan.',
+            ], 422);
+        }
+
+        $borrowingRequest->update(['status' => 'batal']);
 
         return new BorrowingRequestResource($borrowingRequest);
     }
