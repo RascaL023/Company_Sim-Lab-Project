@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('item_maintenances', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('item_id')->constrained()->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignId('item_unit_id')->constrained()->cascadeOnDelete()->cascadeOnUpdate();
             $table->date('maintenance_date');
             $table->text('description');
             $table->string('performed_by', 150)->nullable();
@@ -22,6 +22,9 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->foreignId('recorded_by')->nullable()->constrained('users')->nullOnDelete()->cascadeOnUpdate();
             $table->timestamps();
+
+            $table->index(['item_unit_id', 'maintenance_date']);
+            $table->index('status');
         });
     }
 

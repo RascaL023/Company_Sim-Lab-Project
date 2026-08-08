@@ -16,7 +16,7 @@ class ItemMaintenance extends Model
      * @var list<string>
      */
     protected $fillable = [
-        'item_id',
+        'item_unit_id',
         'maintenance_date',
         'description',
         'performed_by',
@@ -42,11 +42,19 @@ class ItemMaintenance extends Model
     }
 
     /**
-     * Get the item that owns the maintenance.
+     * Get the item unit that owns the maintenance.
+     */
+    public function itemUnit(): BelongsTo
+    {
+        return $this->belongsTo(ItemUnit::class, 'item_unit_id');
+    }
+
+    /**
+     * Get the item (catalog) through unit.
      */
     public function item(): BelongsTo
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsToThrough(Item::class, ItemUnit::class, 'item_unit_id', 'id');
     }
 
     /**

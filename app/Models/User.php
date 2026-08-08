@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -61,6 +61,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the item units created by the user.
+     */
+    public function createdUnits(): HasMany
+    {
+        return $this->hasMany(ItemUnit::class, 'created_by');
+    }
+
+    /**
      * Get the calibrations recorded by the user.
      */
     public function recordedCalibrations(): HasMany
@@ -77,6 +85,30 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the borrowing requests made by the user.
+     */
+    public function borrowingRequests(): HasMany
+    {
+        return $this->hasMany(BorrowingRequest::class, 'requested_by');
+    }
+
+    /**
+     * Get the borrowing requests approved by the user.
+     */
+    public function approvedBorrowingRequests(): HasMany
+    {
+        return $this->hasMany(BorrowingRequest::class, 'approved_by');
+    }
+
+    /**
+     * Get the borrowing items checked by the user.
+     */
+    public function checkedBorrowingItems(): HasMany
+    {
+        return $this->hasMany(BorrowingItem::class, 'checked_by');
+    }
+
+    /**
      * Get the borrowings where the user is the borrower.
      */
     public function borrowings(): HasMany
@@ -85,11 +117,27 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the borrowings approved by the user.
+     * Get the borrowings checked out by the user.
      */
-    public function approvedBorrowings(): HasMany
+    public function checkedOutBorrowings(): HasMany
     {
-        return $this->hasMany(Borrowing::class, 'approved_by');
+        return $this->hasMany(Borrowing::class, 'checked_out_by');
+    }
+
+    /**
+     * Get the borrowings checked in by the user.
+     */
+    public function checkedInBorrowings(): HasMany
+    {
+        return $this->hasMany(Borrowing::class, 'checked_in_by');
+    }
+
+    /**
+     * Get the borrowings checked by the user.
+     */
+    public function checkedBorrowings(): HasMany
+    {
+        return $this->hasMany(Borrowing::class, 'checked_by');
     }
 
     /**
@@ -101,11 +149,35 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the usages verified by the user.
+     */
+    public function verifiedUsages(): HasMany
+    {
+        return $this->hasMany(Usage::class, 'verified_by');
+    }
+
+    /**
+     * Get the stock movements performed by the user.
+     */
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class, 'performed_by');
+    }
+
+    /**
      * Get the audit trails created by the user.
      */
     public function auditTrails(): HasMany
     {
         return $this->hasMany(AuditTrail::class, 'user_id');
+    }
+
+    /**
+     * Get the attachments uploaded by the user.
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(Attachment::class, 'uploaded_by');
     }
 
     /**

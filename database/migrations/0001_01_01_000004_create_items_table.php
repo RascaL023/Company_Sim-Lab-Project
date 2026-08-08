@@ -16,21 +16,18 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained()->restrictOnDelete()->cascadeOnUpdate();
             $table->string('code', 50)->unique();
             $table->string('name', 150);
-            $table->enum('type', ['alat', 'bahan']);
-            $table->string('unit', 30);
-            $table->decimal('stock_quantity', 10, 2)->default(0);
+            $table->string('unit', 30); // satuan: pcs, box, liter, dll
+            $table->decimal('stock_quantity', 10, 2)->default(0); // untuk bahan (consumable)
             $table->decimal('minimum_stock', 10, 2)->default(0);
-            $table->string('location', 100)->nullable();
-            $table->enum('condition_status', ['baik', 'rusak', 'maintenance', 'kadaluarsa'])->default('baik');
+            $table->string('location', 100)->nullable(); // lokasi umum (ruang, gudang)
             $table->string('manufacturer', 100)->nullable();
-            $table->string('serial_number', 100)->nullable();
-            $table->date('purchase_date')->nullable();
-            $table->date('expiry_date')->nullable();
-            $table->date('next_calibration_date')->nullable();
             $table->text('description')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete()->cascadeOnUpdate();
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index('code');
+            $table->index('category_id');
         });
     }
 

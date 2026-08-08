@@ -45,4 +45,24 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    /**
+     * Indicate that the model is a staff member.
+     */
+    public function staf(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'staf',
+        ]);
+    }
+
+    /**
+     * Indicate that the model is an administrator.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
+        ]);
+    }
 }

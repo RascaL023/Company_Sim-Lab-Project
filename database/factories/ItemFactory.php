@@ -21,21 +21,49 @@ class ItemFactory extends Factory
     {
         return [
             'category_id' => Category::factory(),
-            'code' => fake()->unique()->bothify('??-######'),
-            'name' => fake()->word(),
-            'type' => fake()->randomElement(['alat', 'bahan']),
-            'unit' => fake()->randomElement(['pcs', 'box', 'liter', 'gram']),
-            'stock_quantity' => fake()->randomNumber(2, true),
-            'minimum_stock' => fake()->randomNumber(1, true),
-            'location' => fake()->word(),
-            'condition_status' => fake()->randomElement(['baik', 'rusak', 'maintenance', 'kadaluarsa']),
-            'manufacturer' => fake()->company(),
-            'serial_number' => fake()->uuid(),
-            'purchase_date' => fake()->date(),
-            'expiry_date' => fake()->date(),
-            'next_calibration_date' => fake()->date(),
-            'description' => fake()->sentence(),
+            'code' => fake()->unique()->bothify('ITM-######'),
+            'name' => fake()->words(2, true),
+            'unit' => fake()->randomElement(['pcs', 'box', 'liter', 'gram', 'kg', 'ml', 'set', 'unit']),
+            'stock_quantity' => fake()->randomFloat(2, 0, 500),
+            'minimum_stock' => fake()->randomFloat(2, 0, 50),
+            'location' => fake()->randomElement(['Ruang Lab 1', 'Ruang Lab 2', 'Gudang A', 'Gudang B', 'Lokasi Luar']),
+            'manufacturer' => fake()->optional(0.7)->company(),
+            'description' => fake()->optional(0.5)->sentence(),
             'created_by' => User::factory(),
         ];
+    }
+
+    /**
+     * Indicate that the item is alat (equipment).
+     */
+    public function alat(): static
+    {
+        return $this->state(function (array $attributes) {
+            $category = Category::factory()->alat()->create();
+
+            return [
+                'category_id' => $category->id,
+                'unit' => fake()->randomElement(['pcs', 'unit', 'set']),
+                'stock_quantity' => 0, // alat tracked by units
+                'minimum_stock' => 0,
+            ];
+        });
+    }
+
+    /**
+     * Indicate that the item is bahan (consumable).
+     */
+    public function bahan(): static
+    {
+        return $this->state(function (array $attributes) {
+            $category = Category::factory()->bahan()->create();
+
+            return [
+                'category_id' => $category->id,
+                'unit' => fake()->randomElement(['pcs', 'box', 'liter', 'gram', 'kg', 'ml']),
+                'stock_quantity' => fake()->randomFloat(2, 10, 500),
+                'minimum_stock' => fake()->randomFloat(2, 1, 50),
+            ];
+        });
     }
 }

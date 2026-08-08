@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -22,17 +23,11 @@ class Item extends Model
         'category_id',
         'code',
         'name',
-        'type',
         'unit',
         'stock_quantity',
         'minimum_stock',
         'location',
-        'condition_status',
         'manufacturer',
-        'serial_number',
-        'purchase_date',
-        'expiry_date',
-        'next_calibration_date',
         'description',
         'created_by',
     ];
@@ -45,13 +40,8 @@ class Item extends Model
     protected function casts(): array
     {
         return [
-            'type' => 'string',
-            'condition_status' => 'string',
             'stock_quantity' => 'decimal:2',
             'minimum_stock' => 'decimal:2',
-            'purchase_date' => 'date',
-            'expiry_date' => 'date',
-            'next_calibration_date' => 'date',
             'created_by' => 'integer',
         ];
     }
@@ -73,31 +63,39 @@ class Item extends Model
     }
 
     /**
-     * Get the calibrations for the item.
+     * Get the physical units for this item.
      */
-    public function calibrations(): HasMany
+    public function units(): HasMany
     {
-        return $this->hasMany(ItemCalibration::class);
+        return $this->hasMany(ItemUnit::class);
     }
 
     /**
-     * Get the maintenances for the item.
+     * Get the calibrations for this item (through units).
      */
-    public function maintenances(): HasMany
+    public function calibrations(): HasManyThrough
     {
-        return $this->hasMany(ItemMaintenance::class);
+        return $this->hasManyThrough(ItemCalibration::class, ItemUnit::class, 'item_id', 'item_unit_id');
     }
 
     /**
-     * Get the borrowings for the item.
+     * Get the maintenances for this item (through units).
+     */
+    public function maintenances(): HasManyThrough
+    {
+        return $this->hasManyThrough(ItemMaintenance::class, ItemUnit::class, 'item_id', 'item_unit_id');
+    }
+
+    /**
+     * Get the borrowings for this item.
      */
     public function borrowings(): HasMany
     {
-        return $this->hasMany(Borrowing::class);
+        return $this->hasMany(BorrowingItem::class);
     }
 
     /**
-     * Get the usages for the item.
+     * Get the usages for this item.
      */
     public function usages(): HasMany
     {
@@ -105,89 +103,31 @@ class Item extends Model
     }
 
     /**
-     * Get the audit trails for the item.
+     * Get the stock movements for this item.
      */
-    public function auditTrails(): MorphMany
+    public function stockMovements(): HasMany
     {
-        return $this->morphMany(AuditTrail::class, 'auditable');
+        return $this->hasMany(StockMovement::class);
     }
 
     /**
-     * Scope a query to only alat items.
+     * Get the attachments for this item.
      */
-    public function scopeAlat($query)
+    public function attachments(): MorphMany
     {
-        return $query->where('type', 'alat');
+        return $this->morphMany(Attachment::class, 'attachable');
     }
 
     /**
-     * Scope a query to only bahan items.
+     * Get the type from category.
      */
-    public function scopeBahan($query)
+    public function getTypeAttribute(): string
     {
-        return $query->where('type', 'bahan');
+        return $this->category?->type ?? 'bahan';
     }
 
     /**
-     * Scope a query to only items in good condition.
-     */
-    public function scopeBaik($query)
-    {
-        return $query->where('condition_status', 'baik');
-    }
-
-    /**
-     * Scope a query to only damaged items.
-     */
-    public function scopeRusak($query)
-    {
-        return $query->where('condition_status', 'rusak');
-    }
-
-    /**
-     * Scope a query to only items under maintenance.
-     */
-    public function scopeMaintenance($query)
-    {
-        return $query->where('condition_status', 'maintenance');
-    }
-
-    /**
-     * Scope a query to only expired items.
-     */
-    public function scopeKadaluarsa($query)
-    {
-        return $query->where('condition_status', 'kadaluarsa');
-    }
-
-    /**
-     * Scope a query to only items with low stock.
-     */
-    public function scopeLowStock($query)
-    {
-        return $query->whereColumn('stock_quantity', '<', 'minimum_stock');
-    }
-
-    /**
-     * Scope a query to only items needing calibration.
-     */
-    public function scopeNeedsCalibration($query)
-    {
-        return $query->whereNotNull('next_calibration_date')
-            ->where('next_calibration_date', '<', now()->toDateString());
-    }
-
-    /**
-     * Scope a query to only expired items (based on expiry_date).
-     */
-    public function scopeExpired($query)
-    {
-        return $query->whereNotNull('expiry_date')
-            ->where('expiry_date', '<', now()->toDateString());
-    }
-
-    /**
-     * Check if the item is alat.
+     * Check if the item is alat (equipment).
      */
     public function isAlat(): bool
     {
@@ -195,7 +135,7 @@ class Item extends Model
     }
 
     /**
-     * Check if the item is bahan.
+     * Check if the item is bahan (consumable).
      */
     public function isBahan(): bool
     {
@@ -211,20 +151,54 @@ class Item extends Model
     }
 
     /**
-     * Check if the item needs calibration.
+     * Scope a query to only alat items.
      */
-    public function needsCalibration(): bool
+    public function scopeAlat($query)
     {
-        return !is_null($this->next_calibration_date) && 
-               $this->next_calibration_date < now()->toDateString();
+        return $query->whereHas('category', function ($q) {
+            $q->where('type', 'alat');
+        });
     }
 
     /**
-     * Check if the item is expired.
+     * Scope a query to only bahan items.
+     */
+    public function scopeBahan($query)
+    {
+        return $query->whereHas('category', function ($q) {
+            $q->where('type', 'bahan');
+        });
+    }
+
+    /**
+     * Scope a query to only low stock items.
+     */
+    public function scopeLowStock($query)
+    {
+        return $query->whereColumn('stock_quantity', '<', 'minimum_stock');
+    }
+
+    /**
+     * Check if the item (e.g. a consumable) is expired.
      */
     public function isExpired(): bool
     {
-        return !is_null($this->expiry_date) && 
-               $this->expiry_date < now()->toDateString();
+        return $this->expiry_date !== null && $this->expiry_date->isPast();
+    }
+
+    /**
+     * An item needs calibration if it is alat and at least one of its units
+     * has a calibration due within the next 30 days (or overdue).
+     */
+    public function needsCalibration(): bool
+    {
+        if (! $this->isAlat()) {
+            return false;
+        }
+
+        return $this->units()
+            ->whereNotNull('next_calibration_date')
+            ->where('next_calibration_date', '<=', now()->addDays(30))
+            ->exists();
     }
 }

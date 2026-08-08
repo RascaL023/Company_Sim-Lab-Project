@@ -23,4 +23,24 @@ class CategoryFactory extends Factory
             'description' => fake()->sentence(),
         ];
     }
+
+    /**
+     * Indicate that the category is for bahan (materials).
+     */
+    public function bahan(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'type' => 'bahan',
+        ]);
+    }
+
+    /**
+     * Indicate that the category is for alat (equipment).
+     */
+    public function alat(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'type' => 'alat',
+        ]);
+    }
 }

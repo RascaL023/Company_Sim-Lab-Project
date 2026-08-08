@@ -11,6 +11,8 @@ class AuditTrail extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -24,6 +26,7 @@ class AuditTrail extends Model
         'old_values',
         'new_values',
         'ip_address',
+        'user_agent',
     ];
 
     /**
@@ -89,5 +92,13 @@ class AuditTrail extends Model
     public function scopeByUser($query, $userId)
     {
         return $query->where('user_id', $userId);
+    }
+
+    /**
+     * Scope a query to audit trails in a date range.
+     */
+    public function scopeBetweenDates($query, $start, $end)
+    {
+        return $query->whereBetween('created_at', [$start, $end]);
     }
 }

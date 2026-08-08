@@ -17,9 +17,16 @@ class Usage extends Model
      */
     protected $fillable = [
         'item_id',
+        'item_unit_id',
         'user_id',
+        'verified_by',
         'quantity_used',
+        'quantity_before',
+        'quantity_after',
         'usage_date',
+        'status',
+        'rejection_reason',
+        'verified_at',
         'purpose',
         'notes',
     ];
@@ -33,14 +40,20 @@ class Usage extends Model
     {
         return [
             'quantity_used' => 'decimal:2',
+            'quantity_before' => 'decimal:2',
+            'quantity_after' => 'decimal:2',
             'usage_date' => 'datetime',
+            'status' => 'string',
+            'verified_at' => 'datetime',
             'item_id' => 'integer',
+            'item_unit_id' => 'integer',
             'user_id' => 'integer',
+            'verified_by' => 'integer',
         ];
     }
 
     /**
-     * Get the item that was used.
+     * Get the item (catalog) that was used.
      */
     public function item(): BelongsTo
     {
@@ -48,11 +61,51 @@ class Usage extends Model
     }
 
     /**
-     * Get the user that used the item.
+     * Get the physical unit that was used (for alat with tracking).
+     */
+    public function itemUnit(): BelongsTo
+    {
+        return $this->belongsTo(ItemUnit::class, 'item_unit_id');
+    }
+
+    /**
+     * Get the user who used the item.
      */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the user who verified the usage.
+     */
+    public function verifier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    /**
+     * Scope a query to only recorded usages.
+     */
+    public function scopeDicatat($query)
+    {
+        return $query->where('status', 'dicatat');
+    }
+
+    /**
+     * Scope a query to only verified usages.
+     */
+    public function scopeDiverifikasi($query)
+    {
+        return $query->where('status', 'diverifikasi');
+    }
+
+    /**
+     * Scope a query to only rejected usages.
+     */
+    public function scopeDitolak($query)
+    {
+        return $query->where('status', 'ditolak');
     }
 
     /**
@@ -78,5 +131,29 @@ class Usage extends Model
     public function scopeByUser($query, $userId)
     {
         return $query->where('user_id', $userId);
+    }
+
+    /**
+     * Check if the usage is verified.
+     */
+    public function isVerified(): bool
+    {
+        return $this->status === 'diverifikasi';
+    }
+
+    /**
+     * Check if the usage is rejected.
+     */
+    public function isRejected(): bool
+    {
+        return $this->status === 'ditolak';
+    }
+
+    /**
+     * Check if the usage is pending verification.
+     */
+    public function isPendingVerification(): bool
+    {
+        return $this->status === 'dicatat';
     }
 }
