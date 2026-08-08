@@ -29,27 +29,33 @@ class ItemController extends Controller
         // Get query parameters for filtering
         $query = Item::query()
             ->with(['category', 'creator'])->withCount(['calibrations', 'maintenances', 'borrowings', 'usages']) // Prevent N+1 queries
-            ->when($request->filled('type'), function ($q, $type) {
-                return $q->where('type', $type);
+            ->when($request->query('type'), function ($q, string $type) {
+                return $q->whereHas('category', fn ($category) => $category->where('type', $type));
             })
-            ->when($request->filled('condition_status'), function ($q, $status) {
-                return $q->where('condition_status', $status);
+            ->when($request->query('condition_status'), function ($q, string $status) {
+                return $q->whereHas('units', fn ($units) => $units->where('condition', $status));
             })
-            ->when($request->filled('low_stock'), function ($q) {
+            ->when($request->boolean('low_stock'), function ($q) {
                 return $q->whereColumn('stock_quantity', '<', 'minimum_stock');
             })
-            ->when($request->filled('needs_calibration'), function ($q) {
-                return $q->whereNotNull('next_calibration_date')
-                    ->where('next_calibration_date', '<', now()->toDateString());
+            ->when($request->boolean('needs_calibration'), function ($q) {
+                return $q->whereHas('units', function ($units) {
+                    $units->whereNotNull('next_calibration_date')
+                        ->where('next_calibration_date', '<', now()->toDateString());
+                });
             })
-            ->when($request->filled('expired'), function ($q) {
-                return $q->whereNotNull('expiry_date')
-                    ->where('expiry_date', '<', now()->toDateString());
+            ->when($request->boolean('expired'), function ($q) {
+                return $q->whereHas('units', function ($units) {
+                    $units->whereNotNull('expiry_date')
+                        ->where('expiry_date', '<', now()->toDateString());
+                });
             })
-            ->when($request->filled('search'), function ($q, $search) {
-                return $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+            ->when($request->query('search'), function ($q, string $search) {
+                return $q->where(function ($inner) use ($search) {
+                    $inner->where('name', 'like', "%{$search}%")
+                        ->orWhere('code', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
             });
 
         // Get sort parameters

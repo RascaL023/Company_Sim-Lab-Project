@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\AuditTrail;
-use App\Models\Borrowing;
 use App\Models\BorrowingItem;
 use App\Models\BorrowingRequest;
 use App\Models\Item;
@@ -30,7 +29,6 @@ class AuditTrailFactory extends Factory
             ItemUnit::class => ItemUnit::factory(),
             BorrowingRequest::class => BorrowingRequest::factory(),
             BorrowingItem::class => BorrowingItem::factory(),
-            Borrowing::class => Borrowing::factory(),
             Usage::class => Usage::factory(),
             StockMovement::class => StockMovement::factory(),
         ];

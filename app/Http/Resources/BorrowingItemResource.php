@@ -24,6 +24,8 @@ class BorrowingItemResource extends JsonResource
             'checked_by' => new UserResource($this->whenLoaded('checkedBy')),
             'checked_at' => $this->checked_at,
             'check_notes' => $this->check_notes,
+            'checked_out_by' => new UserResource($this->whenLoaded('checkedOutBy')),
+            'checked_in_by' => new UserResource($this->whenLoaded('checkedInBy')),
         ];
     }
 }

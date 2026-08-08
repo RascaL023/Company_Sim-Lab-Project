@@ -20,7 +20,12 @@ Dokumen ini menjelaskan perubahan yang telah dilakukan pada skema database SIMLa
   - Stempel waktu peminjaman/pengembalian sebenarnya
   - Pelacakan kerusakan dan catatan
   - Informasi pemeriksa untuk inspeksi pengembalian
-- Dibuat tabel `borrowings` untuk transaksi checkout/checkin sebenarnya
+  - `checked_out_by` / `checked_in_by` (admin yang checkout/checkin)
+- ~~Dibuat tabel `borrowings` untuk transaksi checkout/checkin sebenarnya~~
+  **Revisi (2026-08-09)**: Tabel `borrowings` dihapus karena hampir seluruh
+  kolomnya menduplikasi `borrowing_items` tanpa use-case multi-siklus yang
+  terimplementasi. Sumber kebenaran checkout/checkin kini tunggal di
+  `borrowing_items`.
 - Semua tabel diindeks dengan baik untuk kinerja
 
 ### B. Verifikasi Pengembalian (Kritis)
@@ -102,7 +107,7 @@ Dokumen ini menjelaskan perubahan yang telah dilakukan pada skema database SIMLa
 - `audit_trails.action`: Menggunakan string(50) untuk mengizinkan jenis tindakan yang fleksibel
 - Bidang status/kondisi lainnya menggunakan kolom ENUM asli pada migrasi:
   - `borrowing_requests.status`: `diajukan`, `disetujui`, `ditolak`, `diproses`, `selesai`, `batal`
-  - `borrowings.status`: `dipinjam`, `dikembalikan`, `terlambat`, `hilang`
+  - ~~`borrowings.status`: `dipinjam`, `dikembalikan`, `terlambat`, `hilang`~~ (tabel dihapus; status siklus diturunkan dari tanggal di `borrowing_items`)
   - `usages.status`: `dicatat`, `diverifikasi`, `ditolak`
   - `categories.type`: `alat`, `bahan`
   - `item_calibrations.result`: `lulus`, `tidak_lulus`

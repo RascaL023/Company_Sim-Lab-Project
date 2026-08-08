@@ -110,35 +110,19 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the borrowings where the user is the borrower.
+     * Get the borrowing items checked out by the user.
      */
-    public function borrowings(): HasMany
+    public function checkedOutBorrowingItems(): HasMany
     {
-        return $this->hasMany(Borrowing::class, 'borrower_id');
+        return $this->hasMany(BorrowingItem::class, 'checked_out_by');
     }
 
     /**
-     * Get the borrowings checked out by the user.
+     * Get the borrowing items checked in by the user.
      */
-    public function checkedOutBorrowings(): HasMany
+    public function checkedInBorrowingItems(): HasMany
     {
-        return $this->hasMany(Borrowing::class, 'checked_out_by');
-    }
-
-    /**
-     * Get the borrowings checked in by the user.
-     */
-    public function checkedInBorrowings(): HasMany
-    {
-        return $this->hasMany(Borrowing::class, 'checked_in_by');
-    }
-
-    /**
-     * Get the borrowings checked by the user.
-     */
-    public function checkedBorrowings(): HasMany
-    {
-        return $this->hasMany(Borrowing::class, 'checked_by');
+        return $this->hasMany(BorrowingItem::class, 'checked_in_by');
     }
 
     /**

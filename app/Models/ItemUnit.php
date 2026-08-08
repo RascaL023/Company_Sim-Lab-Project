@@ -82,19 +82,19 @@ class ItemUnit extends Model
     }
 
     /**
-     * Get the borrowings for this unit.
-     */
-    public function borrowings(): HasMany
-    {
-        return $this->hasMany(Borrowing::class, 'item_unit_id');
-    }
-
-    /**
      * Get the borrowing items for this unit.
      */
     public function borrowingItems(): HasMany
     {
         return $this->hasMany(BorrowingItem::class, 'item_unit_id');
+    }
+
+    /**
+     * Alias kept for older call sites; borrowings now live on borrowing_items.
+     */
+    public function borrowings(): HasMany
+    {
+        return $this->borrowingItems();
     }
 
     /**

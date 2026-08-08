@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Attachment;
 use App\Models\AuditTrail;
-use App\Models\Borrowing;
 use App\Models\BorrowingItem;
 use App\Models\BorrowingRequest;
 use App\Models\Item;
@@ -57,7 +56,6 @@ class BorrowingLifecycleSeeder extends Seeder
      */
     private function createNormalBorrowingCycle($alatItems, $admin, $staff)
     {
-        // Pick a random item and unit
         $item = $alatItems->random();
         $unit = $item->units()->where('condition', 'baik')->first();
 
@@ -65,7 +63,6 @@ class BorrowingLifecycleSeeder extends Seeder
             return;
         }
 
-        // 1. Create borrowing request
         $request = BorrowingRequest::create([
             'request_number' => 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999)),
             'requested_by' => $staff->id,
@@ -76,7 +73,6 @@ class BorrowingLifecycleSeeder extends Seeder
             'approved_at' => now()->subDays(4),
         ]);
 
-        // 2. Create borrowing item
         $borrowingItem = BorrowingItem::create([
             'borrowing_request_id' => $request->id,
             'item_id' => $item->id,
@@ -91,32 +87,10 @@ class BorrowingLifecycleSeeder extends Seeder
             'checked_by' => $admin->id,
             'checked_at' => now()->subHours(1),
             'check_notes' => 'Barang dikembalikan dalam kondisi baik, tidak ada kerusakan terlihat.',
-        ]);
-
-        // 3. Create borrowing transaction (checkout/checkin)
-        Borrowing::create([
-            'borrowing_item_id' => $borrowingItem->id,
-            'borrower_id' => $staff->id,
-            'borrow_date' => $borrowingItem->borrow_date,
-            'expected_return_date' => $borrowingItem->expected_return_date,
-            'actual_return_date' => $borrowingItem->actual_return_date,
-            'condition_before' => $borrowingItem->condition_before,
-            'condition_after' => $borrowingItem->condition_after,
-            'is_damaged' => $borrowingItem->is_damaged,
-            'damage_notes' => $borrowingItem->damage_notes,
             'checked_out_by' => $admin->id,
             'checked_in_by' => $admin->id,
-            'checked_by' => $borrowingItem->checked_by,
-            'checked_at' => $borrowingItem->checked_at,
-            'check_notes' => $borrowingItem->check_notes,
-            'status' => 'dikembalikan',
-            'notes' => 'Peminjaman selesai tanpa masalah.',
         ]);
 
-        // 4. Update unit condition if needed (should remain baik)
-        $unit->refresh();
-
-        // 5. Create audit trails
         AuditTrail::create([
             'user_id' => $staff->id,
             'auditable_type' => BorrowingRequest::class,
@@ -145,18 +119,16 @@ class BorrowingLifecycleSeeder extends Seeder
 
         AuditTrail::create([
             'user_id' => $admin->id,
-            'auditable_type' => Borrowing::class,
-            'auditable_id' => Borrowing::where('borrowing_item_id', $borrowingItem->id)->first()->id,
+            'auditable_type' => BorrowingItem::class,
+            'auditable_id' => $borrowingItem->id,
             'action' => 'checked_in',
             'new_values' => [
                 'actual_return_date' => $borrowingItem->actual_return_date,
                 'checked_by' => $admin->id,
-                'status' => 'dikembalikan',
+                'checked_in_by' => $admin->id,
             ],
         ]);
 
-        // 6. Create attachment (condition evidence)
-        // Note: We're not actually creating files, just database records
         Attachment::create([
             'attachable_type' => BorrowingItem::class,
             'attachable_id' => $borrowingItem->id,
@@ -176,7 +148,6 @@ class BorrowingLifecycleSeeder extends Seeder
      */
     private function createDamageBorrowingCycle($alatItems, $admin, $staff)
     {
-        // Pick a random item and unit
         $item = $alatItems->random();
         $unit = $item->units()->where('condition', 'baik')->first();
 
@@ -184,7 +155,6 @@ class BorrowingLifecycleSeeder extends Seeder
             return;
         }
 
-        // 1. Create borrowing request
         $request = BorrowingRequest::create([
             'request_number' => 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999)),
             'requested_by' => $staff->id,
@@ -195,14 +165,13 @@ class BorrowingLifecycleSeeder extends Seeder
             'approved_at' => now()->subDays(9),
         ]);
 
-        // 2. Create borrowing item (will be returned damaged)
         $borrowingItem = BorrowingItem::create([
             'borrowing_request_id' => $request->id,
             'item_id' => $item->id,
             'item_unit_id' => $unit->id,
             'quantity' => 1,
             'condition_before' => 'baik',
-            'condition_after' => 'rusak_berat', // Returned damaged
+            'condition_after' => 'rusak_berat',
             'is_damaged' => true,
             'damage_notes' => 'Terjadi retakan pada bagian housing mikroskop akibat jatuh selama pengujian.',
             'borrow_date' => now()->subDays(7),
@@ -211,35 +180,15 @@ class BorrowingLifecycleSeeder extends Seeder
             'checked_by' => $admin->id,
             'checked_at' => now()->subHours(12),
             'check_notes' => 'Barang dikembalikan dengan kerusakan berat pada housing bagian kiri. Disarankan perbaikan.',
-        ]);
-
-        // 3. Create borrowing transaction
-        Borrowing::create([
-            'borrowing_item_id' => $borrowingItem->id,
-            'borrower_id' => $staff->id,
-            'borrow_date' => $borrowingItem->borrow_date,
-            'expected_return_date' => $borrowingItem->expected_return_date,
-            'actual_return_date' => $borrowingItem->actual_return_date,
-            'condition_before' => $borrowingItem->condition_before,
-            'condition_after' => $borrowingItem->condition_after,
-            'is_damaged' => $borrowingItem->is_damaged,
-            'damage_notes' => $borrowingItem->damage_notes,
             'checked_out_by' => $admin->id,
             'checked_in_by' => $admin->id,
-            'checked_by' => $borrowingItem->checked_by,
-            'checked_at' => $borrowingItem->checked_at,
-            'check_notes' => $borrowingItem->check_notes,
-            'status' => 'dikembalikan',
-            'notes' => 'Barang dikembalikan dalam keadaan rusak, perlu perbaikan.',
         ]);
 
-        // 4. Update unit condition to reflect damage
         $unit->update([
             'condition' => 'rusak_berat',
             'notes' => $unit->notes.' Diperbarui: Rusak berat akibat jatuh selama peminjaman ['.now()->toDateString().']',
         ]);
 
-        // 5. Create maintenance record (triggered by damage)
         $maintenance = ItemMaintenance::create([
             'item_unit_id' => $unit->id,
             'maintenance_date' => now()->subDays(1),
@@ -251,7 +200,6 @@ class BorrowingLifecycleSeeder extends Seeder
             'recorded_by' => $admin->id,
         ]);
 
-        // 6. Update unit condition after maintenance
         $unit->update([
             'condition' => 'baik',
             'last_calibration_date' => now()->subDays(1),
@@ -259,7 +207,6 @@ class BorrowingLifecycleSeeder extends Seeder
             'notes' => $unit->notes.' Diperbarui: Setelah perbaikan dan kalibrasi ulang ['.now()->toDateString().']',
         ]);
 
-        // 7. Create audit trails
         AuditTrail::create([
             'user_id' => $staff->id,
             'auditable_type' => BorrowingRequest::class,
@@ -309,7 +256,6 @@ class BorrowingLifecycleSeeder extends Seeder
      */
     private function createOverdueBorrowing($alatItems, $admin, $staff)
     {
-        // Pick a random item and unit
         $item = $alatItems->random();
         $unit = $item->units()->where('condition', 'baik')->first();
 
@@ -317,18 +263,16 @@ class BorrowingLifecycleSeeder extends Seeder
             return;
         }
 
-        // 1. Create borrowing request
         $request = BorrowingRequest::create([
             'request_number' => 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999)),
             'requested_by' => $staff->id,
             'approved_by' => $admin->id,
-            'status' => 'diproses', // Still in process
+            'status' => 'diproses',
             'purpose' => 'Penelitian jangka panjang',
             'requested_at' => now()->subDays(20),
             'approved_at' => now()->subDays(19),
         ]);
 
-        // 2. Create borrowing item (not returned yet)
         $borrowingItem = BorrowingItem::create([
             'borrowing_request_id' => $request->id,
             'item_id' => $item->id,
@@ -338,34 +282,15 @@ class BorrowingLifecycleSeeder extends Seeder
             'condition_after' => null,
             'is_damaged' => false,
             'borrow_date' => now()->subDays(15),
-            'expected_return_date' => now()->subDays(5), // Already overdue
-            'actual_return_date' => null, // Not returned yet
+            'expected_return_date' => now()->subDays(5),
+            'actual_return_date' => null,
             'checked_by' => null,
             'checked_at' => null,
             'check_notes' => null,
-        ]);
-
-        // 3. Create borrowing transaction (only checked out)
-        Borrowing::create([
-            'borrowing_item_id' => $borrowingItem->id,
-            'borrower_id' => $staff->id,
-            'borrow_date' => $borrowingItem->borrow_date,
-            'expected_return_date' => $borrowingItem->expected_return_date,
-            'actual_return_date' => null,
-            'condition_before' => $borrowingItem->condition_before,
-            'condition_after' => null,
-            'is_damaged' => false,
-            'damage_notes' => null,
             'checked_out_by' => $admin->id,
             'checked_in_by' => null,
-            'checked_by' => null,
-            'checked_at' => null,
-            'check_notes' => null,
-            'status' => 'terlambat',
-            'notes' => 'Barang belum dikembalikan melebihi batas waktu yang ditentukan.',
         ]);
 
-        // 4. Create audit trails
         AuditTrail::create([
             'user_id' => $staff->id,
             'auditable_type' => BorrowingRequest::class,
@@ -385,14 +310,13 @@ class BorrowingLifecycleSeeder extends Seeder
 
         AuditTrail::create([
             'user_id' => $staff->id,
-            'auditable_type' => Borrowing::class,
-            'auditable_id' => Borrowing::where('borrowing_item_id', $borrowingItem->id)->first()->id,
+            'auditable_type' => BorrowingItem::class,
+            'auditable_id' => $borrowingItem->id,
             'action' => 'checked_out',
             'new_values' => [
                 'borrow_date' => $borrowingItem->borrow_date,
                 'expected_return_date' => $borrowingItem->expected_return_date,
                 'checked_out_by' => $admin->id,
-                'status' => 'dipinjam',
             ],
         ]);
     }
@@ -402,7 +326,6 @@ class BorrowingLifecycleSeeder extends Seeder
      */
     private function createRejectedRequest($alatItems, $admin, $staff)
     {
-        // Pick a random item and unit
         $item = $alatItems->random();
         $unit = $item->units()->where('condition', 'baik')->first();
 
@@ -410,21 +333,19 @@ class BorrowingLifecycleSeeder extends Seeder
             return;
         }
 
-        // 1. Create borrowing request that gets rejected
         $request = BorrowingRequest::create([
             'request_number' => 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999)),
             'requested_by' => $staff->id,
-            'approved_by' => $admin->id, // Still set but will be overridden by rejection
+            'approved_by' => $admin->id,
             'status' => 'ditolak',
             'purpose' => 'Pengujian dengan bahan berbahaya yang tidak diizinkan',
             'requested_at' => now()->subDays(3),
-            'approved_at' => now()->subDays(2), // When it was processed/rejected
+            'approved_at' => now()->subDays(2),
             'rejected_at' => now()->subDays(2),
             'rejection_reason' => 'Pengajuan ditolak karena bahan yang akan digunakan tergolong berbahaya dan memerlukan izin khusus yang belum ada.',
         ]);
 
-        // 2. Create borrowing item (never approved, so never borrowed)
-        $borrowingItem = BorrowingItem::create([
+        BorrowingItem::create([
             'borrowing_request_id' => $request->id,
             'item_id' => $item->id,
             'item_unit_id' => $unit->id,
@@ -432,7 +353,7 @@ class BorrowingLifecycleSeeder extends Seeder
             'condition_before' => 'baik',
             'condition_after' => null,
             'is_damaged' => false,
-            'borrow_date' => null, // Never borrowed
+            'borrow_date' => null,
             'expected_return_date' => null,
             'actual_return_date' => null,
             'checked_by' => null,
@@ -440,7 +361,6 @@ class BorrowingLifecycleSeeder extends Seeder
             'check_notes' => null,
         ]);
 
-        // 3. Create audit trails
         AuditTrail::create([
             'user_id' => $staff->id,
             'auditable_type' => BorrowingRequest::class,

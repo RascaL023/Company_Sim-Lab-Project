@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BorrowingItem extends Model
 {
@@ -31,6 +30,8 @@ class BorrowingItem extends Model
         'checked_by',
         'checked_at',
         'check_notes',
+        'checked_out_by',
+        'checked_in_by',
     ];
 
     /**
@@ -50,6 +51,8 @@ class BorrowingItem extends Model
             'actual_return_date' => 'datetime',
             'checked_by' => 'integer',
             'checked_at' => 'datetime',
+            'checked_out_by' => 'integer',
+            'checked_in_by' => 'integer',
         ];
     }
 
@@ -86,11 +89,27 @@ class BorrowingItem extends Model
     }
 
     /**
-     * Get the borrowing transaction for this item.
+     * Alias for checker() used by API resources.
      */
-    public function borrowing(): HasMany
+    public function checkedBy(): BelongsTo
     {
-        return $this->hasMany(Borrowing::class, 'borrowing_item_id');
+        return $this->checker();
+    }
+
+    /**
+     * Get the admin who checked the item out.
+     */
+    public function checkedOutBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'checked_out_by');
+    }
+
+    /**
+     * Get the admin who checked the item in.
+     */
+    public function checkedInBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'checked_in_by');
     }
 
     /**
