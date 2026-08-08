@@ -85,6 +85,14 @@ class Usage extends Model
     }
 
     /**
+     * Get the user who verified the usage.
+     */
+    public function verifiedBy(): BelongsTo
+    {
+        return $this->verifier();
+    }
+
+    /**
      * Scope a query to only recorded usages.
      */
     public function scopeDicatat($query)

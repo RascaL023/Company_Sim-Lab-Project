@@ -6,12 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\BorrowingRequestResource;
 use App\Models\BorrowingRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class BorrowingRequestController extends Controller
 {
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', BorrowingRequest::class);
+
         return BorrowingRequest::with(['requestedBy', 'approvedBy', 'items.item'])
+            ->when(! $request->user()->isAdmin(), fn ($q) => $q->where('requested_by', $request->user()->id))
             ->when($request->filled('status'), fn ($q, $s) => $q->where('status', $s))
             ->paginate($request->query('per_page', 15));
     }
@@ -25,6 +29,8 @@ class BorrowingRequestController extends Controller
             'items.*.item_id' => 'required|exists:items,id',
             'items.*.quantity' => 'required|numeric|min:1',
         ]);
+
+        Gate::authorize('create', [BorrowingRequest::class, (int) $validated['requested_by']]);
 
         $requestNumber = 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999));
 
@@ -48,11 +54,15 @@ class BorrowingRequestController extends Controller
 
     public function show(BorrowingRequest $borrowingRequest)
     {
+        Gate::authorize('view', $borrowingRequest);
+
         return new BorrowingRequestResource($borrowingRequest);
     }
 
     public function update(Request $request, BorrowingRequest $borrowingRequest)
     {
+        Gate::authorize('update', $borrowingRequest);
+
         $request->validate([
             'status' => 'sometimes|in:diajukan,disetujui,ditolak,diproses,selesai,batal',
             'approved_by' => 'sometimes|exists:users,id',
@@ -66,6 +76,8 @@ class BorrowingRequestController extends Controller
 
     public function destroy(BorrowingRequest $borrowingRequest)
     {
+        Gate::authorize('delete', $borrowingRequest);
+
         $borrowingRequest->update(['status' => 'batal']);
 
         return response()->json(null, 204);
@@ -73,6 +85,8 @@ class BorrowingRequestController extends Controller
 
     public function approve(Request $request, BorrowingRequest $borrowingRequest)
     {
+        Gate::authorize('approve', $borrowingRequest);
+
         $borrowingRequest->approved_by = $request->user()->id;
         $borrowingRequest->approved_at = now();
         $borrowingRequest->status = 'disetujui';
@@ -83,6 +97,8 @@ class BorrowingRequestController extends Controller
 
     public function reject(Request $request, BorrowingRequest $borrowingRequest)
     {
+        Gate::authorize('reject', $borrowingRequest);
+
         $validated = $request->validate([
             'rejection_reason' => 'required|string',
         ]);

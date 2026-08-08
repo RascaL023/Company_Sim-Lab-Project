@@ -7,12 +7,19 @@ use App\Http\Resources\UsageResource;
 use App\Models\Item;
 use App\Models\Usage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class UsageController extends Controller
 {
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Usage::class);
+
         $query = Usage::with(['item', 'itemUnit', 'user', 'verifiedBy']);
+
+        if (! $request->user()->isAdmin()) {
+            $query->where('user_id', $request->user()->id);
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->get('status'));
@@ -27,6 +34,8 @@ class UsageController extends Controller
 
     public function store(Request $request)
     {
+        Gate::authorize('create', Usage::class);
+
         $validated = $request->validate([
             'item_id' => 'required|exists:items,id',
             'item_unit_id' => 'nullable|exists:item_units,id',
@@ -49,11 +58,15 @@ class UsageController extends Controller
 
     public function show(Usage $usage)
     {
+        Gate::authorize('view', $usage);
+
         return new UsageResource($usage);
     }
 
     public function update(Request $request, Usage $usage)
     {
+        Gate::authorize('update', $usage);
+
         $request->validate([
             'status' => 'sometimes|in:dicatat,diverifikasi,ditolak',
             'verified_by' => 'nullable|exists:users,id',
@@ -67,6 +80,8 @@ class UsageController extends Controller
 
     public function destroy(Usage $usage)
     {
+        Gate::authorize('delete', $usage);
+
         $usage->delete();
 
         return response()->json(null, 204);
@@ -74,6 +89,8 @@ class UsageController extends Controller
 
     public function verify(Request $request, Usage $usage)
     {
+        Gate::authorize('verify', $usage);
+
         $usage->update([
             'status' => 'diverifikasi',
             'verified_by' => $request->user()->id,
@@ -85,6 +102,8 @@ class UsageController extends Controller
 
     public function reject(Request $request, Usage $usage)
     {
+        Gate::authorize('reject', $usage);
+
         $validated = $request->validate(['rejection_reason' => 'required|string']);
 
         $usage->update([

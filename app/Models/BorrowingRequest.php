@@ -55,11 +55,27 @@ class BorrowingRequest extends Model
     }
 
     /**
+     * Get the user who requested the borrowing.
+     */
+    public function requestedBy(): BelongsTo
+    {
+        return $this->requester();
+    }
+
+    /**
      * Get the user who approved/rejected the request.
      */
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Get the user who approved/rejected the request.
+     */
+    public function approvedBy(): BelongsTo
+    {
+        return $this->approver();
     }
 
     /**
