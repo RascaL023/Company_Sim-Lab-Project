@@ -2,13 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Http\Resources\CategoryResource;
-use App\Http\Resources\UserResource;
 
 /**
- * @property \App\Models\Item $resource
+ * @property Item $resource
  */
 class ItemResource extends JsonResource
 {
@@ -43,11 +42,11 @@ class ItemResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'deleted_at' => $this->deleted_at,
-            
+
             // Relationships (eager loaded)
             'category' => CategoryResource::make($this->whenLoaded('category')),
             'creator' => UserResource::make($this->whenLoaded('creator')),
-            
+
             // Counts for collections (optional, can be heavy)
             'calibrations_count' => $this->whenCounted('calibrations'),
             'maintenances_count' => $this->whenCounted('maintenances'),

@@ -5,23 +5,30 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreItemRequest;
 use App\Http\Requests\UpdateItemRequest;
+use App\Http\Resources\AuditTrailResource;
+use App\Http\Resources\CalibrationResource;
 use App\Http\Resources\ItemCollection;
 use App\Http\Resources\ItemResource;
+use App\Http\Resources\ItemUnitResource;
+use App\Http\Resources\MaintenanceResource;
+use App\Http\Resources\StockMovementResource;
+use App\Http\Resources\UsageResource;
 use App\Models\Item;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ItemController extends Controller
 {
     /**
      * Display a listing of the resource.
-     * 
+     *
      * Eager loads category and creator to prevent N+1 queries
      */
     public function index(Request $request)
     {
         // Get query parameters for filtering
         $query = Item::query()
-            ->with(['category', 'creator']) // Prevent N+1 queries
+            ->with(['category', 'creator'])->withCount(['calibrations', 'maintenances', 'borrowings', 'usages']) // Prevent N+1 queries
             ->when($request->filled('type'), function ($q, $type) {
                 return $q->where('type', $type);
             })
@@ -48,7 +55,7 @@ class ItemController extends Controller
         // Get sort parameters
         $sortBy = $request->query('sort_by', 'created_at');
         $sortOrder = $request->query('sort_order', 'desc');
-        
+
         // Validate sort column to prevent injection
         $allowedSortColumns = ['id', 'name', 'code', 'stock_quantity', 'created_at', 'updated_at'];
         if (in_array($sortBy, $allowedSortColumns)) {
@@ -72,7 +79,7 @@ class ItemController extends Controller
         $item = Item::create($request->validated());
 
         // Load relationships for the response
-        $item->load(['category', 'creator']);
+        $item->load(['category', 'creator'])->loadCount(['calibrations', 'maintenances', 'borrowings', 'usages']);
 
         return (new ItemResource($item))
             ->response()
@@ -81,12 +88,12 @@ class ItemController extends Controller
 
     /**
      * Display the specified resource.
-     * 
+     *
      * Eager loads category and creator to prevent N+1 queries
      */
     public function show(Item $item)
     {
-        $item->load(['category', 'creator']);
+        $item->load(['category', 'creator'])->loadCount(['calibrations', 'maintenances', 'borrowings', 'usages']);
 
         return new ItemResource($item);
     }
@@ -99,7 +106,7 @@ class ItemController extends Controller
         $item->update($request->validated());
 
         // Reload with relationships for the response
-        $item->load(['category', 'creator']);
+        $item->load(['category', 'creator'])->loadCount(['calibrations', 'maintenances', 'borrowings', 'usages']);
 
         return new ItemResource($item);
     }
@@ -112,5 +119,75 @@ class ItemController extends Controller
         $item->delete();
 
         return response()->json(null, 204);
+    }
+
+    public function stockMovements(Item $item, Request $request)
+    {
+        $movements = $item->stockMovements()
+            ->with(['itemUnit', 'performedBy'])
+            ->orderBy('occurred_at', 'desc')
+            ->paginate($request->query('per_page', 15));
+
+        return new AnonymousResourceCollection(
+            StockMovementResource::collection($movements)
+        );
+    }
+
+    public function usages(Item $item, Request $request)
+    {
+        $usages = $item->usages()
+            ->with(['user', 'itemUnit', 'verifiedBy'])
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->query('per_page', 15));
+
+        return new AnonymousResourceCollection(
+            UsageResource::collection($usages)
+        );
+    }
+
+    public function calibrations(Item $item, Request $request)
+    {
+        $calibrations = $item->calibrations()
+            ->with(['itemUnit', 'recordedBy'])
+            ->orderBy('calibration_date', 'desc')
+            ->paginate($request->query('per_page', 15));
+
+        return new AnonymousResourceCollection(
+            CalibrationResource::collection($calibrations)
+        );
+    }
+
+    public function maintenances(Item $item, Request $request)
+    {
+        $maintenances = $item->maintenances()
+            ->with(['itemUnit', 'recordedBy'])
+            ->orderBy('maintenance_date', 'desc')
+            ->paginate($request->query('per_page', 15));
+
+        return new AnonymousResourceCollection(
+            MaintenanceResource::collection($maintenances)
+        );
+    }
+
+    public function auditTrails(Item $item, Request $request)
+    {
+        $audits = $item->auditTrails()
+            ->with(['user', 'itemUnit'])
+            ->orderBy('occurred_at', 'desc')
+            ->paginate($request->query('per_page', 15));
+
+        return new AnonymousResourceCollection(
+            AuditTrailResource::collection($audits)
+        );
+    }
+
+    public function units(Item $item, Request $request)
+    {
+        $units = $item->units()
+            ->with(['item'])
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->query('per_page', 15));
+
+        return ItemUnitResource::collection($units);
     }
 }
