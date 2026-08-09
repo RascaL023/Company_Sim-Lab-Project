@@ -2,10 +2,11 @@
 
 @section('title', 'Lokasi')
 
+@section('content')
 <div x-data="locationsPage">
     <x-page-header title="Lokasi" subtitle="Lokasi fisik untuk unit alat dan bahan.">
         <x-slot:actions>
-            <button type="button" x-show="auth.isAny(['laboran', 'admin_sistem'])" @click="openCreate()" class="btn btn-primary">
+            <button type="button" x-show="$store.auth.isAny(['admin_sistem'])" @click="openCreate()" class="btn btn-primary">
                 <x-icon name="plus" class="h-4 w-4" />
                 Tambah Lokasi
             </button>
@@ -41,12 +42,12 @@
                             <td class="table-td text-sm text-zinc-500" x-text="loc.description ?? '—'"></td>
                             <td class="table-td text-right">
                                 <div class="inline-flex items-center gap-1">
-                                    <template x-if="auth.isAny(['laboran', 'admin_sistem'])">
+                                    <template x-if="$store.auth.isAny(['admin_sistem'])">
                                         <button type="button" class="btn btn-ghost btn-sm" title="Ubah" @click="openEdit(loc)">
                                             <x-icon name="pencil" class="h-3.5 w-3.5" />
                                         </button>
                                     </template>
-                                    <template x-if="auth.isAny(['laboran', 'admin_sistem'])">
+                                    <template x-if="$store.auth.isAny(['admin_sistem'])">
                                         <button type="button" class="btn btn-ghost btn-sm !text-rose-500 hover:!bg-rose-50" title="Hapus" @click="remove(loc)">
                                             <x-icon name="trash" class="h-3.5 w-3.5" />
                                         </button>
@@ -97,3 +98,4 @@
         </form>
     </x-modal>
 </div>
+@endsection

@@ -2,6 +2,7 @@
 
 @section('title', 'Unit Item')
 
+@section('content')
 <div x-data="itemUnitsPage">
     <x-page-header title="Unit Item" subtitle="Unit fisik alat/bahan: serial, kondisi, dan lokasi." />
 
@@ -66,12 +67,12 @@
                             </td>
                             <td class="table-td text-right">
                                 <div class="inline-flex items-center gap-1">
-                                    <template x-if="auth.isAny(['laboran', 'admin_sistem'])">
+                                    <template x-if="$store.auth.isAny(['laboran', 'admin_sistem'])">
                                         <button type="button" class="btn btn-ghost btn-sm" title="Ubah" @click="openEdit(unit)">
                                             <x-icon name="pencil" class="h-3.5 w-3.5" />
                                         </button>
                                     </template>
-                                    <template x-if="auth.isAny(['laboran', 'admin_sistem'])">
+                                    <template x-if="$store.auth.isAny(['laboran', 'admin_sistem'])">
                                         <button type="button" class="btn btn-ghost btn-sm !text-rose-500 hover:!bg-rose-50" title="Hapus" @click="remove(unit)">
                                             <x-icon name="trash" class="h-3.5 w-3.5" />
                                         </button>
@@ -132,3 +133,4 @@
         </form>
     </x-modal>
 </div>
+@endsection

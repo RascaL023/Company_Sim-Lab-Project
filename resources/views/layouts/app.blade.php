@@ -44,9 +44,9 @@
             <div class="space-y-1">
                 <p class="px-3 pb-1 text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Katalog</p>
                 <x-nav-item href="/items" label="Items" match="items*" icon="package" />
-                <x-nav-item href="/categories" label="Kategori" match="categories*" icon="tag" :roles="['admin_sistem']" />
-                <x-nav-item href="/locations" label="Lokasi" match="locations*" icon="map-pin" :roles="['admin_sistem']" />
-                <x-nav-item href="/item-units" label="Unit Item" match="item-units*" icon="layers" :roles="['laboran', 'admin_sistem']" />
+                <x-nav-item href="/categories" label="Kategori" match="categories*" icon="tag" />
+                <x-nav-item href="/locations" label="Lokasi" match="locations*" icon="map-pin" />
+                <x-nav-item href="/item-units" label="Unit Item" match="item-units*" icon="layers" />
             </div>
 
             <div class="space-y-1">
@@ -80,12 +80,12 @@
                 <span x-show="unread > 0" x-cloak class="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-600 px-1.5 text-[11px] font-semibold text-white" x-text="unread"></span>
             </a>
             <div class="flex items-center gap-3 rounded-xl border border-zinc-100 bg-zinc-50/70 px-3 py-2.5">
-                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-xs font-bold text-white" x-text="auth.initials"></div>
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-xs font-bold text-white" x-text="$store.auth.initials"></div>
                 <div class="min-w-0 flex-1">
-                    <p class="truncate text-[13px] font-semibold text-zinc-900" x-text="auth.user?.name"></p>
-                    <p class="truncate text-[11px] text-zinc-400" x-text="auth.roleLabel"></p>
+                    <p class="truncate text-[13px] font-semibold text-zinc-900" x-text="$store.auth.user?.name"></p>
+                    <p class="truncate text-[11px] text-zinc-400" x-text="$store.auth.roleLabel"></p>
                 </div>
-                <button type="button" @click="auth.logout()" title="Keluar" class="rounded-lg p-1.5 text-zinc-400 transition hover:bg-rose-50 hover:text-rose-600">
+                <button type="button" @click="$store.auth.logout()" title="Keluar" class="rounded-lg p-1.5 text-zinc-400 transition hover:bg-rose-50 hover:text-rose-600">
                     <x-icon name="logout" class="h-4 w-4" />
                 </button>
             </div>
@@ -93,15 +93,15 @@
     </aside>
 
     {{-- Main column --}}
-    <div class="flex min-h-screen flex-1 flex-col lg:pl-72">
+    <div class="flex min-h-screen flex-col lg:pl-72">
         <header class="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b border-zinc-200/70 bg-[#fafafa]/85 px-4 backdrop-blur sm:px-8">
-            <button type="button" class="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 lg:hidden" @click="sidebarOpen = true">
+            <button type="button" class="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 lg:hidden" @click="sidebarOpen = true" aria-label="Buka menu">
                 <x-icon name="menu" class="h-5 w-5" />
             </button>
-            <div class="flex items-center gap-2 text-sm">
-                <a href="/dashboard" class="font-medium text-zinc-400 transition hover:text-zinc-600">SIMLab</a>
+            <div class="flex min-w-0 items-center gap-2 text-sm">
+                <a href="/dashboard" class="shrink-0 font-medium text-zinc-400 transition hover:text-zinc-600">SIMLab</a>
                 <span class="text-zinc-300">/</span>
-                <span class="font-semibold text-zinc-800">@yield('title')</span>
+                <span class="truncate font-semibold text-zinc-800">@yield('title')</span>
             </div>
 
             <div class="ml-auto flex items-center gap-1">
@@ -116,7 +116,7 @@
                         <span
                             x-show="unread > 0"
                             x-cloak
-                            class="absolute -right-0.5 -top-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white"
+                            class="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white"
                             x-text="unread"
                         ></span>
                     </button>

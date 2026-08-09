@@ -2,6 +2,7 @@
 
 @section('title', 'Stock Opname')
 
+@section('content')
 <div x-data="stockOpnamePage" x-cloak>
     <x-page-header title="Stock Opname" subtitle="Sesuaikan stok fisik dengan pencatatan melalui sesi opname." />
 
@@ -94,3 +95,4 @@
         </div>
     </div>
 </div>
+@endsection

@@ -2,6 +2,7 @@
 
 @section('title', 'Audit Trail')
 
+@section('content')
 <div x-data="auditTrailsPage">
     <x-page-header title="Audit Trail" subtitle="Jejak perubahan seluruh entitas sistem (read-only)." />
 
@@ -65,3 +66,4 @@
         <x-pagination />
     </div>
 </div>
+@endsection

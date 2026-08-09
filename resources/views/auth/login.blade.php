@@ -2,6 +2,7 @@
 
 @section('title', 'Masuk')
 
+@section('content')
 <div x-data="loginPage">
     <div class="mb-8 lg:hidden">
         <div class="flex items-center gap-3">
@@ -54,3 +55,4 @@
         </div>
     </div>
 </div>
+@endsection

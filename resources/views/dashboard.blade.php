@@ -2,6 +2,7 @@
 
 @section('title', 'Dashboard')
 
+@section('content')
 <div x-data="dashboardPage">
     <x-page-header title="Dashboard" subtitle="Ringkasan kondisi laboratorium Anda hari ini." />
 
@@ -148,3 +149,4 @@
         </div>
     </div>
 </div>
+@endsection

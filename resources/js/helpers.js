@@ -165,7 +165,9 @@ export function ago(value) {
 
 export function currentUser() {
     try {
-        return JSON.parse(window.localStorage.getItem('simlab.user')) ?? null;
+        const raw = window.localStorage.getItem('simlab.user');
+        if (!raw) return null;
+        return JSON.parse(raw);
     } catch (e) {
         return null;
     }

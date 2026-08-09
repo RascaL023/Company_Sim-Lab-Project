@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api, readToken } from './api';
 import { pageNumbers } from './helpers';
 
 export function pagedList(opts = {}) {
@@ -91,7 +91,7 @@ export function appShell() {
             return '/notifications';
         },
         init() {
-            if (!window.localStorage.getItem('simlab.token')) {
+            if (!readToken()) {
                 window.location.assign('/login');
                 return;
             }

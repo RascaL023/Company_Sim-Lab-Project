@@ -2,10 +2,11 @@
 
 @section('title', 'Lampiran')
 
+@section('content')
 <div x-data="attachmentsPage">
     <x-page-header title="Lampiran" subtitle="Dokumen dan bukti yang menempel pada entitas laboratorium.">
         <x-slot:actions>
-            <button type="button" x-show="auth.isAny(['laboran', 'admin_sistem'])" @click="openUpload()" class="btn btn-primary">
+            <button type="button" x-show="$store.auth.isAny(['laboran', 'admin_sistem'])" @click="openUpload()" class="btn btn-primary">
                 <x-icon name="plus" class="h-4 w-4" />
                 Unggah Lampiran
             </button>
@@ -51,7 +52,7 @@
                                     <button type="button" class="btn btn-ghost btn-sm" title="Unduh" @click="download(a)">
                                         <x-icon name="download" class="h-3.5 w-3.5" />
                                     </button>
-                                    <template x-if="auth.isAny(['laboran', 'admin_sistem'])">
+                                    <template x-if="$store.auth.isAny(['laboran', 'admin_sistem'])">
                                         <button type="button" class="btn btn-ghost btn-sm !text-rose-500 hover:!bg-rose-50" title="Hapus" @click="remove(a)">
                                             <x-icon name="trash" class="h-3.5 w-3.5" />
                                         </button>
@@ -115,3 +116,4 @@
         </form>
     </x-modal>
 </div>
+@endsection

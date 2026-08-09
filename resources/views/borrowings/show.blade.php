@@ -2,6 +2,7 @@
 
 @section('title', 'Detail Peminjaman')
 
+@section('content')
 <div x-data="borrowingDetailPage({ id: '{{ $borrowingRequest }}' })">
     <a href="/borrowings" class="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 transition hover:text-brand-600">
         <x-icon name="chevron-left" class="h-4 w-4" />
@@ -36,13 +37,13 @@
                         <p class="mt-1 text-sm text-zinc-500" x-text="`oleh ${request.requested_by?.name ?? '—'} · ${fmt.fmtDateTime(request.requested_at)}`"></p>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <template x-if="request.status === 'diajukan' && auth.isAny(['laboran', 'admin_sistem'])">
+                        <template x-if="request.status === 'diajukan' && $store.auth.isAny(['laboran'])">
                             <button type="button" class="btn btn-primary" :disabled="busy" @click="approve(request)">
                                 <x-icon name="check" class="h-4 w-4" />
                                 Setujui
                             </button>
                         </template>
-                        <template x-if="request.status === 'diajukan' && auth.isAny(['laboran', 'admin_sistem'])">
+                        <template x-if="request.status === 'diajukan' && $store.auth.isAny(['laboran'])">
                             <button type="button" class="btn btn-secondary" @click="openReject(request)">
                                 <x-icon name="x" class="h-4 w-4" />
                                 Tolak
@@ -106,13 +107,13 @@
                                 <span x-show="bi.is_damaged" class="font-medium text-rose-600">Rusak</span>
                             </div>
                             <div class="flex gap-2">
-                                <template x-if="request.status === 'disetujui' && !bi.borrow_date && auth.isAny(['laboran', 'admin_sistem'])">
+                                <template x-if="request.status === 'disetujui' && !bi.borrow_date && $store.auth.isAny(['laboran'])">
                                     <button type="button" class="btn btn-primary btn-sm" @click="openCheckout(bi)">
                                         <x-icon name="package" class="h-3.5 w-3.5" />
                                         Checkout
                                     </button>
                                 </template>
-                                <template x-if="bi.borrow_date && !bi.actual_return_date && auth.isAny(['laboran', 'admin_sistem'])">
+                                <template x-if="bi.borrow_date && !bi.actual_return_date && $store.auth.isAny(['laboran'])">
                                     <button type="button" class="btn btn-secondary btn-sm" @click="openReturn(bi)">
                                         <x-icon name="rotate-ccw" class="h-3.5 w-3.5" />
                                         Return
@@ -185,3 +186,4 @@
         </div>
     </template>
 </div>
+@endsection

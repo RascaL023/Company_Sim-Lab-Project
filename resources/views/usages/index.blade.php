@@ -2,6 +2,7 @@
 
 @section('title', 'Pemakaian')
 
+@section('content')
 <div x-data="usagesPage">
     <x-page-header title="Pemakaian" subtitle="Catatan pemakaian bahan dan alat laboratorium.">
         <x-slot:actions>
@@ -60,12 +61,12 @@
                             </td>
                             <td class="table-td text-right">
                                 <div class="inline-flex items-center gap-1">
-                                    <template x-if="u.status === 'dicatat' && auth.isAny(['laboran'])">
+                                    <template x-if="u.status === 'dicatat' && $store.auth.isAny(['laboran'])">
                                         <button type="button" class="btn btn-ghost btn-sm !text-emerald-600 hover:!bg-emerald-50" title="Verifikasi" @click="verify(u)">
                                             <x-icon name="check" class="h-3.5 w-3.5" />
                                         </button>
                                     </template>
-                                    <template x-if="u.status === 'dicatat' && auth.isAny(['laboran'])">
+                                    <template x-if="u.status === 'dicatat' && $store.auth.isAny(['laboran'])">
                                         <button type="button" class="btn btn-ghost btn-sm !text-rose-500 hover:!bg-rose-50" title="Tolak" @click="openReject(u)">
                                             <x-icon name="x" class="h-3.5 w-3.5" />
                                         </button>
@@ -145,3 +146,4 @@
         </div>
     </x-modal>
 </div>
+@endsection

@@ -2,6 +2,7 @@
 
 @section('title', 'Laporan')
 
+@section('content')
 <div x-data="reportsPage">
     <x-page-header title="Laporan" subtitle="Unduh laporan laboratorium dalam format PDF atau Excel." />
 
@@ -77,3 +78,4 @@
         </div>
     </div>
 </div>
+@endsection

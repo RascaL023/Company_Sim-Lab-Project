@@ -2,6 +2,7 @@
 
 @section('title', 'Peminjaman')
 
+@section('content')
 <div x-data="borrowingsPage">
     <x-page-header title="Peminjaman" subtitle="Permintaan peminjaman alat dan bahan laboratorium.">
         <x-slot:actions>
@@ -69,12 +70,12 @@
                                     <button type="button" class="btn btn-ghost btn-sm" title="Detail" @click="openDrawer(req)">
                                         <x-icon name="eye" class="h-3.5 w-3.5" />
                                     </button>
-                                    <template x-if="req.status === 'diajukan' && auth.isAny(['laboran', 'admin_sistem'])">
+                                    <template x-if="req.status === 'diajukan' && $store.auth.isAny(['laboran'])">
                                         <button type="button" class="btn btn-ghost btn-sm !text-emerald-600 hover:!bg-emerald-50" title="Setujui" @click="approve(req)">
                                             <x-icon name="check" class="h-3.5 w-3.5" />
                                         </button>
                                     </template>
-                                    <template x-if="req.status === 'diajukan' && auth.isAny(['laboran', 'admin_sistem'])">
+                                    <template x-if="req.status === 'diajukan' && $store.auth.isAny(['laboran'])">
                                         <button type="button" class="btn btn-ghost btn-sm !text-rose-500 hover:!bg-rose-50" title="Tolak" @click="openReject(req)">
                                             <x-icon name="x" class="h-3.5 w-3.5" />
                                         </button>
@@ -146,13 +147,13 @@
                                     <p class="mt-0.5 text-xs text-zinc-400" x-text="`${bi.item?.code} · Qty ${fmt.fmtNum(bi.quantity)}`"></p>
                                 </div>
                                 <div class="flex shrink-0 flex-wrap justify-end gap-1.5">
-                                    <template x-if="expanded?.status === 'disetujui' && !bi.borrow_date && auth.isAny(['laboran', 'admin_sistem'])">
+                                    <template x-if="expanded?.status === 'disetujui' && !bi.borrow_date && $store.auth.isAny(['laboran'])">
                                         <button type="button" class="btn btn-primary btn-sm" @click="openCheckout(bi)">
                                             <x-icon name="package" class="h-3.5 w-3.5" />
                                             Checkout
                                         </button>
                                     </template>
-                                    <template x-if="bi.borrow_date && !bi.actual_return_date && auth.isAny(['laboran', 'admin_sistem'])">
+                                    <template x-if="bi.borrow_date && !bi.actual_return_date && $store.auth.isAny(['laboran'])">
                                         <button type="button" class="btn btn-secondary btn-sm" @click="openReturn(bi)">
                                             <x-icon name="rotate-ccw" class="h-3.5 w-3.5" />
                                             Return
@@ -235,3 +236,4 @@
         </div>
     </x-modal>
 </div>
+@endsection

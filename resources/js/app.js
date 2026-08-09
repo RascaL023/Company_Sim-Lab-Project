@@ -1,8 +1,7 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
-import persist from '@alpinejs/persist';
 
-import api from './api';
+import api, { clearAuthStorage, readToken, readUser, writeToken, writeUser } from './api';
 import * as fmt from './helpers';
 import { appShell, dropdown, pagedList } from './components';
 
@@ -14,11 +13,9 @@ import * as adminPages from './pages/admin';
 window.api = api;
 window.fmt = fmt;
 
-Alpine.plugin(persist);
-
 Alpine.store('auth', {
-    token: Alpine.$persist('').as('simlab.token'),
-    user: Alpine.$persist(null).as('simlab.user'),
+    token: readToken(),
+    user: readUser(),
     get isLoggedIn() {
         return Boolean(this.token);
     },
@@ -38,6 +35,9 @@ Alpine.store('auth', {
         const res = await api.post('/login', { email, password, device_name: 'web' });
         this.token = res.data.token;
         this.user = res.data.user;
+        // Persist as bare token (not JSON-encoded) so axios Authorization stays valid.
+        writeToken(this.token);
+        writeUser(this.user);
     },
     async logout() {
         try {
@@ -47,6 +47,7 @@ Alpine.store('auth', {
         }
         this.token = '';
         this.user = null;
+        clearAuthStorage();
         window.location.assign('/login');
     },
 });
@@ -95,13 +96,17 @@ Alpine.store('confirm', {
 window.toast = (message, type = 'success') => Alpine.store('toast').push(message, type);
 window.confirmAction = (opts) => Alpine.store('confirm').ask(opts);
 
+// Allow templates to use `auth.*` instead of `$store.auth.*`
+Alpine.magic('auth', () => Alpine.store('auth'));
+
 Alpine.data('appShell', () => appShell());
 Alpine.data('dropdown', () => dropdown());
-Alpine.data('pagedList', (el, opts = {}) => pagedList(opts));
+Alpine.data('pagedList', (...args) => pagedList(...args));
 
 const pageFactories = { ...catalogPages, ...transactionPages, ...operationPages, ...adminPages };
 for (const [name, factory] of Object.entries(pageFactories)) {
-    Alpine.data(name, (el, ...args) => factory(...args));
+    // Alpine.data("name", (arg) => ...) — first arg is the value from x-data="name(arg)"
+    Alpine.data(name, (...args) => factory(...args));
 }
 
 window.Alpine = Alpine;

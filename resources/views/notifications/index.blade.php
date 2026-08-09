@@ -2,6 +2,7 @@
 
 @section('title', 'Notifikasi')
 
+@section('content')
 <div x-data="notificationsPage">
     <x-page-header title="Notifikasi" subtitle="Pemberitahuan status dan aktivitas terkait akun Anda." />
 
@@ -42,3 +43,4 @@
         </div>
     </div>
 </div>
+@endsection

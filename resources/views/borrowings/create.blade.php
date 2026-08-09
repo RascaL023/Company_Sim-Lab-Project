@@ -2,6 +2,7 @@
 
 @section('title', 'Ajukan Peminjaman')
 
+@section('content')
 <div x-data="borrowingCreatePage">
     <x-page-header title="Ajukan Peminjaman" subtitle="Pilih item yang ingin dipinjam dan tuliskan tujuan peminjaman." />
 
@@ -75,3 +76,4 @@
         </div>
     </div>
 </div>
+@endsection

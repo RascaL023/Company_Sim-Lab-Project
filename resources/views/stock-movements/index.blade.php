@@ -2,10 +2,11 @@
 
 @section('title', 'Mutasi Stok')
 
+@section('content')
 <div x-data="stockMovementsPage">
     <x-page-header title="Mutasi Stok" subtitle="Ledger mutasi stok masuk dan keluar (append-only).">
         <x-slot:actions>
-            <button type="button" x-show="auth.isAny(['laboran', 'admin_sistem'])" @click="openCreate()" class="btn btn-primary">
+            <button type="button" x-show="$store.auth.isAny(['laboran', 'admin_sistem'])" @click="openCreate()" class="btn btn-primary">
                 <x-icon name="plus" class="h-4 w-4" />
                 Catat Mutasi
             </button>
@@ -137,3 +138,4 @@
         </form>
     </x-modal>
 </div>
+@endsection

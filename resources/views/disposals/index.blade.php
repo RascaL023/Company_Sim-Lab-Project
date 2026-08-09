@@ -2,6 +2,7 @@
 
 @section('title', 'Disposal')
 
+@section('content')
 <div x-data="disposalsPage" x-cloak>
     <x-page-header title="Disposal" subtitle="Ajukan penghapusan aset yang rusak total, kedaluwarsa, atau hilang." />
 
@@ -103,3 +104,4 @@
         </div>
     </div>
 </div>
+@endsection

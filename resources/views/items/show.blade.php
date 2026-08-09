@@ -2,6 +2,7 @@
 
 @section('title', 'Detail Item')
 
+@section('content')
 <div x-data="itemDetailPage({ id: '{{ $item }}' })">
     <a href="/items" class="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 transition hover:text-brand-600">
         <x-icon name="chevron-left" class="h-4 w-4" />
@@ -296,3 +297,4 @@
         </div>
     </template>
 </div>
+@endsection

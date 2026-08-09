@@ -2,12 +2,13 @@
 
 @section('title', 'Items')
 
+@section('content')
 <div x-data="itemsPage">
     <x-page-header title="Items" subtitle="Katalog master alat dan bahan laboratorium.">
         <x-slot:actions>
             <button
                 type="button"
-                x-show="auth.isAny(['laboran', 'admin_sistem'])"
+                x-show="$store.auth.isAny(['laboran', 'admin_sistem'])"
                 @click="openCreate()"
                 class="btn btn-primary"
             >
@@ -92,12 +93,12 @@
                                     <a :href="`/items/${item.id}`" class="btn btn-ghost btn-sm" title="Detail">
                                         <x-icon name="eye" class="h-3.5 w-3.5" />
                                     </a>
-                                    <template x-if="auth.isAny(['laboran', 'admin_sistem'])">
+                                    <template x-if="$store.auth.isAny(['laboran', 'admin_sistem'])">
                                         <button type="button" class="btn btn-ghost btn-sm" title="Ubah" @click="openEdit(item)">
                                             <x-icon name="pencil" class="h-3.5 w-3.5" />
                                         </button>
                                     </template>
-                                    <template x-if="auth.isAny(['laboran', 'admin_sistem'])">
+                                    <template x-if="$store.auth.isAny(['laboran', 'admin_sistem'])">
                                         <button type="button" class="btn btn-ghost btn-sm !text-rose-500 hover:!bg-rose-50" title="Hapus" @click="remove(item)">
                                             <x-icon name="trash" class="h-3.5 w-3.5" />
                                         </button>
@@ -192,3 +193,4 @@
         </form>
     </x-modal>
 </div>
+@endsection
