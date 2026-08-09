@@ -19,7 +19,7 @@ class MaintenanceResource extends JsonResource
             'status' => $this->status,
             'is_completed' => $this->status === 'selesai',
             'notes' => $this->notes,
-            'recorded_by' => new UserResource($this->whenLoaded('recordedBy')),
+            'recorded_by' => new UserResource($this->whenLoaded('recorder')),
         ];
     }
 }

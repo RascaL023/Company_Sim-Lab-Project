@@ -17,9 +17,8 @@ class AuditTrailSeeder extends Seeder
         $admin = $users->where('role', 'laboran')->first() ?? $users->first();
         $staff = $users->where('role', 'peminjam')->first() ?? $users->last();
 
-        // Create some additional audit trails for direct user actions, settings changes, etc.
+        // Create some additional audit trails for direct user actions and bulk operations.
         $this->createUserManagementTrails($admin, $staff, $users);
-        $this->createSystemSettingsTrails($admin);
         $this->createBulkOperationsTrails($staff);
 
         $this->command->info('Created additional audit trail records');
@@ -53,33 +52,6 @@ class AuditTrailSeeder extends Seeder
                 'action' => 'updated',
                 'old_values' => ['is_active' => false],
                 'new_values' => ['is_active' => true],
-                'ip_address' => '192.168.1.100',
-                'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            ]);
-        }
-    }
-
-    /**
-     * Create audit trails for system settings changes
-     */
-    private function createSystemSettingsTrails($admin)
-    {
-        // Simulate system configuration changes
-        $settings = [
-            ['key' => 'backup_frequency', 'old' => 'weekly', 'new' => 'daily'],
-            ['key' => 'retention_period', 'old' => '2 years', 'new' => '3 years'],
-            ['key' => 'notification_email', 'old' => 'admin@old.com', 'new' => 'admin@wiralab.com'],
-            ['key' => 'password_policy', 'old' => 'medium', 'new' => 'strict'],
-        ];
-
-        foreach ($settings as $setting) {
-            AuditTrail::create([
-                'user_id' => $admin->id,
-                'auditable_type' => 'System\\Settings',
-                'auditable_id' => 1, // arbitrary ID for settings
-                'action' => 'updated',
-                'old_values' => [$setting['key'] => $setting['old']],
-                'new_values' => [$setting['key'] => $setting['new']],
                 'ip_address' => '192.168.1.100',
                 'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             ]);

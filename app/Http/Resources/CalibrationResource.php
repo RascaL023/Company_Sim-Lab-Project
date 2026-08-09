@@ -19,7 +19,7 @@ class CalibrationResource extends JsonResource
             'result' => $this->result,
             'passes_calibration' => $this->result === 'lulus',
             'notes' => $this->notes,
-            'recorded_by' => new UserResource($this->whenLoaded('recordedBy')),
+            'recorded_by' => new UserResource($this->whenLoaded('recorder')),
         ];
     }
 }

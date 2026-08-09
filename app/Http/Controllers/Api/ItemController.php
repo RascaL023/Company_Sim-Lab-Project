@@ -13,9 +13,9 @@ use App\Http\Resources\ItemUnitResource;
 use App\Http\Resources\MaintenanceResource;
 use App\Http\Resources\StockMovementResource;
 use App\Http\Resources\UsageResource;
+use App\Models\AuditTrail;
 use App\Models\Item;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ItemController extends Controller
 {
@@ -130,13 +130,11 @@ class ItemController extends Controller
     public function stockMovements(Item $item, Request $request)
     {
         $movements = $item->stockMovements()
-            ->with(['itemUnit', 'performedBy'])
+            ->with(['itemUnit', 'performer'])
             ->orderBy('occurred_at', 'desc')
             ->paginate($request->query('per_page', 15));
 
-        return new AnonymousResourceCollection(
-            StockMovementResource::collection($movements)
-        );
+        return StockMovementResource::collection($movements);
     }
 
     public function usages(Item $item, Request $request)
@@ -146,45 +144,39 @@ class ItemController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate($request->query('per_page', 15));
 
-        return new AnonymousResourceCollection(
-            UsageResource::collection($usages)
-        );
+        return UsageResource::collection($usages);
     }
 
     public function calibrations(Item $item, Request $request)
     {
         $calibrations = $item->calibrations()
-            ->with(['itemUnit', 'recordedBy'])
+            ->with(['itemUnit', 'recorder'])
             ->orderBy('calibration_date', 'desc')
             ->paginate($request->query('per_page', 15));
 
-        return new AnonymousResourceCollection(
-            CalibrationResource::collection($calibrations)
-        );
+        return CalibrationResource::collection($calibrations);
     }
 
     public function maintenances(Item $item, Request $request)
     {
         $maintenances = $item->maintenances()
-            ->with(['itemUnit', 'recordedBy'])
+            ->with(['itemUnit', 'recorder'])
             ->orderBy('maintenance_date', 'desc')
             ->paginate($request->query('per_page', 15));
 
-        return new AnonymousResourceCollection(
-            MaintenanceResource::collection($maintenances)
-        );
+        return MaintenanceResource::collection($maintenances);
     }
 
     public function auditTrails(Item $item, Request $request)
     {
-        $audits = $item->auditTrails()
-            ->with(['user', 'itemUnit'])
-            ->orderBy('occurred_at', 'desc')
+        $audits = AuditTrail::query()
+            ->where('auditable_type', Item::class)
+            ->where('auditable_id', $item->id)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
             ->paginate($request->query('per_page', 15));
 
-        return new AnonymousResourceCollection(
-            AuditTrailResource::collection($audits)
-        );
+        return AuditTrailResource::collection($audits);
     }
 
     public function units(Item $item, Request $request)

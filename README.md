@@ -1,59 +1,160 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SIMLab
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Sistem Informasi Manajemen Laboratorium** — backend API untuk inventaris alat/bahan, peminjaman, stok, kalibrasi/maintenance, dan pelaporan laboratorium hardware.
 
-## About Laravel
+Stack: **Laravel 12** + **Sanctum** (token API) · PDF (**DomPDF**) · Excel (**Maatwebsite Excel**).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+> Frontend dikonsumsi lewat HTTP API (`/api/...`). Route web hanya halaman welcome default Laravel. Kontrak endpoint resmi: [`API_REFERENCE.md`](./API_REFERENCE.md).
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Fitur utama
 
-## Learning Laravel
+| Modul | Ringkasan |
+|-------|-----------|
+| **Auth & RBAC** | Login/logout Sanctum; 4 role: `admin_sistem`, `laboran`, `kepala_lab`, `peminjam` |
+| **Master data** | Kategori, item katalog, lokasi rak, unit fisik (`item_units`) |
+| **Peminjaman** | State machine (`diajukan` → … → `selesai`/`batal`), approve/reject, checkout/return, notifikasi in-app |
+| **Stok** | Ledger `stock_movements` (append-only), opname multi-item, penggunaan bahan + verifikasi |
+| **Aset** | Kalibrasi & maintenance per unit; usulan penghapusan aset (disposal) + approval Kepala Lab |
+| **Audit** | Trail otomatis (`AuditableObserver`) untuk jejak perubahan domain |
+| **Laporan** | Stok inventaris, riwayat peminjaman, aset rusak/hilang — PDF & Excel |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Pemisahan katalog vs unit fisik
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Ini aturan domain paling penting:
 
-## Laravel Sponsors
+- **`items`** — data katalog (alat/bahan): kode, nama, kategori, stok bahan, dll.
+- **`item_units`** — unit fisik alat: serial, kondisi, `location_id`, jadwal kalibrasi.
+- Kalibrasi, maintenance, dan peminjaman alat merujuk **`item_units`**, bukan `items`.
+- Bahan habis pakai dilacak lewat `stock_quantity` + ledger; biasanya tanpa unit fisik.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Detail skema & keputusan desain: [`SCHEMA_CHANGES.md`](./SCHEMA_CHANGES.md).
 
-### Premium Partners
+### Role (hak akses ringkas)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+| Role | Contoh wewenang |
+|------|-----------------|
+| `peminjam` | Lihat katalog, ajukan peminjaman, terima notifikasi status |
+| `laboran` | Approve/reject peminjaman, checkout/return, stock opname, verify usage, usulkan disposal, unduh laporan |
+| `kepala_lab` | Approve/reject penghapusan aset, unduh laporan |
+| `admin_sistem` | Kelola user, kategori, lokasi rak; usulkan disposal; unduh laporan |
 
-## Contributing
+Matriks lengkap ada di [`API_REFERENCE.md`](./API_REFERENCE.md).
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## Persyaratan
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- PHP **8.2+**
+- Composer
+- Node.js + npm (untuk Vite build aset default Laravel; API tetap jalan tanpa UI kustom)
+- Database: **SQLite** (default lokal) atau **MySQL/MariaDB**
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Setup cepat
 
-## License
+```bash
+composer run setup
+# setara dengan: composer install → copy .env → key:generate → migrate → npm install → npm run build
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Atau manual:
+
+```bash
+composer install
+cp .env.example .env   # sesuaikan DB_* jika pakai MySQL
+php artisan key:generate
+touch database/database.sqlite   # jika DB_CONNECTION=sqlite
+php artisan migrate --seed
+npm install && npm run build
+```
+
+Jalankan server development (serve + queue + log + Vite):
+
+```bash
+composer run dev
+```
+
+API base URL lokal: `http://localhost:8000/api`.
+
+### Kredensial seed
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin Sistem | `admin.sistem@wiralab.com` | `password` |
+| Laboran | `laboran@wiralab.com` | `password` |
+| Kepala Lab | `kepala.lab@wiralab.com` | `password` |
+| Peminjam | `peminjam@wiralab.com` | `password` |
+
+```http
+POST /api/login
+Content-Type: application/json
+
+{ "email": "laboran@wiralab.com", "password": "password", "device_name": "web" }
+```
+
+Response berisi `token` — kirim sebagai `Authorization: Bearer {token}` pada request berikutnya.
+
+---
+
+## Dokumentasi & testing API
+
+| Dokumen / folder | Isi |
+|------------------|-----|
+| [`API_REFERENCE.md`](./API_REFERENCE.md) | Kontrak endpoint, format response, role, pengecualian binary |
+| [`SCHEMA_CHANGES.md`](./SCHEMA_CHANGES.md) | Alasan skema, enum status, audit/GLP |
+| [`.assets/http/`](./.assets/http/) | Request Kulala/HTTP Client siap pakai (login per role, CRUD, laporan) |
+
+Alur kerja Kulala: pilih env `dev` → `auth.http` (login) → file domain lain. Lihat [`.assets/http/README.md`](./.assets/http/README.md).
+
+---
+
+## Perintah berguna
+
+| Tugas | Perintah |
+|-------|----------|
+| Setup awal | `composer run setup` |
+| Dev (serve + queue + pail + vite) | `composer run dev` |
+| Tes | `composer run test` atau `php artisan test` |
+| Tes filter | `php artisan test --filter=ReportGenerationTest` |
+| Migrate + seed ulang | `php artisan migrate:fresh --seed` |
+| Format PHP (Pint) | `./vendor/bin/pint` |
+| Build aset | `npm run build` |
+
+---
+
+## Arsitektur kode (singkat)
+
+```
+routes/api.php                 # semua route bisnis (prefix /api)
+app/Http/Controllers/Api/      # controller domain
+app/Http/Resources/            # envelope { "data": ... }
+app/Models/                    # Eloquent + state machine (borrowing, disposal)
+app/Policies/                  # otorisasi per role
+app/Observers/                 # stock ledger, audit trail, notifikasi, maintenance otomatis
+app/Exports/ + resources/views/reports/   # Excel & PDF
+tests/Feature/{Auth,Borrowing,Stock,Asset,Notification,Report,...}/
+```
+
+Konvensi penting:
+
+- Status domain berbahasa **Indonesia** (`disetujui`, `rusak_berat`, …) — assert literal di test.
+- Transisi status lewat endpoint khusus (`PATCH .../approve`), bukan ubah `status` di `update`.
+- `stock_movements` immutable untuk quantity; stok item di-update lewat observer.
+- Response JSON standar Resource; unduhan laporan/attachment = binary (lihat pengecualian di API reference).
+
+---
+
+## Stack terkait
+
+- Laravel Sanctum — token API
+- barryvdh/laravel-dompdf — laporan PDF
+- maatwebsite/excel — laporan Excel
+
+---
+
+## Lisensi
+
+Proyek ini memakai kerangka Laravel (MIT). Sesuaikan lisensi aplikasi sesuai kebijakan organisasi/kampus tempat magang.
