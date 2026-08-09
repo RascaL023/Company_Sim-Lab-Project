@@ -1,0 +1,21 @@
+### ============================================================
+### Notifications — in-app (milik user login)
+### Login sebagai peminjam setelah laboran approve request
+### untuk melihat notifikasi status peminjaman.
+### ============================================================
+
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+@notificationId = 00000000-0000-0000-0000-000000000000
+
+### List notifications (paginated)
+GET {{baseUrl}}/notifications
+Authorization: Bearer {{token}}
+
+### Unread count (badge)
+GET {{baseUrl}}/notifications/unread-count
+Authorization: Bearer {{token}}
+
+### Mark notification as read
+PATCH {{baseUrl}}/notifications/{{notificationId}}/read
+Authorization: Bearer {{token}}

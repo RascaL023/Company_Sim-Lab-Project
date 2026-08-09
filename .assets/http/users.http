@@ -1,18 +1,18 @@
 ### ============================================================
-### Users — admin only
-### Jalankan auth.http → Login as admin dulu.
+### Users — admin_sistem only
+### Jalankan auth.http → Login as admin sistem dulu.
 ### ============================================================
 
 @baseUrl = {{baseUrl}}
 @token = {{token}}
-@userId = 2
+@userId = 4
 
 ### List users (paginated)
 GET {{baseUrl}}/users
 Authorization: Bearer {{token}}
 
-### List users — filter role staf
-GET {{baseUrl}}/users?role=staf&per_page=10
+### List users — filter role peminjam
+GET {{baseUrl}}/users?role=peminjam&per_page=10
 Authorization: Bearer {{token}}
 
 ### List users — search
@@ -23,17 +23,17 @@ Authorization: Bearer {{token}}
 GET {{baseUrl}}/users/{{userId}}
 Authorization: Bearer {{token}}
 
-### Create user (staf)
+### Create user (peminjam)
 # @name createUser
 POST {{baseUrl}}/users
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "name": "Staf Kulala",
-  "email": "staf.kulala@wiralab.com",
+  "name": "Peminjam Kulala",
+  "email": "peminjam.kulala@wiralab.com",
   "password": "rahasia123",
-  "role": "staf",
+  "role": "peminjam",
   "phone": "081299988877",
   "is_active": true
 }

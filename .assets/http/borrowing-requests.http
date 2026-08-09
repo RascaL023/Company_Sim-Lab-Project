@@ -1,16 +1,17 @@
 ### ============================================================
 ### Borrowing requests + item checkout/return lifecycle
-### Alur tipikal (admin):
-###   1) staff create request → 2) admin approve
-###   3) admin checkout tiap item → parent jadi diproses
-###   4) admin return tiap item → parent jadi selesai
+### Alur tipikal:
+###   1) peminjam create request → 2) laboran approve
+###   3) laboran checkout tiap item → parent jadi diproses
+###   4) laboran return tiap item → parent jadi selesai
+### Login dengan role yang sesuai sebelum tiap langkah.
 ### ============================================================
 
 @baseUrl = {{baseUrl}}
 @token = {{token}}
 @requestId = 5
 @borrowingItemId = 1
-@staffUserId = 3
+@peminjamUserId = 4
 
 ### List borrowing requests
 GET {{baseUrl}}/borrowing-requests
@@ -24,14 +25,14 @@ Authorization: Bearer {{token}}
 GET {{baseUrl}}/borrowing-requests/{{requestId}}
 Authorization: Bearer {{token}}
 
-### Create borrowing request
+### Create borrowing request (login sebagai peminjam; requested_by = diri sendiri)
 # @name createBorrowing
 POST {{baseUrl}}/borrowing-requests
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "requested_by": {{staffUserId}},
+  "requested_by": {{peminjamUserId}},
   "purpose": "Pengujian rutin sampel air",
   "items": [
     {
@@ -51,11 +52,11 @@ Content-Type: application/json
   "notes": "Prioritas sedang"
 }
 
-### Approve (admin, status harus diajukan)
+### Approve (laboran, status harus diajukan)
 PATCH {{baseUrl}}/borrowing-requests/{{requestId}}/approve
 Authorization: Bearer {{token}}
 
-### Reject (admin, status harus diajukan)
+### Reject (laboran, status harus diajukan)
 PATCH {{baseUrl}}/borrowing-requests/{{requestId}}/reject
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -64,7 +65,7 @@ Content-Type: application/json
   "rejection_reason": "Barang tidak tersedia minggu ini"
 }
 
-### Cancel (admin atau pemilik request)
+### Cancel (pemilik atau role lab)
 PATCH {{baseUrl}}/borrowing-requests/{{requestId}}/cancel
 Authorization: Bearer {{token}}
 
@@ -73,7 +74,7 @@ DELETE {{baseUrl}}/borrowing-requests/{{requestId}}
 Authorization: Bearer {{token}}
 
 ### ------------------------------------------------------------
-### Borrowing items — checkout / return (admin only)
+### Borrowing items — checkout / return (laboran only)
 ### Ganti @borrowingItemId dengan id dari items[] di response create/show
 ### ------------------------------------------------------------
 

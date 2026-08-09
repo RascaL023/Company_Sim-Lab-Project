@@ -1,0 +1,23 @@
+### ============================================================
+### Stock opname — laboran only
+### Login as laboran dulu (auth.http → loginLaboran)
+### ============================================================
+
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+@itemIdA = 21
+@itemIdB = 22
+
+### Submit stock opname session
+# @name stockOpname
+POST {{baseUrl}}/stock-opname
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "notes": "Opname rutin via kulala",
+  "items": [
+    { "item_id": {{itemIdA}}, "counted_quantity": 45 },
+    { "item_id": {{itemIdB}}, "counted_quantity": 12 }
+  ]
+}

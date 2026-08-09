@@ -1,0 +1,46 @@
+### ============================================================
+### Locations — master lokasi rak
+### Kelola: admin_sistem | Lihat: semua role
+### ============================================================
+
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+@locationId = 1
+
+### List locations
+GET {{baseUrl}}/locations
+Authorization: Bearer {{token}}
+
+### Search locations
+GET {{baseUrl}}/locations?search=Rak&per_page=20
+Authorization: Bearer {{token}}
+
+### Show location
+GET {{baseUrl}}/locations/{{locationId}}
+Authorization: Bearer {{token}}
+
+### Create location (admin_sistem)
+# @name createLocation
+POST {{baseUrl}}/locations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "code": "Z-9",
+  "name": "Rak Z Baris 9",
+  "description": "Dibuat via kulala"
+}
+
+### Update location
+PATCH {{baseUrl}}/locations/{{locationId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Rak Z Baris 9 (revisi)",
+  "description": "Updated"
+}
+
+### Delete location
+DELETE {{baseUrl}}/locations/{{locationId}}
+Authorization: Bearer {{token}}

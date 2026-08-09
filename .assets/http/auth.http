@@ -1,8 +1,8 @@
 ### ============================================================
 ### Auth — login / profile / logout
-### Seeded users: admin@wiralab.com | budi@wiralab.com (password)
-### After login, token disimpan ke global `token` (kulala).
-### Pilih environment `dev` di kulala sebelum request.
+### Seed: admin.sistem | laboran | kepala.lab | peminjam @wiralab.com
+### Password semua: password
+### Setelah login, token disimpan ke global `token` (kulala).
 ### ============================================================
 
 @baseUrl = {{baseUrl}}
@@ -53,13 +53,13 @@ client.global.set("token", response.body.token);
 %}
 
 ### Login as peminjam
-# @name loginStaff
+# @name loginPeminjam
 POST {{baseUrl}}/login
 Content-Type: application/json
 
 {
-  "email": "{{staffEmail}}",
-  "password": "{{staffPassword}}",
+  "email": "{{peminjamEmail}}",
+  "password": "{{peminjamPassword}}",
   "device_name": "kulala-peminjam"
 }
 

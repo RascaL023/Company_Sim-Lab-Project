@@ -1,0 +1,47 @@
+### ============================================================
+### Asset disposals — usulan + approval
+### Propose: laboran / admin_sistem
+### Approve/reject: kepala_lab
+### ============================================================
+
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+@disposalId = 1
+@itemUnitId = 1
+@itemId = 21
+
+### Propose disposal — alat (item_unit_id)
+# @name proposeAlatDisposal
+POST {{baseUrl}}/asset-disposals
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "item_unit_id": {{itemUnitId}},
+  "reason": "rusak_total",
+  "notes": "Tidak layak pakai"
+}
+
+### Propose disposal — bahan (item_id)
+POST {{baseUrl}}/asset-disposals
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "item_id": {{itemId}},
+  "reason": "kedaluwarsa",
+  "notes": "Reagen lewat tanggal"
+}
+
+### Approve disposal (login sebagai kepala_lab)
+PATCH {{baseUrl}}/asset-disposals/{{disposalId}}/approve
+Authorization: Bearer {{token}}
+
+### Reject disposal (wajib rejection_reason)
+PATCH {{baseUrl}}/asset-disposals/{{disposalId}}/reject
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "rejection_reason": "Masih bisa diperbaiki"
+}

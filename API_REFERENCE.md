@@ -22,9 +22,9 @@ Kontrak resmi untuk frontend. Base URL: `/api`. Semua path di bawah relatif terh
 | `POST /login` | `{ "token", "token_type", "user": { ... } }` | Envelope auth (token + profil); `user` = atribut UserResource (tanpa wrap `data` ganda) |
 | `POST /logout` | `204` | Tidak ada payload |
 | `GET .../attachments/{id}/download` | binary file | Bukan JSON |
-| `GET /reports/inventory?format=pdf\|excel` | binary PDF / Excel | Unduhan laporan, bukan JSON Resource |
-| `GET /reports/borrowings?format=pdf\|excel` | binary PDF / Excel | Unduhan laporan, bukan JSON Resource |
-| `GET /reports/damaged-assets?format=pdf\|excel` | binary PDF / Excel | Unduhan laporan, bukan JSON Resource |
+| `GET /reports/inventory?format=pdf\|excel` | binary PDF / Excel | Unduhan laporan |
+| `GET /reports/borrowings?format=pdf\|excel` | binary PDF / Excel | Unduhan laporan |
+| `GET /reports/damaged-assets?format=pdf\|excel` | binary PDF / Excel | Unduhan laporan |
 | `DELETE` / soft-cancel sukses | `204` | Tidak ada payload |
 | Guard / immutable ledger errors | `{ "message": "..." }` + `422`/`405` | Bukan resource entity |
 
@@ -34,7 +34,29 @@ Auth header untuk endpoint terproteksi:
 Authorization: Bearer {token}
 ```
 
-Role: `admin_sistem` | `laboran` | `kepala_lab` | `peminjam`. Kolom status domain memakai bahasa Indonesia (lihat `SCHEMA_CHANGES.md`).
+### Role
+
+`admin_sistem` | `laboran` | `kepala_lab` | `peminjam`
+
+Kolom status domain memakai bahasa Indonesia (lihat `SCHEMA_CHANGES.md`).
+
+### Ringkasan hak akses (utama)
+
+| Area | `peminjam` | `laboran` | `kepala_lab` | `admin_sistem` |
+|------|------------|-----------|--------------|----------------|
+| Katalog items/categories (lihat) | ✓ | ✓ | ✓ | ✓ |
+| Kelola categories / locations | — | — | — | ✓ |
+| Kelola users | — | — | — | ✓ |
+| Buat pengajuan peminjaman | ✓ (milik sendiri) | — | — | — |
+| Approve/reject peminjaman | — | ✓ | — | — |
+| Checkout / return item | — | ✓ | — | — |
+| Stock opname | — | ✓ | lihat* | lihat* |
+| Usulkan disposal | — | ✓ | — | ✓ |
+| Approve/reject disposal | — | — | ✓ | — |
+| Laporan PDF/Excel | — | ✓ | ✓ | ✓ |
+| Notifikasi in-app | milik sendiri | milik sendiri | milik sendiri | milik sendiri |
+
+\* Policy opname: `create` hanya laboran; `viewAny`/`view` laboran + kepala_lab + admin_sistem (endpoint store saja yang ada saat ini).
 
 ---
 
@@ -48,9 +70,9 @@ Role: `admin_sistem` | `laboran` | `kepala_lab` | `peminjam`. Kolom status domai
 
 ```json
 {
-  "email": "admin@example.com",
+  "email": "laboran@wiralab.com",
   "password": "password",
-  "device_name": "web" 
+  "device_name": "web"
 }
 ```
 
@@ -61,14 +83,16 @@ Role: `admin_sistem` | `laboran` | `kepala_lab` | `peminjam`. Kolom status domai
   "token": "1|...",
   "token_type": "Bearer",
   "user": {
-    "id": 1,
-    "name": "Admin",
-    "email": "admin@example.com",
-    "role": "admin",
-    "phone": null,
+    "id": 2,
+    "name": "Laboran Utama",
+    "email": "laboran@wiralab.com",
+    "role": "laboran",
+    "phone": "...",
     "is_active": true,
-    "is_admin": true,
-    "is_staff": false,
+    "is_admin_sistem": false,
+    "is_laboran": true,
+    "is_kepala_lab": false,
+    "is_peminjam": false,
     "email_verified_at": "...",
     "created_at": "...",
     "updated_at": "..."
@@ -88,69 +112,90 @@ Role: `admin_sistem` | `laboran` | `kepala_lab` | `peminjam`. Kolom status domai
 - Auth: Bearer
 - Response `200`: `{ "data": { ...UserResource } }`
 
+### Kredensial seed (dev)
+
+| Role | Email | Password |
+|------|-------|----------|
+| `admin_sistem` | `admin.sistem@wiralab.com` | `password` |
+| `laboran` | `laboran@wiralab.com` | `password` |
+| `kepala_lab` | `kepala.lab@wiralab.com` | `password` |
+| `peminjam` | `peminjam@wiralab.com` | `password` |
+
 ---
 
-## Users (admin only)
+## Users
 
-Policy: semua aksi `UserPolicy` → hanya `admin`.
+Policy: semua aksi → hanya `admin_sistem`.
 
 | Method | Path | Role |
 |--------|------|------|
-| `GET` | `/users` | admin |
-| `POST` | `/users` | admin |
-| `GET` | `/users/{id}` | admin |
-| `PATCH`/`PUT` | `/users/{id}` | admin |
-| `DELETE` | `/users/{id}` | admin (bukan diri sendiri) |
+| `GET` | `/users` | `admin_sistem` |
+| `POST` | `/users` | `admin_sistem` |
+| `GET` | `/users/{id}` | `admin_sistem` |
+| `PATCH`/`PUT` | `/users/{id}` | `admin_sistem` |
+| `DELETE` | `/users/{id}` | `admin_sistem` (bukan diri sendiri) |
 
-### `GET /users`
+Query `index`: `role`, `is_active`, `search`, `per_page`.
 
-Query opsional: `role`, `is_active`, `search`, `per_page`.
-
-Response paginated `UserResource`.
-
-### `POST /users`
+`POST` body:
 
 ```json
 {
-  "name": "Staf Baru",
-  "email": "staf@example.com",
+  "name": "User Baru",
+  "email": "baru@wiralab.com",
   "password": "rahasia123",
-  "role": "staf",
+  "role": "peminjam",
   "phone": "08123456789",
   "is_active": true
 }
 ```
 
-- `role` wajib `admin`|`staf`; email unik; password min 8.
+- `role`: `admin_sistem`|`laboran`|`kepala_lab`|`peminjam`
 - Response `201`: `{ "data": { ...UserResource } }`
-
-### `PATCH /users/{id}`
-
-Boleh mengubah `name`, `email`, `password`, `role`, `phone`, `is_active` (nonaktifkan akun).
-
-Response `200`: `{ "data": { ...UserResource } }`
-
-### `DELETE /users/{id}`
-
-Response `204`. Tidak boleh menghapus akun sendiri.
 
 ---
 
 ## Categories
 
-Auth: Bearer. (Belum ada policy khusus — semua user terautentikasi.)
-
-| Method | Path |
-|--------|------|
-| `GET` | `/categories` |
-| `POST` | `/categories` |
-| `GET` | `/categories/{id}` |
-| `PATCH`/`PUT` | `/categories/{id}` |
-| `DELETE` | `/categories/{id}` |
+| Method | Path | Role |
+|--------|------|------|
+| `GET` | `/categories` | semua role |
+| `GET` | `/categories/{id}` | semua role |
+| `POST` | `/categories` | `admin_sistem` |
+| `PATCH`/`PUT` | `/categories/{id}` | `admin_sistem` |
+| `DELETE` | `/categories/{id}` | `admin_sistem` |
 
 Query `index`: `type` (`alat`|`bahan`), `per_page`.
 
 `POST` body: `{ "name", "type": "alat"|"bahan", "description?" }` → `201` + `CategoryResource`.
+
+---
+
+## Locations (master lokasi rak)
+
+| Method | Path | Role |
+|--------|------|------|
+| `GET` | `/locations` | semua role |
+| `GET` | `/locations/{id}` | semua role |
+| `POST` | `/locations` | `admin_sistem` |
+| `PATCH`/`PUT` | `/locations/{id}` | `admin_sistem` |
+| `DELETE` | `/locations/{id}` | `admin_sistem` |
+
+Query `index`: `search` (code/name), `per_page`.
+
+`POST` body:
+
+```json
+{
+  "code": "A-1",
+  "name": "Rak A Baris 1",
+  "description": "Opsional"
+}
+```
+
+Response: `{ "data": { ...LocationResource } }` (`id`, `code`, `name`, `description`, timestamps).
+
+> Unit fisik (`item_units`) merujuk lokasi lewat `location_id` (FK). Kolom string `location` di unit sudah dihapus.
 
 ---
 
@@ -172,7 +217,9 @@ Auth: Bearer.
 | `GET` | `/items/{id}/audit-trails` | nested, paginated |
 | `GET` | `/items/{id}/units` | nested, paginated |
 
-Single: `ItemResource` di `data`. Index: `ItemCollection` (paginated).
+Single: `ItemResource` di `data`. Index: paginated.
+
+Catatan: `items.location` masih string katalog umum (bukan FK). Lokasi fisik unit = `item_units.location_id`.
 
 ---
 
@@ -185,7 +232,20 @@ Single: `ItemResource` di `data`. Index: `ItemCollection` (paginated).
 | `PATCH`/`PUT` | `/item-units/{id}` |
 | `DELETE` | `/item-units/{id}` |
 
-Query `index`: `condition`, `needs_calibration`, `per_page`. Resource: `ItemUnitResource`.
+Query `index`: `condition`, `location_id`, `needs_calibration`, `per_page`.
+
+`PATCH` body (contoh):
+
+```json
+{
+  "condition": "baik",
+  "location_id": 3,
+  "notes": "Dipindah ke Rak A"
+}
+```
+
+- `condition`: `baik`|`rusak_ringan`|`rusak_berat`|`hilang`|`dihapus`
+- Resource memuat `location_id` + objek `location` (saat di-load)
 
 ---
 
@@ -193,20 +253,20 @@ Query `index`: `condition`, `needs_calibration`, `per_page`. Resource: `ItemUnit
 
 | Method | Path | Role / catatan |
 |--------|------|----------------|
-| `GET` | `/borrowing-requests` | staf: hanya milik sendiri; admin: semua |
-| `POST` | `/borrowing-requests` | staf wajib `requested_by` = diri sendiri |
-| `GET` | `/borrowing-requests/{id}` | pemilik atau admin |
+| `GET` | `/borrowing-requests` | peminjam: milik sendiri; laboran/kepala_lab/admin_sistem: semua |
+| `POST` | `/borrowing-requests` | **peminjam**; `requested_by` wajib = diri sendiri |
+| `GET` | `/borrowing-requests/{id}` | pemilik atau role yang bisa lihat semua |
 | `PATCH`/`PUT` | `/borrowing-requests/{id}` | **tidak boleh** kirim `status` |
 | `DELETE` | `/borrowing-requests/{id}` | soft-cancel → status `batal`, response `204` |
-| `PATCH` | `/borrowing-requests/{id}/approve` | **admin**; dari `diajukan` → `disetujui` |
-| `PATCH` | `/borrowing-requests/{id}/reject` | **admin**; body `{ "rejection_reason" }`; dari `diajukan` → `ditolak` |
-| `PATCH` | `/borrowing-requests/{id}/cancel` | admin atau pemilik; → `batal` |
+| `PATCH` | `/borrowing-requests/{id}/approve` | **laboran**; `diajukan` → `disetujui` |
+| `PATCH` | `/borrowing-requests/{id}/reject` | **laboran**; body `{ "rejection_reason" }` |
+| `PATCH` | `/borrowing-requests/{id}/cancel` | pemilik atau role yang bisa lihat semua → `batal` |
 
 `POST` body:
 
 ```json
 {
-  "requested_by": 2,
+  "requested_by": 4,
   "purpose": "Praktikum",
   "items": [
     { "item_id": 1, "quantity": 1 }
@@ -214,9 +274,9 @@ Query `index`: `condition`, `needs_calibration`, `per_page`. Resource: `ItemUnit
 }
 ```
 
-Response `201`: `{ "data": { ...BorrowingRequestResource } }`.
-
 Transisi status valid: `diajukan`→`disetujui|ditolak|batal`; `disetujui`→`diproses|batal`; `diproses`→`selesai`. Invalid → `422`.
+
+Perubahan status ke `disetujui`/`ditolak`/`diproses`/`selesai` memicu notifikasi in-app ke `requested_by`.
 
 ---
 
@@ -224,8 +284,8 @@ Transisi status valid: `diajukan`→`disetujui|ditolak|batal`; `disetujui`→`di
 
 | Method | Path | Role |
 |--------|------|------|
-| `PATCH` | `/borrowing-items/{id}/checkout` | **admin**; parent harus `disetujui` |
-| `PATCH` | `/borrowing-items/{id}/return` | **admin**; item harus sudah checkout, belum return |
+| `PATCH` | `/borrowing-items/{id}/checkout` | **laboran**; parent harus `disetujui` |
+| `PATCH` | `/borrowing-items/{id}/return` | **laboran**; sudah checkout, belum return |
 
 ### Checkout body
 
@@ -235,9 +295,7 @@ Transisi status valid: `diajukan`→`disetujui|ditolak|batal`; `disetujui`→`di
 }
 ```
 
-(`expected_return_date` wajib, tanggal masa depan.)
-
-Setelah **semua** item di request yang sama checkout → parent status `diproses`.
+Setelah **semua** item checkout → parent `diproses`.
 
 ### Return body
 
@@ -252,10 +310,8 @@ Setelah **semua** item di request yang sama checkout → parent status `diproses
 
 - `condition_after`: `baik`|`rusak_ringan`|`rusak_berat`|`hilang`
 - `damage_notes` wajib jika `is_damaged=true`
-- Return rusak + punya `item_unit_id` → otomatis buat `item_maintenances`
-- Setelah **semua** item return → parent status `selesai`
-
-Response: `{ "data": { ...BorrowingItemResource } }`
+- Return rusak + punya `item_unit_id` → otomatis `item_maintenances`
+- Setelah **semua** item return → parent `selesai`
 
 ---
 
@@ -266,24 +322,39 @@ Ledger append-only.
 | Method | Path | Catatan |
 |--------|------|---------|
 | `GET` | `/stock-movements` | filter `type`, `item_id`, `per_page` |
-| `POST` | `/stock-movements` | membuat movement; stock item di-update observer |
+| `POST` | `/stock-movements` | membuat movement; stock di-update observer |
 | `GET` | `/stock-movements/{id}` | |
 | `PATCH`/`PUT` | `/stock-movements/{id}` | hanya `notes` / `occurred_at`; ubah quantity → `422` |
 | `DELETE` | `/stock-movements/{id}` | selalu `405` |
 
-`POST` body:
+`type`: `in_purchase`, `in_return`, `in_adjustment`, `out_borrow`, `out_usage`, `out_disposal`, `out_adjustment`, `transfer_in`, `transfer_out`.
+
+---
+
+## Stock opname
+
+Satu sesi opname (banyak item). Hanya **laboran**.
+
+| Method | Path | Role |
+|--------|------|------|
+| `POST` | `/stock-opname` | `laboran` |
+
+Body:
 
 ```json
 {
-  "item_id": 1,
-  "item_unit_id": null,
-  "type": "in_purchase",
-  "quantity": 10,
-  "notes": "Pembelian"
+  "notes": "Opname rutin Januari 2026",
+  "items": [
+    { "item_id": 1, "counted_quantity": 45 },
+    { "item_id": 2, "counted_quantity": 12 }
+  ]
 }
 ```
 
-`type`: `in_purchase`, `in_return`, `in_adjustment`, `out_borrow`, `out_usage`, `out_disposal`, `out_adjustment`, `transfer_in`, `transfer_out`.
+- Selisih vs `stock_quantity` → `StockMovement` `in_adjustment` / `out_adjustment` (quantity = abs selisih)
+- Sama → skip (tidak buat movement)
+- Header sesi: tabel `stock_opnames`; movement ter-link lewat `reference_type` / `reference_id`
+- Response `201`: `{ "data": { ...StockOpnameResource } }` (termasuk ringkasan adjustment)
 
 ---
 
@@ -291,24 +362,71 @@ Ledger append-only.
 
 | Method | Path | Role |
 |--------|------|------|
-| `GET` | `/usages` | staf: milik sendiri |
+| `GET` | `/usages` | peminjam: milik sendiri; laboran/kepala_lab/admin_sistem: semua |
 | `POST` | `/usages` | membuat usage + `StockMovement` `out_usage` |
 | `GET` | `/usages/{id}` | |
-| `PATCH` | `/usages/{id}/verify` | **admin** |
-| `PATCH` | `/usages/{id}/reject` | **admin**; body `{ "rejection_reason" }` |
+| `PATCH` | `/usages/{id}/verify` | **laboran** |
+| `PATCH` | `/usages/{id}/reject` | **laboran**; body `{ "rejection_reason" }` |
 
-`POST` body:
+Status usage: `dicatat` → `diverifikasi` | `ditolak`.
+
+---
+
+## Asset disposals (penghapusan aset)
+
+| Method | Path | Role |
+|--------|------|------|
+| `POST` | `/asset-disposals` | `laboran` atau `admin_sistem` |
+| `PATCH` | `/asset-disposals/{id}/approve` | **kepala_lab**; status harus `diusulkan` |
+| `PATCH` | `/asset-disposals/{id}/reject` | **kepala_lab**; wajib `rejection_reason` |
+
+`POST` body — tepat salah satu `item_id` (bahan) **atau** `item_unit_id` (alat):
 
 ```json
 {
-  "item_id": 1,
-  "item_unit_id": null,
-  "quantity_used": 5,
-  "purpose": "Praktikum"
+  "item_unit_id": 12,
+  "reason": "rusak_total",
+  "notes": "Tidak layak pakai"
 }
 ```
 
-Status usage: `dicatat` → `diverifikasi` | `ditolak`.
+- `reason`: `rusak_total`|`kedaluwarsa`|`hilang`|`lainnya`
+- Status: `diusulkan` → `disetujui` | `ditolak`
+- Approve alat (`item_unit_id`): `item_units.condition` → `dihapus`
+- Approve bahan (`item_id`): buat `StockMovement` `out_disposal` sejumlah stok saat ini
+- Model diaudit otomatis (`AuditableObserver`)
+
+---
+
+## Notifications (in-app)
+
+Hanya notifikasi milik user yang login. Channel: `database` (bukan email/push).
+
+| Method | Path | Response |
+|--------|------|----------|
+| `GET` | `/notifications` | paginated `NotificationResource` |
+| `GET` | `/notifications/unread-count` | `{ "data": { "unread_count": N } }` |
+| `PATCH` | `/notifications/{id}/read` | tandai dibaca → `NotificationResource` |
+
+`NotificationResource`:
+
+```json
+{
+  "id": "uuid",
+  "type": "App\\Notifications\\BorrowingStatusChanged",
+  "payload": {
+    "message": "Status peminjaman BR-2026... berubah menjadi disetujui.",
+    "borrowing_request_id": 1,
+    "request_number": "BR-2026...",
+    "status": "disetujui"
+  },
+  "read_at": null,
+  "created_at": "...",
+  "updated_at": "..."
+}
+```
+
+> Field isi notifikasi dinamai `payload` (bukan `data`) agar tidak bentrok dengan envelope JsonResource.
 
 ---
 
@@ -340,7 +458,7 @@ Status usage: `dicatat` → `diverifikasi` | `ditolak`.
 
 ## Audit trails
 
-Read-only.
+Read-only. Tertulis otomatis oleh `AuditableObserver` (tanpa `AuditTrail::create` manual di controller).
 
 | Method | Path |
 |--------|------|
@@ -350,8 +468,6 @@ Read-only.
 
 Query `index`: `action`, `auditable_type`, `auditable_id`, `user_id`, `per_page`.  
 Query `recent`: `limit` (default 20).
-
-Resource: `AuditTrailResource` (`old_values` / `new_values` = changed fields saja untuk update).
 
 > Route `GET /audit-trails/recent` didaftarkan sebelum `apiResource` show agar tidak tertangkap sebagai `{id}`.
 
@@ -375,23 +491,18 @@ Unduhan binary (PDF via DomPDF, Excel via Maatwebsite). Parameter wajib: `format
 
 Akses: `kepala_lab`, `laboran`, `admin_sistem`. `peminjam` → `403`.
 
-| Method | Path | Query | Response |
-|--------|------|-------|----------|
-| `GET` | `/reports/inventory` | `format=pdf\|excel` | file `laporan-stok-inventaris.pdf/.xlsx` |
-| `GET` | `/reports/borrowings` | `format=pdf\|excel`, `from?`, `to?` (ISO date; filter `requested_at`) | file `laporan-riwayat-peminjaman.pdf/.xlsx` |
-| `GET` | `/reports/damaged-assets` | `format=pdf\|excel` | file `laporan-aset-rusak-hilang.pdf/.xlsx` |
+| Method | Path | Query | File |
+|--------|------|-------|------|
+| `GET` | `/reports/inventory` | `format=pdf\|excel` | `laporan-stok-inventaris.pdf/.xlsx` |
+| `GET` | `/reports/borrowings` | `format=pdf\|excel`, `from?`, `to?` (filter `requested_at`) | `laporan-riwayat-peminjaman.pdf/.xlsx` |
+| `GET` | `/reports/borrowings` | `to` harus `after_or_equal:from` | `422` jika invalid |
+| `GET` | `/reports/damaged-assets` | `format=pdf\|excel` | `laporan-aset-rusak-hilang.pdf/.xlsx` |
 
-Contoh:
+Isi singkat:
 
-```http
-GET /api/reports/inventory?format=pdf
-Authorization: Bearer {token}
-```
-
-```http
-GET /api/reports/borrowings?format=excel&from=2026-01-01&to=2026-01-31
-Authorization: Bearer {token}
-```
+- **inventory** — semua item + stok + ringkasan kondisi unit (alat)
+- **borrowings** — request + baris item (peminjam, tanggal pinjam/kembali)
+- **damaged-assets** — unit `rusak_*`/`hilang` + disposal berstatus `disetujui`
 
 Content-Type tipikal: `application/pdf` atau `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
 
@@ -404,14 +515,29 @@ Content-Type tipikal: `application/pdf` atau `application/vnd.openxmlformats-off
 ```json
 {
   "id": 1,
-  "name": "Admin Lab",
-  "email": "admin@example.com",
-  "role": "admin",
+  "name": "Admin Sistem",
+  "email": "admin.sistem@wiralab.com",
+  "role": "admin_sistem",
   "phone": null,
   "is_active": true,
-  "is_admin": true,
-  "is_staff": false,
+  "is_admin_sistem": true,
+  "is_laboran": false,
+  "is_kepala_lab": false,
+  "is_peminjam": false,
   "email_verified_at": "2026-08-09T00:00:00.000000Z",
+  "created_at": "...",
+  "updated_at": "..."
+}
+```
+
+### LocationResource
+
+```json
+{
+  "id": 1,
+  "code": "A-1",
+  "name": "Rak A Baris 1",
+  "description": null,
   "created_at": "...",
   "updated_at": "..."
 }

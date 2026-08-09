@@ -1,11 +1,13 @@
 ### ============================================================
 ### Item units (unit fisik alat)
+### location_id → master locations (bukan string bebas)
 ### ============================================================
 
 @baseUrl = {{baseUrl}}
 @token = {{token}}
 @itemUnitId = 1
 @itemId = 1
+@locationId = 1
 
 ### List item units
 GET {{baseUrl}}/item-units
@@ -15,22 +17,26 @@ Authorization: Bearer {{token}}
 GET {{baseUrl}}/item-units?condition=baik
 Authorization: Bearer {{token}}
 
+### Filter by location
+GET {{baseUrl}}/item-units?location_id={{locationId}}
+Authorization: Bearer {{token}}
+
 ### Filter needs calibration
 GET {{baseUrl}}/item-units?needs_calibration=1
 Authorization: Bearer {{token}}
 
-### Show item unit
+### Show item unit (includes location relation)
 GET {{baseUrl}}/item-units/{{itemUnitId}}
 Authorization: Bearer {{token}}
 
-### Update item unit
+### Update item unit — assign location_id
 PATCH {{baseUrl}}/item-units/{{itemUnitId}}
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
   "condition": "baik",
-  "location": "Rak A-1",
+  "location_id": {{locationId}},
   "notes": "Dicek via kulala"
 }
 

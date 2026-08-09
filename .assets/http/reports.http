@@ -1,0 +1,33 @@
+### ============================================================
+### Reports — PDF / Excel
+### Akses: kepala_lab | laboran | admin_sistem
+### format wajib: pdf | excel
+### Response = binary file (bukan JSON)
+### ============================================================
+
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+
+### Inventory — PDF
+GET {{baseUrl}}/reports/inventory?format=pdf
+Authorization: Bearer {{token}}
+
+### Inventory — Excel
+GET {{baseUrl}}/reports/inventory?format=excel
+Authorization: Bearer {{token}}
+
+### Borrowings — PDF (with date range)
+GET {{baseUrl}}/reports/borrowings?format=pdf&from=2026-01-01&to=2026-12-31
+Authorization: Bearer {{token}}
+
+### Borrowings — Excel
+GET {{baseUrl}}/reports/borrowings?format=excel&from=2026-01-01&to=2026-12-31
+Authorization: Bearer {{token}}
+
+### Damaged assets — PDF
+GET {{baseUrl}}/reports/damaged-assets?format=pdf
+Authorization: Bearer {{token}}
+
+### Damaged assets — Excel
+GET {{baseUrl}}/reports/damaged-assets?format=excel
+Authorization: Bearer {{token}}
