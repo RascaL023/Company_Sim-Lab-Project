@@ -18,8 +18,8 @@ class AuditTrailTest extends TestCase
 
     public function test_model_create_and_update_are_audited_automatically(): void
     {
-        $staff = User::factory()->staf()->create();
-        $admin = User::factory()->admin()->create();
+        $staff = User::factory()->peminjam()->create();
+        $admin = User::factory()->laboran()->create();
 
         $this->actingAs($staff);
 

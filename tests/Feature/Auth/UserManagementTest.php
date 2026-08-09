@@ -15,11 +15,11 @@ class UserManagementTest extends TestCase
         return $user->createToken('test-token')->plainTextToken;
     }
 
-    public function test_staff_cannot_access_user_management_endpoints(): void
+    public function test_non_admin_sistem_cannot_access_user_management_endpoints(): void
     {
-        $staff = User::factory()->staf()->create();
-        $target = User::factory()->staf()->create();
-        $token = $this->tokenFor($staff);
+        $laboran = User::factory()->laboran()->create();
+        $target = User::factory()->peminjam()->create();
+        $token = $this->tokenFor($laboran);
 
         $this->withToken($token)
             ->getJson('/api/users')
@@ -30,7 +30,7 @@ class UserManagementTest extends TestCase
                 'name' => 'User Baru',
                 'email' => 'baru@example.com',
                 'password' => 'password123',
-                'role' => 'staf',
+                'role' => 'peminjam',
             ])
             ->assertForbidden();
 
@@ -49,43 +49,43 @@ class UserManagementTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_admin_can_create_user_and_new_user_can_login(): void
+    public function test_admin_sistem_can_create_user_and_new_user_can_login(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->adminSistem()->create();
 
         $create = $this->withToken($this->tokenFor($admin))
             ->postJson('/api/users', [
-                'name' => 'Staf Baru',
-                'email' => 'staf.baru@example.com',
+                'name' => 'Peminjam Baru',
+                'email' => 'peminjam.baru@example.com',
                 'password' => 'rahasia123',
-                'role' => 'staf',
+                'role' => 'peminjam',
                 'phone' => '08123456789',
             ])
             ->assertCreated()
-            ->assertJsonPath('data.email', 'staf.baru@example.com')
-            ->assertJsonPath('data.role', 'staf')
+            ->assertJsonPath('data.email', 'peminjam.baru@example.com')
+            ->assertJsonPath('data.role', 'peminjam')
             ->assertJsonPath('data.is_active', true);
 
         $this->assertDatabaseHas('users', [
             'id' => $create->json('data.id'),
-            'email' => 'staf.baru@example.com',
-            'role' => 'staf',
+            'email' => 'peminjam.baru@example.com',
+            'role' => 'peminjam',
         ]);
 
         $this->postJson('/api/login', [
-            'email' => 'staf.baru@example.com',
+            'email' => 'peminjam.baru@example.com',
             'password' => 'rahasia123',
         ])
             ->assertOk()
             ->assertJsonPath('token_type', 'Bearer')
-            ->assertJsonPath('user.email', 'staf.baru@example.com')
+            ->assertJsonPath('user.email', 'peminjam.baru@example.com')
             ->assertJsonStructure(['token', 'token_type', 'user' => ['id', 'email', 'role']]);
     }
 
-    public function test_admin_can_list_and_update_users(): void
+    public function test_admin_sistem_can_list_and_update_users(): void
     {
-        $admin = User::factory()->admin()->create();
-        $staff = User::factory()->staf()->create([
+        $admin = User::factory()->adminSistem()->create();
+        $peminjam = User::factory()->peminjam()->create([
             'email' => 'aktif@example.com',
             'is_active' => true,
         ]);
@@ -102,19 +102,19 @@ class UserManagementTest extends TestCase
             ]);
 
         $this->withToken($this->tokenFor($admin))
-            ->patchJson("/api/users/{$staff->id}", [
+            ->patchJson("/api/users/{$peminjam->id}", [
                 'is_active' => false,
-                'name' => 'Staf Nonaktif',
+                'name' => 'Peminjam Nonaktif',
             ])
             ->assertOk()
-            ->assertJsonPath('data.id', $staff->id)
+            ->assertJsonPath('data.id', $peminjam->id)
             ->assertJsonPath('data.is_active', false)
-            ->assertJsonPath('data.name', 'Staf Nonaktif');
+            ->assertJsonPath('data.name', 'Peminjam Nonaktif');
 
         $this->assertDatabaseHas('users', [
-            'id' => $staff->id,
+            'id' => $peminjam->id,
             'is_active' => false,
-            'name' => 'Staf Nonaktif',
+            'name' => 'Peminjam Nonaktif',
         ]);
     }
 }

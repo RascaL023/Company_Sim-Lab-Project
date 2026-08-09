@@ -174,34 +174,62 @@ class User extends Authenticatable
     }
 
     /**
-     * Scope a query to only admin users.
+     * Scope a query to only admin sistem users.
      */
-    public function scopeAdmins($query)
+    public function scopeAdminsSistem($query)
     {
-        return $query->where('role', 'admin');
+        return $query->where('role', 'admin_sistem');
     }
 
     /**
-     * Scope a query to only staff users.
+     * Scope a query to only laboran users.
      */
-    public function scopeStaff($query)
+    public function scopeLaboran($query)
     {
-        return $query->where('role', 'staf');
+        return $query->where('role', 'laboran');
     }
 
     /**
-     * Check if the user is an admin.
+     * Scope a query to only kepala lab users.
      */
-    public function isAdmin(): bool
+    public function scopeKepalaLab($query)
     {
-        return $this->role === 'admin';
+        return $query->where('role', 'kepala_lab');
     }
 
     /**
-     * Check if the user is staff.
+     * Scope a query to only peminjam users.
      */
-    public function isStaff(): bool
+    public function scopePeminjam($query)
     {
-        return $this->role === 'staf';
+        return $query->where('role', 'peminjam');
+    }
+
+    public function isAdminSistem(): bool
+    {
+        return $this->role === 'admin_sistem';
+    }
+
+    public function isLaboran(): bool
+    {
+        return $this->role === 'laboran';
+    }
+
+    public function isKepalaLab(): bool
+    {
+        return $this->role === 'kepala_lab';
+    }
+
+    public function isPeminjam(): bool
+    {
+        return $this->role === 'peminjam';
+    }
+
+    /**
+     * Roles that may view all lab operational data (not limited to own records).
+     */
+    public function canViewAllLabRecords(): bool
+    {
+        return $this->isLaboran() || $this->isKepalaLab() || $this->isAdminSistem();
     }
 }

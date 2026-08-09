@@ -1,76 +1,105 @@
-### Get all items
-### Returns paginated list of items with included category and creator
+### ============================================================
+### Items (+ nested relations)
+### ============================================================
+
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+@itemId = 1
+
+### List items
 GET {{baseUrl}}/items
-Accept: application/json
+Authorization: Bearer {{token}}
 
-### Get single item by ID
-### Returns item with category, creator, and count fields populated
-GET {{baseUrl}}/items/1
-Accept: application/json
-
-### Filter by type (alat or bahan)
+### Filter type alat
 GET {{baseUrl}}/items?type=alat
-Accept: application/json
+Authorization: Bearer {{token}}
 
-### Filter low stock items
+### Filter type bahan
+GET {{baseUrl}}/items?type=bahan
+Authorization: Bearer {{token}}
+
+### Filter low stock
 GET {{baseUrl}}/items?low_stock=true
-Accept: application/json
+Authorization: Bearer {{token}}
 
-### Search items
+### Filter needs calibration
+GET {{baseUrl}}/items?needs_calibration=true
+Authorization: Bearer {{token}}
+
+### Filter expired
+GET {{baseUrl}}/items?expired=true
+Authorization: Bearer {{token}}
+
+### Filter condition_status (via item_units)
+GET {{baseUrl}}/items?condition_status=baik
+Authorization: Bearer {{token}}
+
+### Search
 GET {{baseUrl}}/items?search=mikroskop
-Accept: application/json
+Authorization: Bearer {{token}}
 
-### Sort by stock_quantity descending
-GET {{baseUrl}}/items?sort_by=stock_quantity&sort_order=desc
-Accept: application/json
+### Sort by stock_quantity desc
+GET {{baseUrl}}/items?sort_by=stock_quantity&sort_order=desc&per_page=10
+Authorization: Bearer {{token}}
 
-### Create new item
+### Show item
+GET {{baseUrl}}/items/{{itemId}}
+Authorization: Bearer {{token}}
+
+### Create item
 POST {{baseUrl}}/items
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "code": "NEW-001",
-  "name": "New Item Name",
   "category_id": 1,
-  "unit": "pcs",
+  "code": "NEW-KULALA-001",
+  "name": "Item Uji Kulala",
+  "type": "bahan",
+  "unit": "botol",
   "stock_quantity": 50,
   "minimum_stock": 10,
   "location": "Ruang Lab 1",
-  "description": "Deskripsi item baru"
+  "condition_status": "baik",
+  "manufacturer": "PT Vendor",
+  "description": "Dibuat via kulala",
+  "created_by": 1
 }
 
-### Update item
-PATCH {{baseUrl}}/items/1
+### Update item (partial)
+PATCH {{baseUrl}}/items/{{itemId}}
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "name": "Updated Item Name",
-  "stock_quantity": 75,
+  "name": "Item Updated",
   "location": "Ruang Lab 2"
 }
 
-### Full update item
-PUT {{baseUrl}}/items/1
-Content-Type: application/json
-Accept: application/json
-
-{
-  "code": "MODIFIED-001",
-  "name": "Modified Item Name",
-  "category_id": 1,
-  "unit": "box",
-  "stock_quantity": 100,
-  "minimum_stock": 20,
-  "location": "Gudang A",
-  "manufacturer": "PT Vendor",
-  "description": "Updated description"
-}
-
 ### Delete item
-DELETE {{baseUrl}}/items/1
+DELETE {{baseUrl}}/items/{{itemId}}
+Authorization: Bearer {{token}}
 
-### Get current authenticated user
-GET {{baseUrl}}/user
-Accept: application/json
+### Nested — stock movements
+GET {{baseUrl}}/items/{{itemId}}/stock-movements
+Authorization: Bearer {{token}}
+
+### Nested — usages
+GET {{baseUrl}}/items/{{itemId}}/usages
+Authorization: Bearer {{token}}
+
+### Nested — calibrations
+GET {{baseUrl}}/items/{{itemId}}/calibrations
+Authorization: Bearer {{token}}
+
+### Nested — maintenances
+GET {{baseUrl}}/items/{{itemId}}/maintenances
+Authorization: Bearer {{token}}
+
+### Nested — audit trails
+GET {{baseUrl}}/items/{{itemId}}/audit-trails
+Authorization: Bearer {{token}}
+
+### Nested — units
+GET {{baseUrl}}/items/{{itemId}}/units
+Authorization: Bearer {{token}}

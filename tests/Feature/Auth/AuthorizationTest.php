@@ -28,7 +28,7 @@ class AuthorizationTest extends TestCase
 
     public function test_staff_cannot_access_admin_only_borrowing_and_usage_actions(): void
     {
-        $staff = User::factory()->staf()->create();
+        $staff = User::factory()->peminjam()->create();
         $borrowingRequest = BorrowingRequest::factory()->diajukan()->create([
             'requested_by' => $staff->id,
         ]);
@@ -59,8 +59,8 @@ class AuthorizationTest extends TestCase
 
     public function test_admin_can_access_admin_only_borrowing_and_usage_actions(): void
     {
-        $admin = User::factory()->admin()->create();
-        $staff = User::factory()->staf()->create();
+        $admin = User::factory()->laboran()->create();
+        $staff = User::factory()->peminjam()->create();
         $requestToApprove = BorrowingRequest::factory()->diajukan()->create([
             'requested_by' => $staff->id,
         ]);
@@ -97,8 +97,8 @@ class AuthorizationTest extends TestCase
 
     public function test_staff_cannot_view_or_approve_another_staffs_borrowing_request(): void
     {
-        $staff = User::factory()->staf()->create();
-        $otherStaff = User::factory()->staf()->create();
+        $staff = User::factory()->peminjam()->create();
+        $otherStaff = User::factory()->peminjam()->create();
         $ownRequest = BorrowingRequest::factory()->diajukan()->create([
             'requested_by' => $staff->id,
         ]);
@@ -124,8 +124,8 @@ class AuthorizationTest extends TestCase
 
     public function test_staff_store_borrowing_must_use_their_own_user_id(): void
     {
-        $staff = User::factory()->staf()->create();
-        $otherStaff = User::factory()->staf()->create();
+        $staff = User::factory()->peminjam()->create();
+        $otherStaff = User::factory()->peminjam()->create();
         $item = Item::factory()->create();
 
         $this->withToken($this->bearerTokenFor($staff))

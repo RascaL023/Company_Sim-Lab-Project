@@ -1,52 +1,97 @@
-### Variables
-@baseUrl = http://localhost:8000
+### ============================================================
+### Calibrations & maintenances
+### Filter needs_calibration = query param di index, bukan path terpisah
+### ============================================================
 
-### List calibrations (all equipment units)
-GET {{baseUrl}}/api/calibrations
-Accept: application/json
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+@calibrationId = 1
+@maintenanceId = 1
+@itemUnitId = 1
+@itemId = 1
 
-### Filter calibration needs (due within next period)
-GET {{baseUrl}}/api/calibrations/needs-calibration
-Accept: application/json
+### List calibrations
+GET {{baseUrl}}/calibrations
+Authorization: Bearer {{token}}
 
-### Get calibration history for a unit
-GET {{baseUrl}/api/items/1/units/1/calibrations
-Accept: application/json
+### Filter needs calibration (next_calibration_date <= +30 hari)
+GET {{baseUrl}}/calibrations?needs_calibration=1
+Authorization: Bearer {{token}}
 
-### Create calibration record
-POST {{baseUrl}}/api/calibrations
+### Show calibration
+GET {{baseUrl}}/calibrations/{{calibrationId}}
+Authorization: Bearer {{token}}
+
+### Create calibration
+POST {{baseUrl}}/calibrations
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "item_unit_id": 1,
+  "item_unit_id": {{itemUnitId}},
   "calibration_date": "2026-08-01",
   "next_calibration_date": "2027-02-01",
   "calibrated_by": "Dr. Ahmad",
-  "certificate_number": "CERT-2026-001",
+  "certificate_number": "CERT-2026-KULALA-001",
   "result": "lulus",
-  "notes": "Kalibrasi berhasil, hasil dalam batas toleransi"
+  "notes": "Kalibrasi via kulala"
 }
 
-### Get maintenance records for a unit
-GET {{baseUrl}}/api/items/1/units/1/maintenances
-Accept: application/json
-
-### Create maintenance record
-POST {{baseUrl}}/api/maintenances
+### Update calibration
+PATCH {{baseUrl}}/calibrations/{{calibrationId}}
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "item_unit_id": 1,
-  "maintenance_date": "2026-08-07",
-  "description": "Perbaikan housing mikroskop akibat retakan",
-  "performed_by": "Teknik Laboratorium",
-  "cost": 750000,
-  "status": "selesai",
-  "notes": "Perbaikan selesai dengan baik"
+  "notes": "Catatan kalibrasi diperbarui",
+  "result": "lulus"
 }
 
-### Get maintenance history for an item
-GET {{baseUrl}}/api/items/1/maintenances
-Accept: application/json
+### Nested — calibrations for item
+GET {{baseUrl}}/items/{{itemId}}/calibrations
+Authorization: Bearer {{token}}
+
+### ------------------------------------------------------------
+### Maintenances
+### ------------------------------------------------------------
+
+### List maintenances
+GET {{baseUrl}}/maintenances
+Authorization: Bearer {{token}}
+
+### Filter by status
+GET {{baseUrl}}/maintenances?status=proses
+Authorization: Bearer {{token}}
+
+### Show maintenance
+GET {{baseUrl}}/maintenances/{{maintenanceId}}
+Authorization: Bearer {{token}}
+
+### Create maintenance
+POST {{baseUrl}}/maintenances
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "item_unit_id": {{itemUnitId}},
+  "maintenance_date": "2026-08-09",
+  "description": "Perbaikan housing mikroskop",
+  "performed_by": "Teknik Laboratorium",
+  "cost": 750000,
+  "status": "proses",
+  "notes": "Dibuat via kulala"
+}
+
+### Update maintenance
+PATCH {{baseUrl}}/maintenances/{{maintenanceId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "selesai",
+  "notes": "Selesai diperbaiki"
+}
+
+### Nested — maintenances for item
+GET {{baseUrl}}/items/{{itemId}}/maintenances
+Authorization: Bearer {{token}}

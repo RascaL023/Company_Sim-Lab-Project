@@ -28,7 +28,7 @@ class BorrowingLifecycleTest extends TestCase
      */
     private function approvedRequestWithItems(int $itemCount = 2): array
     {
-        $staff = User::factory()->staf()->create();
+        $staff = User::factory()->peminjam()->create();
         $request = BorrowingRequest::factory()->disetujui()->create([
             'requested_by' => $staff->id,
         ]);
@@ -69,7 +69,7 @@ class BorrowingLifecycleTest extends TestCase
 
     public function test_checkout_rejected_when_request_still_pending(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->laboran()->create();
         $request = BorrowingRequest::factory()->diajukan()->create();
         $item = BorrowingItem::factory()->create([
             'borrowing_request_id' => $request->id,
@@ -87,7 +87,7 @@ class BorrowingLifecycleTest extends TestCase
 
     public function test_checkout_succeeds_and_fills_borrow_fields(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->laboran()->create();
         [$request, $items] = $this->approvedRequestWithItems(1);
         $item = $items[0];
 
@@ -106,7 +106,7 @@ class BorrowingLifecycleTest extends TestCase
 
     public function test_parent_becomes_diproses_after_all_items_checked_out(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->laboran()->create();
         [$request, $items] = $this->approvedRequestWithItems(2);
 
         $this->actingAsUser($admin)
@@ -128,7 +128,7 @@ class BorrowingLifecycleTest extends TestCase
 
     public function test_return_with_damage_creates_maintenance_record(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->laboran()->create();
         [$request, $items] = $this->approvedRequestWithItems(1);
         $item = $items[0];
         $this->checkoutAll($admin, $items);
@@ -166,7 +166,7 @@ class BorrowingLifecycleTest extends TestCase
 
     public function test_return_without_damage_does_not_create_maintenance(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->laboran()->create();
         [$request, $items] = $this->approvedRequestWithItems(1);
         $item = $items[0];
         $this->checkoutAll($admin, $items);
@@ -185,7 +185,7 @@ class BorrowingLifecycleTest extends TestCase
 
     public function test_item_cannot_be_returned_twice(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->laboran()->create();
         [$request, $items] = $this->approvedRequestWithItems(1);
         $item = $items[0];
         $this->checkoutAll($admin, $items);
@@ -206,7 +206,7 @@ class BorrowingLifecycleTest extends TestCase
 
     public function test_parent_becomes_selesai_after_all_items_returned(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->laboran()->create();
         [$request, $items] = $this->approvedRequestWithItems(2);
         $this->checkoutAll($admin, $items);
 
@@ -233,8 +233,8 @@ class BorrowingLifecycleTest extends TestCase
 
     public function test_staff_cannot_return_item(): void
     {
-        $admin = User::factory()->admin()->create();
-        $staff = User::factory()->staf()->create();
+        $admin = User::factory()->laboran()->create();
+        $staff = User::factory()->peminjam()->create();
         [$request, $items] = $this->approvedRequestWithItems(1);
         $this->checkoutAll($admin, $items);
 

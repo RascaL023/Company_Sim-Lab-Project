@@ -21,7 +21,7 @@ class BorrowingStateMachineTest extends TestCase
 
     public function test_rejected_request_cannot_be_approved(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->laboran()->create();
         $borrowingRequest = BorrowingRequest::factory()->ditolak()->create();
 
         $this->actingAsUser($admin)
@@ -34,7 +34,7 @@ class BorrowingStateMachineTest extends TestCase
 
     public function test_request_cannot_be_approved_twice(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->laboran()->create();
         $borrowingRequest = BorrowingRequest::factory()->diajukan()->create();
 
         $this->actingAsUser($admin)
@@ -53,7 +53,7 @@ class BorrowingStateMachineTest extends TestCase
 
     public function test_update_endpoint_cannot_change_status(): void
     {
-        $staff = User::factory()->staf()->create();
+        $staff = User::factory()->peminjam()->create();
         $borrowingRequest = BorrowingRequest::factory()->diajukan()->create([
             'requested_by' => $staff->id,
             'purpose' => 'Tujuan awal',
@@ -77,7 +77,7 @@ class BorrowingStateMachineTest extends TestCase
 
     public function test_approved_request_cannot_be_rejected(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->laboran()->create();
         $borrowingRequest = BorrowingRequest::factory()->disetujui()->create();
 
         $this->actingAsUser($admin)
@@ -92,8 +92,8 @@ class BorrowingStateMachineTest extends TestCase
 
     public function test_other_staff_cannot_cancel_request(): void
     {
-        $owner = User::factory()->staf()->create();
-        $otherStaff = User::factory()->staf()->create();
+        $owner = User::factory()->peminjam()->create();
+        $otherStaff = User::factory()->peminjam()->create();
         $borrowingRequest = BorrowingRequest::factory()->diajukan()->create([
             'requested_by' => $owner->id,
         ]);
@@ -107,7 +107,7 @@ class BorrowingStateMachineTest extends TestCase
 
     public function test_normal_approve_flow_sets_status_and_approver(): void
     {
-        $admin = User::factory()->admin()->create();
+        $admin = User::factory()->laboran()->create();
         $borrowingRequest = BorrowingRequest::factory()->diajukan()->create();
 
         $this->actingAsUser($admin)

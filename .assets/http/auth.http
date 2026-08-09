@@ -1,24 +1,86 @@
-@authBaseUrl = http://localhost:8000/api
-# @token = {{login.response.body.$.token}}
+### ============================================================
+### Auth — login / profile / logout
+### Seeded users: admin@wiralab.com | budi@wiralab.com (password)
+### After login, token disimpan ke global `token` (kulala).
+### Pilih environment `dev` di kulala sebelum request.
+### ============================================================
 
-### Login
+@baseUrl = {{baseUrl}}
+
+### Login as admin sistem
 # @name login
-POST {{authBaseUrl}}/login
+POST {{baseUrl}}/login
 Content-Type: application/json
-Accept: application/json
 
 {
-  "email": "admin@wiralab.com",
-  "password": "password",
-  "device_name": "http-client"
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}",
+  "device_name": "kulala"
+}
+
+> {%
+client.global.set("token", response.body.token);
+%}
+
+### Login as laboran
+# @name loginLaboran
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{laboranEmail}}",
+  "password": "{{laboranPassword}}",
+  "device_name": "kulala-laboran"
+}
+
+> {%
+client.global.set("token", response.body.token);
+%}
+
+### Login as kepala lab
+# @name loginKepalaLab
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{kepalaLabEmail}}",
+  "password": "{{kepalaLabPassword}}",
+  "device_name": "kulala-kepala"
+}
+
+> {%
+client.global.set("token", response.body.token);
+%}
+
+### Login as peminjam
+# @name loginStaff
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{staffEmail}}",
+  "password": "{{staffPassword}}",
+  "device_name": "kulala-peminjam"
+}
+
+> {%
+client.global.set("token", response.body.token);
+%}
+
+### Login — invalid password (expect 422)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "salah",
+  "device_name": "kulala"
 }
 
 ### Get current authenticated user
-GET {{authBaseUrl}}/user
+GET {{baseUrl}}/user
 Authorization: Bearer {{token}}
-Accept: application/json
 
-### Logout
-POST {{authBaseUrl}}/logout
+### Logout (revokes current token)
+POST {{baseUrl}}/logout
 Authorization: Bearer {{token}}
-Accept: application/json

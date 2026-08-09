@@ -14,18 +14,19 @@ class LoginTest extends TestCase
 
     public function test_user_can_login_with_valid_credentials(): void
     {
-        $user = User::factory()->admin()->create([
-            'email' => 'admin@example.com',
+        $user = User::factory()->laboran()->create([
+            'email' => 'laboran@example.com',
             'password' => 'password',
         ]);
 
         $response = $this->postJson('/api/login', [
-            'email' => 'admin@example.com',
+            'email' => 'laboran@example.com',
             'password' => 'password',
         ])->assertOk()
             ->assertJsonPath('token_type', 'Bearer')
-            ->assertJsonPath('user.email', 'admin@example.com')
-            ->assertJsonPath('user.is_admin', true)
+            ->assertJsonPath('user.email', 'laboran@example.com')
+            ->assertJsonPath('user.is_laboran', true)
+            ->assertJsonPath('user.is_admin_sistem', false)
             ->assertJsonStructure(['token', 'token_type', 'user' => ['id', 'email', 'role']]);
 
         $this->assertNotEmpty($response->json('token'));
@@ -68,8 +69,8 @@ class LoginTest extends TestCase
 
     public function test_authenticated_user_can_fetch_profile(): void
     {
-        $user = User::factory()->staf()->create([
-            'email' => 'staf@example.com',
+        $user = User::factory()->peminjam()->create([
+            'email' => 'peminjam@example.com',
         ]);
 
         $token = $user->createToken('test-token')->plainTextToken;
@@ -77,9 +78,10 @@ class LoginTest extends TestCase
         $this->withToken($token)
             ->getJson('/api/user')
             ->assertOk()
-            ->assertJsonPath('data.email', 'staf@example.com')
-            ->assertJsonPath('data.is_staff', true)
-            ->assertJsonPath('data.is_admin', false);
+            ->assertJsonPath('data.email', 'peminjam@example.com')
+            ->assertJsonPath('data.is_peminjam', true)
+            ->assertJsonPath('data.is_laboran', false)
+            ->assertJsonPath('data.is_admin_sistem', false);
     }
 
     public function test_logout_revokes_current_token(): void

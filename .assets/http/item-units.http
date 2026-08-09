@@ -1,0 +1,43 @@
+### ============================================================
+### Item units (unit fisik alat)
+### ============================================================
+
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+@itemUnitId = 1
+@itemId = 1
+
+### List item units
+GET {{baseUrl}}/item-units
+Authorization: Bearer {{token}}
+
+### Filter by condition
+GET {{baseUrl}}/item-units?condition=baik
+Authorization: Bearer {{token}}
+
+### Filter needs calibration
+GET {{baseUrl}}/item-units?needs_calibration=1
+Authorization: Bearer {{token}}
+
+### Show item unit
+GET {{baseUrl}}/item-units/{{itemUnitId}}
+Authorization: Bearer {{token}}
+
+### Update item unit
+PATCH {{baseUrl}}/item-units/{{itemUnitId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "condition": "baik",
+  "location": "Rak A-1",
+  "notes": "Dicek via kulala"
+}
+
+### Units for an item
+GET {{baseUrl}}/items/{{itemId}}/units
+Authorization: Bearer {{token}}
+
+### Delete item unit
+DELETE {{baseUrl}}/item-units/{{itemUnitId}}
+Authorization: Bearer {{token}}

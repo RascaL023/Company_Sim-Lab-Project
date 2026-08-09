@@ -20,8 +20,8 @@ class BorrowingLifecycleSeeder extends Seeder
     public function run(): void
     {
         $users = User::all();
-        $admin = $users->where('role', 'admin')->first() ?? $users->first();
-        $staff = $users->where('role', 'staf')->first() ?? $users->last();
+        $admin = $users->where('role', 'laboran')->first() ?? $users->first();
+        $staff = $users->where('role', 'peminjam')->first() ?? $users->last();
 
         // Get some alat items with units
         $alatItemsWithUnits = Item::whereHas('category', function ($q) {

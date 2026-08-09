@@ -18,8 +18,8 @@ class CalibrationMaintenanceSeeder extends Seeder
     {
         echo 'CalibrationMaintenanceSeeder started at '.now()->toDateTimeString().PHP_EOL;
         $users = User::all();
-        $admin = $users->where('role', 'admin')->first() ?? $users->first();
-        $staff = $users->where('role', 'staf')->first() ?? $users->last();
+        $admin = $users->where('role', 'laboran')->first() ?? $users->first();
+        $staff = $users->where('role', 'peminjam')->first() ?? $users->last();
 
         // Get item units that need calibration/maintenance
         $itemUnits = ItemUnit::whereHas('item.category', function ($q) {

@@ -1,30 +1,41 @@
-### Variables
-@baseUrl = http://localhost:8000
+### ============================================================
+### Audit trails (read-only)
+### ============================================================
 
-### List recent audit trails
-GET {{baseUrl}}/api/audit-trails
-Accept: application/json
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+@auditId = 1
+@itemId = 1
+@userId = 1
 
-### Filter by action type
-GET {{baseUrl}}/api/audit-trails?action=created
-Accept: application/json
+### List audit trails
+GET {{baseUrl}}/audit-trails
+Authorization: Bearer {{token}}
+
+### Recent (limit)
+GET {{baseUrl}}/audit-trails/recent?limit=20
+Authorization: Bearer {{token}}
+
+### Filter by action
+GET {{baseUrl}}/audit-trails?action=created
+Authorization: Bearer {{token}}
 
 ### Filter by user
-GET {{baseUrl}}/api/audit-trails?user_id=1
-Accept: application/json
+GET {{baseUrl}}/audit-trails?user_id={{userId}}
+Authorization: Bearer {{token}}
 
-### Get audit trail for specific model (polymorphic)
-GET {{baseUrl}}/api/audit-trails?auditable_type=App\Models\BorrowingRequest&auditable_id=1
-Accept: application/json
+### Filter by auditable (BorrowingRequest)
+GET {{baseUrl}}/audit-trails?auditable_type=App\Models\BorrowingRequest&auditable_id=1
+Authorization: Bearer {{token}}
 
-### Get audit trail for an item
-GET {{baseUrl}}/api/items/1/audit-trails
-Accept: application/json
+### Filter by auditable (Usage)
+GET {{baseUrl}}/audit-trails?auditable_type=App\Models\Usage&auditable_id=1
+Authorization: Bearer {{token}}
 
-### Get audit trail for a borrowing request
-GET {{baseUrl}}/api/borrowing-requests/1/audit-trails
-Accept: application/json
+### Show audit trail
+GET {{baseUrl}}/audit-trails/{{auditId}}
+Authorization: Bearer {{token}}
 
-### Search in recent audit trails
-GET {{baseUrl}}/api/audit-trails?search=admin
-Accept: application/json
+### Nested — audit trails for item
+GET {{baseUrl}}/items/{{itemId}}/audit-trails
+Authorization: Bearer {{token}}

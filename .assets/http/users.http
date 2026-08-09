@@ -1,0 +1,62 @@
+### ============================================================
+### Users — admin only
+### Jalankan auth.http → Login as admin dulu.
+### ============================================================
+
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+@userId = 2
+
+### List users (paginated)
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+### List users — filter role staf
+GET {{baseUrl}}/users?role=staf&per_page=10
+Authorization: Bearer {{token}}
+
+### List users — search
+GET {{baseUrl}}/users?search=budi
+Authorization: Bearer {{token}}
+
+### Show user
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+
+### Create user (staf)
+# @name createUser
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Staf Kulala",
+  "email": "staf.kulala@wiralab.com",
+  "password": "rahasia123",
+  "role": "staf",
+  "phone": "081299988877",
+  "is_active": true
+}
+
+### Update user (deactivate)
+PATCH {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "is_active": false,
+  "name": "Budi Santoso (nonaktif)"
+}
+
+### Update user (reactivate)
+PATCH {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "is_active": true
+}
+
+### Delete user (jangan hapus diri sendiri)
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}

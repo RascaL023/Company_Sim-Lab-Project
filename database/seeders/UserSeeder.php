@@ -13,71 +13,72 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Admin users
-        $admin1 = User::create([
-            'name' => 'Admin Utama',
-            'email' => 'admin@wiralab.com',
+        User::create([
+            'name' => 'Admin Sistem',
+            'email' => 'admin.sistem@wiralab.com',
             'password' => Hash::make('password'),
-            'role' => 'admin',
+            'role' => 'admin_sistem',
             'phone' => '081234567890',
             'is_active' => true,
             'email_verified_at' => now(),
         ]);
 
-        $admin2 = User::create([
-            'name' => 'Admin Gudang',
-            'email' => 'gudang@wiralab.com',
+        User::create([
+            'name' => 'Laboran Utama',
+            'email' => 'laboran@wiralab.com',
             'password' => Hash::make('password'),
-            'role' => 'admin',
+            'role' => 'laboran',
             'phone' => '081234567891',
             'is_active' => true,
             'email_verified_at' => now(),
         ]);
 
-        // Staff users
-        $staff1 = User::create([
-            'name' => 'Budi Santoso',
-            'email' => 'budi@wiralab.com',
+        User::create([
+            'name' => 'Kepala Laboratorium',
+            'email' => 'kepala.lab@wiralab.com',
             'password' => Hash::make('password'),
-            'role' => 'staf',
+            'role' => 'kepala_lab',
             'phone' => '081234567892',
             'is_active' => true,
             'email_verified_at' => now(),
         ]);
 
-        $staff2 = User::create([
-            'name' => 'Siti Rahayu',
-            'email' => 'siti@wiralab.com',
+        User::create([
+            'name' => 'Budi Santoso',
+            'email' => 'peminjam@wiralab.com',
             'password' => Hash::make('password'),
-            'role' => 'staf',
+            'role' => 'peminjam',
             'phone' => '081234567893',
             'is_active' => true,
             'email_verified_at' => now(),
         ]);
 
-        $staff3 = User::create([
-            'name' => 'Ahmad Wijaya',
-            'email' => 'ahmad@wiralab.com',
+        // Extra peminjam for lifecycle scenarios
+        User::create([
+            'name' => 'Siti Rahayu',
+            'email' => 'siti@wiralab.com',
             'password' => Hash::make('password'),
-            'role' => 'staf',
+            'role' => 'peminjam',
             'phone' => '081234567894',
             'is_active' => true,
             'email_verified_at' => now(),
         ]);
 
-        $staff4 = User::create([
-            'name' => 'Dewi Lestari',
-            'email' => 'dewi@wiralab.com',
+        User::create([
+            'name' => 'Ahmad Wijaya',
+            'email' => 'ahmad@wiralab.com',
             'password' => Hash::make('password'),
-            'role' => 'staf',
+            'role' => 'peminjam',
             'phone' => '081234567895',
             'is_active' => true,
             'email_verified_at' => now(),
         ]);
 
-        // Additional staff for testing
-        User::factory(10)->create([
-            'role' => 'staf',
+        User::factory(8)->peminjam()->create([
+            'is_active' => true,
+        ]);
+
+        User::factory(2)->laboran()->create([
             'is_active' => true,
         ]);
 

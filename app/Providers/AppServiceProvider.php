@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\BorrowingItem;
 use App\Models\BorrowingRequest;
+use App\Models\Category;
 use App\Models\ItemCalibration;
 use App\Models\ItemMaintenance;
 use App\Models\StockMovement;
@@ -14,6 +15,7 @@ use App\Observers\BorrowingItemObserver;
 use App\Observers\StockMovementObserver;
 use App\Policies\BorrowingItemPolicy;
 use App\Policies\BorrowingRequestPolicy;
+use App\Policies\CategoryPolicy;
 use App\Policies\UsagePolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -38,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(BorrowingItem::class, BorrowingItemPolicy::class);
         Gate::policy(Usage::class, UsagePolicy::class);
         Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(Category::class, CategoryPolicy::class);
 
         StockMovement::observe(StockMovementObserver::class);
         BorrowingItem::observe(BorrowingItemObserver::class);

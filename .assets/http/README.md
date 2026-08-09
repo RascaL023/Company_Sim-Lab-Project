@@ -1,58 +1,41 @@
-# API Testing Files for kulala.nvim
+# API Testing — kulala.nvim
 
-## Directory Structure
-```
-.assets/http/
-├── items.http              (fully functional)
-├── categories.http         (routes not yet wired)
-├── borrowing-requests.http (routes not yet wired)
-├── stock-movements.http    (routes not yet wired)
-├── usages.http             (routes not yet wired)
-├── calibration-maintenance.http (routes not yet wired)
-├── audit-trails.http       (routes not yet wired)
-└── attachments.http        (routes not yet wired)
-```
+File `.http` di folder ini mengikuti kontrak `API_REFERENCE.md` dan route di `routes/api.php`.
 
-## Current Status
+## Setup
 
-| File | Routes Wired | Notes |
-|------|-------------|-------|
-| `items.http` | ✅ Yes | All CRUD operations enabled |
-| Others | ❌ No | Routes exist in code but not registered in `routes/api.php` |
+1. Jalankan server: `php artisan serve` (atau `composer run dev`)
+2. Pastikan DB sudah di-seed: `php artisan migrate:fresh --seed`
+3. Di nvim + kulala, pilih environment **`dev`** (`http-client.env.json`)
+4. Buka `auth.http` → jalankan **Login as admin** (menyimpan token ke global `token`)
+5. Buka file domain lain dan jalankan request (header `Authorization: Bearer {{token}}`)
 
-## Instructions for kulala.nvim
+### Kredensial seed
 
-1. Open any `.http` file in nvim
-2. Use `<leader>rt` (or `:Rest open`) to execute all requests
-3. Use `<CR>` on a specific request line to execute it
-4. Variables (`@baseUrl`) are defined at top of each file
+| Role  | Email               | Password   |
+|-------|---------------------|------------|
+| admin | admin@wiralab.com   | password   |
+| staf  | budi@wiralab.com    | password   |
 
-## To Enable Full Testing
+## File
 
-The following routes need to be registered in `routes/api.php`:
+| File | Isi |
+|------|-----|
+| `auth.http` | login admin/staf, `/user`, logout (+ set global token) |
+| `users.http` | CRUD users (admin only) |
+| `categories.http` | CRUD categories |
+| `items.http` | CRUD items + nested (units, movements, usages, …) |
+| `item-units.http` | list/show/update/delete units |
+| `borrowing-requests.http` | request + approve/reject/cancel + checkout/return |
+| `stock-movements.http` | ledger create/update notes; quantity immutable; delete 405 |
+| `usages.http` | create + verify/reject (PATCH) |
+| `calibration-maintenance.http` | calibrations & maintenances |
+| `audit-trails.http` | index/recent/show + filter |
+| `attachments.http` | list/show/download/upload/delete |
 
-```php
-Route::apiResource('categories', CategoryController::class);
-Route::apiResource('borrowing-requests', BorrowingRequestController::class);
-Route::apiResource('borrowing-items', BorrowingItemController::class);
-Route::apiResource('stock-movements', StockMovementController::class);
-Route::apiResource('usages', UsageController::class);
-Route::apiResource('calibrations', ItemCalibrationController::class);
-Route::apiResource('maintenances', ItemMaintenanceController::class);
-Route::apiResource('audit-trails', AuditTrailController::class);
-Route::apiResource('attachments', AttachmentController::class);
-Route::apiResource('item-units', ItemUnitController::class);
+## Tips kulala
 
-// Additional endpoints
-Route::get('items/{item}/stock-movements', [ItemController::class, 'stockMovements']);
-Route::get('items/{item}/usages', [ItemController::class, 'usages']);
-Route::get('items/{item}/calibrations', [ItemController::class, 'calibrations']);
-Route::get('items/{item}/maintenances', [ItemController::class, 'maintenances']);
-```
-
-## Environment
-
-- Laravel 12
-- PHP 8.2+
-- Database: SQLite (for testing)
-- Auth: Sanctum (passport token for user endpoint)
+- Variabel `@requestId`, `@itemId`, dll. di atas file — ubah sesuai data seed/response.
+- Setelah login, token ada di `client.global` (`{{token}}`). Kalau hilang, login ulang.
+- Response sukses resource: `{ "data": ... }`; login: `{ "token", "token_type", "user" }`.
+- Jangan kirim `status` di `PATCH /borrowing-requests/{id}` — pakai approve/reject/cancel.

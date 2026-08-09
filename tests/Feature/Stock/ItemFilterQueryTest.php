@@ -22,7 +22,7 @@ class ItemFilterQueryTest extends TestCase
 
     public function test_item_filters_query_units_and_categories_without_sql_errors(): void
     {
-        $user = User::factory()->admin()->create();
+        $user = User::factory()->laboran()->create();
 
         $baikAlat = Item::factory()->alat()->create(['name' => 'Mikroskop Baik']);
         ItemUnit::factory()->for($baikAlat)->create([

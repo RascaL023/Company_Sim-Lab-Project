@@ -20,7 +20,7 @@ class StockLedgerIntegrityTest extends TestCase
 
     public function test_posting_usage_creates_out_usage_stock_movement(): void
     {
-        $user = User::factory()->staf()->create();
+        $user = User::factory()->peminjam()->create();
         $item = Item::factory()->bahan()->create(['stock_quantity' => 100]);
 
         $response = $this->withToken($this->tokenFor($user))
@@ -44,7 +44,7 @@ class StockLedgerIntegrityTest extends TestCase
 
     public function test_usage_stock_matches_movement_quantity_after(): void
     {
-        $user = User::factory()->staf()->create();
+        $user = User::factory()->peminjam()->create();
         $item = Item::factory()->bahan()->create(['stock_quantity' => 80]);
 
         $this->withToken($this->tokenFor($user))
@@ -69,7 +69,7 @@ class StockLedgerIntegrityTest extends TestCase
 
     public function test_mixed_stock_movements_reconcile_to_sum_of_ledger(): void
     {
-        $user = User::factory()->admin()->create();
+        $user = User::factory()->laboran()->create();
         $token = $this->tokenFor($user);
         $item = Item::factory()->bahan()->create(['stock_quantity' => 0]);
 
@@ -114,7 +114,7 @@ class StockLedgerIntegrityTest extends TestCase
 
     public function test_patch_cannot_change_stock_movement_quantity(): void
     {
-        $user = User::factory()->admin()->create();
+        $user = User::factory()->laboran()->create();
         $token = $this->tokenFor($user);
         $item = Item::factory()->bahan()->create(['stock_quantity' => 0]);
 

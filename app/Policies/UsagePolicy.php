@@ -14,7 +14,7 @@ class UsagePolicy
 
     public function view(User $user, Usage $usage): bool
     {
-        return $user->isAdmin() || $usage->user_id === $user->id;
+        return $user->canViewAllLabRecords() || $usage->user_id === $user->id;
     }
 
     public function create(User $user): bool
@@ -24,21 +24,21 @@ class UsagePolicy
 
     public function update(User $user, Usage $usage): bool
     {
-        return $user->isAdmin() || $usage->user_id === $user->id;
+        return $user->isLaboran() || $usage->user_id === $user->id;
     }
 
     public function delete(User $user, Usage $usage): bool
     {
-        return $user->isAdmin() || $usage->user_id === $user->id;
+        return $user->isLaboran() || $usage->user_id === $user->id;
     }
 
     public function verify(User $user, Usage $usage): bool
     {
-        return $user->isAdmin();
+        return $user->isLaboran();
     }
 
     public function reject(User $user, Usage $usage): bool
     {
-        return $user->isAdmin();
+        return $user->isLaboran();
     }
 }

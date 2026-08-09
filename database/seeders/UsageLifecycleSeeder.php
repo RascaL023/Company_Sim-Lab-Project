@@ -18,8 +18,8 @@ class UsageLifecycleSeeder extends Seeder
     public function run(): void
     {
         $users = User::all();
-        $admin = $users->where('role', 'admin')->first() ?? $users->first();
-        $staff = $users->where('role', 'staf')->first() ?? $users->last();
+        $admin = $users->where('role', 'laboran')->first() ?? $users->first();
+        $staff = $users->where('role', 'peminjam')->first() ?? $users->last();
 
         // Get bahan items (consumables that get used up)
         $bahanItems = Item::whereHas('category', function ($q) {

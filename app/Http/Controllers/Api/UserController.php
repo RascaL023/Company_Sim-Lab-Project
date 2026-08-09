@@ -40,7 +40,7 @@ class UserController extends Controller
             'name' => 'required|string|max:150',
             'email' => 'required|email|max:150|unique:users,email',
             'password' => 'required|string|min:8',
-            'role' => 'required|in:admin,staf',
+            'role' => 'required|in:admin_sistem,laboran,kepala_lab,peminjam',
             'phone' => 'nullable|string|max:20',
             'is_active' => 'sometimes|boolean',
         ]);
@@ -70,7 +70,7 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:150',
             'email' => ['sometimes', 'email', 'max:150', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => 'sometimes|string|min:8',
-            'role' => 'sometimes|in:admin,staf',
+            'role' => 'sometimes|in:admin_sistem,laboran,kepala_lab,peminjam',
             'phone' => 'nullable|string|max:20',
             'is_active' => 'sometimes|boolean',
         ]);

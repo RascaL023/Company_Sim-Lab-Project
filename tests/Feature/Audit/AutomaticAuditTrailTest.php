@@ -26,8 +26,8 @@ class AutomaticAuditTrailTest extends TestCase
 
     public function test_http_lifecycle_writes_automatic_audit_trails(): void
     {
-        $staff = User::factory()->staf()->create();
-        $admin = User::factory()->admin()->create();
+        $staff = User::factory()->peminjam()->create();
+        $admin = User::factory()->laboran()->create();
         $alat = Item::factory()->alat()->create();
         $bahan = Item::factory()->bahan()->create(['stock_quantity' => 100]);
 

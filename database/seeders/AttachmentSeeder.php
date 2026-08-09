@@ -19,8 +19,8 @@ class AttachmentSeeder extends Seeder
     public function run(): void
     {
         $users = User::all();
-        $admin = $users->where('role', 'admin')->first() ?? $users->first();
-        $staff = $users->where('role', 'staf')->first() ?? $users->last();
+        $admin = $users->where('role', 'laboran')->first() ?? $users->first();
+        $staff = $users->where('role', 'peminjam')->first() ?? $users->last();
 
         // Create attachments for various models
         $this->createItemAttachments($admin, $staff);

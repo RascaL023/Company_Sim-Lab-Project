@@ -1,58 +1,59 @@
-### Variables
-@baseUrl = http://localhost:8000
+### ============================================================
+### Usages
+### POST membuat Usage + StockMovement out_usage otomatis
+### verify/reject = admin only, method PATCH
+### ============================================================
 
-### List usages (verified only by default)
-GET {{baseUrl}}/api/usages
-Accept: application/json
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+@usageId = 1
+@itemId = 5
 
-### Filter by status
-GET {{baseUrl}}/api/usages?status=diverifikasi
-Accept: application/json
+### List usages
+GET {{baseUrl}}/usages
+Authorization: Bearer {{token}}
 
-### Filter pending verification
-GET {{baseUrl}}/api/usages?status=dicatat
-Accept: application/json
+### Filter status dicatat
+GET {{baseUrl}}/usages?status=dicatat
+Authorization: Bearer {{token}}
 
-### Get usage records for an item
-GET {{baseUrl}}/api/items/5/usages
-Accept: application/json
+### Filter status diverifikasi
+GET {{baseUrl}}/usages?status=diverifikasi
+Authorization: Bearer {{token}}
 
-### Create usage record (bahan consumption)
-POST {{baseUrl}}/api/usages
+### Filter by item
+GET {{baseUrl}}/usages?item_id={{itemId}}
+Authorization: Bearer {{token}}
+
+### Nested — usages for item
+GET {{baseUrl}}/items/{{itemId}}/usages
+Authorization: Bearer {{token}}
+
+### Show usage
+GET {{baseUrl}}/usages/{{usageId}}
+Authorization: Bearer {{token}}
+
+### Create usage
+# @name createUsage
+POST {{baseUrl}}/usages
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "item_id": 5,
-  "item_unit_id": null,
-  "user_id": 2,
-  "quantity_used": 29.94,
-  "quantity_before": 100.00,
-  "quantity_after": 70.06,
-  "purpose": "Penggunaan untuk analisis sampel air",
-  "status": "dicatat"
+  "item_id": {{itemId}},
+  "quantity_used": 5.5,
+  "purpose": "Pemakaian uji via kulala"
 }
 
-### Verify usage record
-PUT {{baseUrl}}/api/usages/1/verify
+### Verify usage (admin)
+PATCH {{baseUrl}}/usages/{{usageId}}/verify
+Authorization: Bearer {{token}}
+
+### Reject usage (admin)
+PATCH {{baseUrl}}/usages/{{usageId}}/reject
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "verified_by": 1,
-  "status": "diverifikasi"
+  "rejection_reason": "Kuantitas tidak sesuai catatan lab"
 }
-
-### Reject usage record
-PUT {{baseUrl}}/api/usages/1/reject
-Content-Type: application/json
-Accept: application/json
-
-{
-  "rejected_by": 1,
-  "rejection_reason": "Kuantitas tidak sesuai dengan rekaman penggunaan"
-}
-
-### Get single usage record
-GET {{baseUrl}}/api/usages/1
-Accept: application/json

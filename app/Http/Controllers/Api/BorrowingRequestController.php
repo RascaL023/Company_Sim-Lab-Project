@@ -16,7 +16,7 @@ class BorrowingRequestController extends Controller
 
         return BorrowingRequestResource::collection(
             BorrowingRequest::with(['requestedBy', 'approvedBy', 'items.item'])
-                ->when(! $request->user()->isAdmin(), fn ($q) => $q->where('requested_by', $request->user()->id))
+                ->when(! $request->user()->canViewAllLabRecords(), fn ($q) => $q->where('requested_by', $request->user()->id))
                 ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))
                 ->paginate($request->query('per_page', 15))
         );

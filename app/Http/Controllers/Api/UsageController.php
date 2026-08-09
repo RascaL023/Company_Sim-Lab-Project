@@ -18,7 +18,7 @@ class UsageController extends Controller
 
         $query = Usage::with(['item', 'itemUnit', 'user', 'verifiedBy']);
 
-        if (! $request->user()->isAdmin()) {
+        if (! $request->user()->canViewAllLabRecords()) {
             $query->where('user_id', $request->user()->id);
         }
 

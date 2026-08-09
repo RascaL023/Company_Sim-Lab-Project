@@ -1,75 +1,110 @@
-### Variables
-@baseUrl = http://localhost:8000
+### ============================================================
+### Borrowing requests + item checkout/return lifecycle
+### Alur tipikal (admin):
+###   1) staff create request → 2) admin approve
+###   3) admin checkout tiap item → parent jadi diproses
+###   4) admin return tiap item → parent jadi selesai
+### ============================================================
 
-### List borrowing requests (with optional status filter)
-GET {{baseUrl}}/api/borrowing-requests
-Accept: application/json
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+@requestId = 5
+@borrowingItemId = 1
+@staffUserId = 3
+
+### List borrowing requests
+GET {{baseUrl}}/borrowing-requests
+Authorization: Bearer {{token}}
 
 ### Filter by status
-GET {{baseUrl}}/api/borrowing-requests?status=diajukan
-Accept: application/json
+GET {{baseUrl}}/borrowing-requests?status=diajukan
+Authorization: Bearer {{token}}
 
-### Get pending requests
-GET {{baseUrl}}/api/borrowing-requests?status=diajukan&per_page=10
-Accept: application/json
+### Show borrowing request
+GET {{baseUrl}}/borrowing-requests/{{requestId}}
+Authorization: Bearer {{token}}
 
 ### Create borrowing request
-POST {{baseUrl}}/api/borrowing-requests
+# @name createBorrowing
+POST {{baseUrl}}/borrowing-requests
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "requested_by": 1,
-  "purpose": "Pengujian rutin bahan kimia untuk analisis sampel air",
+  "requested_by": {{staffUserId}},
+  "purpose": "Pengujian rutin sampel air",
   "items": [
     {
       "item_id": 1,
-      "item_unit_id": null,
       "quantity": 1
     }
   ]
 }
 
-### Approve borrowing request
-PUT {{baseUrl}}/api/borrowing-requests/1/approve
+### Update borrowing request (purpose/notes only — status dilarang)
+PATCH {{baseUrl}}/borrowing-requests/{{requestId}}
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "approved_by": 1,
-  "notes": "Disetujui untuk keperluan pengujian"
+  "purpose": "Pengujian rutin sampel air (revisi)",
+  "notes": "Prioritas sedang"
 }
 
-### Reject borrowing request
-PUT {{baseUrl}}/api/borrowing-requests/1/reject
+### Approve (admin, status harus diajukan)
+PATCH {{baseUrl}}/borrowing-requests/{{requestId}}/approve
+Authorization: Bearer {{token}}
+
+### Reject (admin, status harus diajukan)
+PATCH {{baseUrl}}/borrowing-requests/{{requestId}}/reject
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "rejected_by": 1,
-  "rejection_reason": "Bahan yang diminta tergolong berbahaya, perlunya izin tambahan"
+  "rejection_reason": "Barang tidak tersedia minggu ini"
 }
 
-### Cancel borrowing request
-PUT {{baseUrl}}/api/borrowing-requests/1/cancel
+### Cancel (admin atau pemilik request)
+PATCH {{baseUrl}}/borrowing-requests/{{requestId}}/cancel
+Authorization: Bearer {{token}}
+
+### Soft-cancel via destroy (status → batal, 204)
+DELETE {{baseUrl}}/borrowing-requests/{{requestId}}
+Authorization: Bearer {{token}}
+
+### ------------------------------------------------------------
+### Borrowing items — checkout / return (admin only)
+### Ganti @borrowingItemId dengan id dari items[] di response create/show
+### ------------------------------------------------------------
+
+### Checkout item (parent harus disetujui)
+PATCH {{baseUrl}}/borrowing-items/{{borrowingItemId}}/checkout
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "cancelled_by": 1,
-  "cancellation_reason": "Permintaan tidak diperlukan lagi"
+  "expected_return_date": "2026-08-20T17:00:00"
 }
 
-### Complete borrowing (after return)
-PUT {{baseUrl}}/api/borrowing-requests/1/complete
+### Return item — kondisi baik
+PATCH {{baseUrl}}/borrowing-items/{{borrowingItemId}}/return
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "completed_by": 1,
-  "notes": "Semua barang dikembalikan"
+  "condition_after": "baik",
+  "is_damaged": false,
+  "check_notes": "Kondisi baik, tidak ada kerusakan"
 }
 
-### Get single borrowing request with items
-GET {{baseUrl}}/api/borrowing-requests/1
-Accept: application/json
+### Return item — rusak (otomatis buat item_maintenance bila ada item_unit_id)
+PATCH {{baseUrl}}/borrowing-items/{{borrowingItemId}}/return
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "condition_after": "rusak_ringan",
+  "is_damaged": true,
+  "damage_notes": "Housing retak ringan di sisi kanan",
+  "check_notes": "Perlu maintenance"
+}

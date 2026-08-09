@@ -1,71 +1,96 @@
-### Variables
-@baseUrl = http://localhost:8000
+### ============================================================
+### Stock movements (ledger append-only)
+### Quantity immutable setelah create; DELETE → 405
+### ============================================================
 
-### List stock movements (with filters)
-GET {{baseUrl}}/api/stock-movements
-Accept: application/json
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+@movementId = 1
+@itemId = 1
 
-### Filter by movement type (in_purchase, out_usage, out_borrow, etc.)
-GET {{baseUrl}}/api/stock-movements?type=in_purchase
-Accept: application/json
+### List stock movements
+GET {{baseUrl}}/stock-movements
+Authorization: Bearer {{token}}
+
+### Filter by type
+GET {{baseUrl}}/stock-movements?type=in_purchase
+Authorization: Bearer {{token}}
+
+### Filter multiple types (incoming)
+GET {{baseUrl}}/stock-movements?type=in_purchase,in_return,in_adjustment
+Authorization: Bearer {{token}}
+
+### Filter outgoing
+GET {{baseUrl}}/stock-movements?type=out_usage,out_borrow,out_disposal
+Authorization: Bearer {{token}}
 
 ### Filter by item
-GET {{baseUrl}}/api/stock-movements?item_id=1
-Accept: application/json
+GET {{baseUrl}}/stock-movements?item_id={{itemId}}
+Authorization: Bearer {{token}}
 
-### Get movement history for an item
-GET {{baseUrl}}/api/items/1/stock-movements
-Accept: application/json
+### Nested — movements for item
+GET {{baseUrl}}/items/{{itemId}}/stock-movements
+Authorization: Bearer {{token}}
 
-### Get incoming movements only
-GET {{baseUrl}}/api/stock-movements?type=in_purchase,in_return,in_adjustment
-Accept: application/json
-
-### Get outgoing movements only
-GET {{baseUrl}}/api/stock-movements?type=out_usage,out_borrow,out_disposal
-Accept: application/json
+### Show movement
+GET {{baseUrl}}/stock-movements/{{movementId}}
+Authorization: Bearer {{token}}
 
 ### Create purchase movement
-POST {{baseUrl}}/api/stock-movements
+# @name createMovement
+POST {{baseUrl}}/stock-movements
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "item_id": 1,
+  "item_id": {{itemId}},
   "type": "in_purchase",
-  "quantity": 50.00,
-  "notes": "Pembelian baru dari supplier ABC",
-  "occurred_at": "2026-08-07T10:00:00.000000Z"
+  "quantity": 25,
+  "notes": "Pembelian via kulala"
 }
 
-### Create usage movement (bahan consumed)
-POST {{baseUrl}}/api/stock-movements
+### Create out_usage movement
+POST {{baseUrl}}/stock-movements
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "item_id": 5,
+  "item_id": {{itemId}},
   "type": "out_usage",
-  "quantity": 29.94,
-  "notes": "Penggunaan untuk analisis sampel air"
+  "quantity": 5,
+  "notes": "Pemakaian langsung"
 }
 
 ### Create disposal movement
-POST {{baseUrl}}/api/stock-movements
+POST {{baseUrl}}/stock-movements
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "item_id": 10,
+  "item_id": {{itemId}},
   "type": "out_disposal",
-  "quantity": 5.00,
-  "notes": "Bahan kadaluarsa dibuang"
+  "quantity": 2,
+  "notes": "Kadaluarsa"
 }
 
-### Get stock balance for an item
-GET {{baseUrl}}/api/items/1/stock-balance
-Accept: application/json
+### Update notes only (OK)
+PATCH {{baseUrl}}/stock-movements/{{movementId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
 
-### Reconcile stock (GET current reconciliation)
-GET {{baseUrl}}/api/stock-reconciliation
-Accept: application/json
+{
+  "notes": "Catatan diperbarui"
+}
+
+### Update quantity — expect 422 (immutable)
+PATCH {{baseUrl}}/stock-movements/{{movementId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": 999
+}
+
+### Delete — expect 405
+DELETE {{baseUrl}}/stock-movements/{{movementId}}
+Authorization: Bearer {{token}}

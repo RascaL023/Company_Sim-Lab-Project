@@ -1,36 +1,62 @@
-### Variables
-@baseUrl = http://localhost:8000
+### ============================================================
+### Attachments
+### Upload = multipart/form-data (file wajib)
+### ============================================================
 
-### List attachments for an item
-GET {{baseUrl}}/api/items/1/attachments
-Accept: application/json
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+@attachmentId = 1
 
-### List attachments for an item unit
-GET {{baseUrl}}/api/items/1/units/1/attachments
-Accept: application/json
+### List attachments
+GET {{baseUrl}}/attachments
+Authorization: Bearer {{token}}
 
-### List attachments for a borrowing request
-GET {{baseUrl}}/api/borrowing-requests/1/attachments
-Accept: application/json
+### Filter by attachable
+GET {{baseUrl}}/attachments?attachable_type=App\Models\ItemUnit&attachable_id=1
+Authorization: Bearer {{token}}
 
-### Get attachment by ID
-GET {{baseUrl}}/api/attachments/1
-Accept: application/json
+### Filter by type
+GET {{baseUrl}}/attachments?type=condition_after
+Authorization: Bearer {{token}}
 
-### Download attachment
-GET {{baseUrl}}/api/attachments/1/download
-Accept: application/json
+### Show attachment
+GET {{baseUrl}}/attachments/{{attachmentId}}
+Authorization: Bearer {{token}}
 
-### Upload attachment (form-data)
-POST {{baseUrl}}/api/attachments
-Content-Type: multipart/form-data
-Accept: application/json
+### Download attachment (binary)
+GET {{baseUrl}}/attachments/{{attachmentId}}/download
+Authorization: Bearer {{token}}
 
-### Parameters for form-data:
-### attachable_type: App\Models\ItemUnit
-### attachable_id: 1
-### type: condition_after
-### file: [select file]
+### Upload attachment
+# Ganti path file lokal di baris File sebelum run.
+# Di kulala: pastikan multipart fields terisi.
+POST {{baseUrl}}/attachments
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----KulalaBoundary
+
+------KulalaBoundary
+Content-Disposition: form-data; name="attachable_type"
+
+App\Models\ItemUnit
+------KulalaBoundary
+Content-Disposition: form-data; name="attachable_id"
+
+1
+------KulalaBoundary
+Content-Disposition: form-data; name="type"
+
+condition_after
+------KulalaBoundary
+Content-Disposition: form-data; name="description"
+
+Foto kondisi setelah return
+------KulalaBoundary
+Content-Disposition: form-data; name="file"; filename="sample.txt"
+Content-Type: text/plain
+
+isi file contoh untuk uji upload
+------KulalaBoundary--
 
 ### Delete attachment
-DELETE {{baseUrl}}/api/attachments/1
+DELETE {{baseUrl}}/attachments/{{attachmentId}}
+Authorization: Bearer {{token}}

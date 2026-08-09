@@ -1,49 +1,59 @@
-### Variables
-@baseUrl = http://localhost:8000
+### ============================================================
+### Categories
+### ============================================================
+
+@baseUrl = {{baseUrl}}
+@token = {{token}}
+@categoryId = 1
 
 ### List categories
-GET {{baseUrl}}/api/categories
-Accept: application/json
+GET {{baseUrl}}/categories
+Authorization: Bearer {{token}}
 
-### Filter categories by type (alat/bahan)
-GET {{baseUrl}}/api/categories?type=alat
-Accept: application/json
+### Filter by type alat
+GET {{baseUrl}}/categories?type=alat
+Authorization: Bearer {{token}}
 
-### Get single category
-GET {{baseUrl}}/api/categories/1
-Accept: application/json
+### Filter by type bahan
+GET {{baseUrl}}/categories?type=bahan&per_page=20
+Authorization: Bearer {{token}}
 
-### Create category (equipment type)
-POST {{baseUrl}}/api/categories
+### Show category
+GET {{baseUrl}}/categories/{{categoryId}}
+Authorization: Bearer {{token}}
+
+### Create category (alat)
+POST {{baseUrl}}/categories
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
   "name": "Mikroskop",
   "type": "alat",
-  "description": "Mikroskop optik dan elektron untuk pengamatan sampel"
+  "description": "Mikroskop optik dan elektron"
 }
 
-### Create category (bahan tipo)
-POST {{baseUrl}}/api/categories
+### Create category (bahan)
+POST {{baseUrl}}/categories
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
   "name": "Bahan Kimia",
   "type": "bahan",
-  "description": "Bahan-bahan kimia untuk penggunaan laboratorium"
+  "description": "Bahan kimia laboratorium"
 }
 
 ### Update category
-PATCH {{baseUrl}}/api/categories/1
+PATCH {{baseUrl}}/categories/{{categoryId}}
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Accept: application/json
 
 {
-  "name": "Mikroskop Baru",
-  "description": "Updated description"
+  "name": "Mikroskop Updated",
+  "description": "Deskripsi diperbarui"
 }
 
 ### Delete category
-DELETE {{baseUrl}}/api/categories/1
+DELETE {{baseUrl}}/categories/{{categoryId}}
+Authorization: Bearer {{token}}
