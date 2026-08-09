@@ -89,6 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('audit-trails', AuditTrailController::class)->only(['index', 'show']);
 
     // Asset disposals (write-off approval)
+    Route::get('asset-disposals', [AssetDisposalController::class, 'index']);
     Route::post('asset-disposals', [AssetDisposalController::class, 'store']);
     Route::patch('asset-disposals/{assetDisposal}/approve', [AssetDisposalController::class, 'approve']);
     Route::patch('asset-disposals/{assetDisposal}/reject', [AssetDisposalController::class, 'reject']);

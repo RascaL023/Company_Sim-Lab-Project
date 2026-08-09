@@ -1,6 +1,6 @@
 import { api } from '../api';
 import { pagedList } from '../components';
-import { currentUserId, errorMessage } from '../helpers';
+import { currentUserId, downloadBlob, errorMessage } from '../helpers';
 
 function borrowingActions() {
     return {
@@ -26,6 +26,7 @@ function borrowingActions() {
             try {
                 await api.patch(`/borrowing-requests/${req.id}/approve`);
                 toast('Peminjaman disetujui.');
+                window.dispatchEvent(new CustomEvent('simlab:unread-refresh'));
                 await this.load();
             } catch (e) {
                 toast(errorMessage(e), 'error');
@@ -45,6 +46,7 @@ function borrowingActions() {
                 await api.patch(`/borrowing-requests/${this.rejectTarget.id}/reject`, { rejection_reason: this.rejectionReason });
                 toast('Peminjaman ditolak.');
                 this.rejectOpen = false;
+                window.dispatchEvent(new CustomEvent('simlab:unread-refresh'));
                 await this.load();
             } catch (e) {
                 toast(errorMessage(e), 'error');
@@ -135,7 +137,10 @@ export function borrowingsPage() {
             return (req.items ?? []).reduce((s, i) => s + Number(i.quantity ?? 0), 0);
         },
         isCancellable(req) {
-            return ['diajukan', 'disetujui'].includes(req.status);
+            if (!req || !['diajukan', 'disetujui'].includes(req.status)) return false;
+            const auth = window.Alpine?.store?.('auth');
+            if (auth?.isAny(['laboran'])) return true;
+            return req.requested_by?.id === currentUserId();
         },
         init() {
             this.load();
@@ -149,6 +154,7 @@ export function borrowingCreatePage() {
         itemsLoading: true,
         purpose: '',
         selected: [],
+        attachmentFile: null,
         submitting: false,
         errors: {},
         async loadItems() {
@@ -175,6 +181,9 @@ export function borrowingCreatePage() {
         removeLine(index) {
             this.selected.splice(index, 1);
         },
+        onAttachment(e) {
+            this.attachmentFile = e.target.files?.[0] ?? null;
+        },
         totalQuantity() {
             return this.selected.reduce((s, l) => s + Number(l.quantity || 0), 0);
         },
@@ -186,13 +195,32 @@ export function borrowingCreatePage() {
             this.submitting = true;
             this.errors = {};
             try {
-                await api.post('/borrowing-requests', {
+                const res = await api.post('/borrowing-requests', {
                     requested_by: currentUserId(),
                     purpose: this.purpose,
                     items: this.selected.map((l) => ({ item_id: l.item_id, quantity: l.quantity })),
                 });
+                const created = res.data?.data ?? null;
+                if (this.attachmentFile && created?.id) {
+                    try {
+                        const fd = new FormData();
+                        fd.append('attachable_type', 'App\\Models\\BorrowingRequest');
+                        fd.append('attachable_id', String(created.id));
+                        fd.append('type', 'surat_izin');
+                        fd.append('description', 'Dokumen pendukung pengajuan peminjaman');
+                        fd.append('file', this.attachmentFile);
+                        await api.post('/attachments', fd);
+                    } catch (attachErr) {
+                        toast(
+                            `Pengajuan tersimpan, tapi unggah lampiran gagal: ${errorMessage(attachErr)}`,
+                            'error',
+                        );
+                        window.location.assign(`/borrowings/${created.id}`);
+                        return;
+                    }
+                }
                 toast('Pengajuan peminjaman terkirim.');
-                window.location.assign('/borrowings');
+                window.location.assign(created?.id ? `/borrowings/${created.id}` : '/borrowings');
             } catch (e) {
                 const data = e.response?.data;
                 if (data?.errors) this.errors = data.errors;
@@ -209,8 +237,10 @@ export function borrowingCreatePage() {
 
 export function borrowingDetailPage(opts = {}) {
     return {
-        id: opts.id ?? null,
+        id: opts.id != null && opts.id !== '' ? Number(opts.id) : null,
         request: null,
+        attachments: [],
+        attachmentsLoading: false,
         loading: true,
         error: null,
         ...borrowingActions(),
@@ -218,29 +248,55 @@ export function borrowingDetailPage(opts = {}) {
             this.loading = true;
             this.error = null;
             try {
+                if (!this.id) {
+                    this.error = 'ID peminjaman tidak valid.';
+                    return;
+                }
                 const res = await api.get(`/borrowing-requests/${this.id}`);
                 this.request = res.data?.data ?? null;
-                await this.loadItems();
+                await this.loadAttachments();
             } catch (e) {
                 this.error = errorMessage(e);
             } finally {
                 this.loading = false;
             }
         },
-        async loadItems() {
+        async loadAttachments() {
+            if (!this.id) return;
+            this.attachmentsLoading = true;
             try {
-                const res = await api.get('/borrowing-requests', { params: { status: this.request?.status, per_page: 200 } });
-                const found = (res.data?.data ?? []).find((r) => r.id === this.id);
-                if (found) this.request = { ...this.request, ...found };
+                const res = await api.get('/attachments', {
+                    params: {
+                        attachable_type: 'App\\Models\\BorrowingRequest',
+                        attachable_id: this.id,
+                        per_page: 50,
+                    },
+                });
+                this.attachments = res.data?.data ?? [];
             } catch (e) {
-                /* keep header-only view */
+                this.attachments = [];
+            } finally {
+                this.attachmentsLoading = false;
+            }
+        },
+        async downloadAttachment(a) {
+            try {
+                const res = await api.get(`/attachments/${a.id}/download`, { responseType: 'blob' });
+                downloadBlob(res.data, a.original_filename ?? `lampiran-${a.id}`);
+            } catch (e) {
+                toast(errorMessage(e), 'error');
             }
         },
         itemQuantity() {
             return (this.request?.items ?? []).reduce((s, i) => s + Number(i.quantity ?? 0), 0);
         },
         isCancellable() {
-            return this.request && ['diajukan', 'disetujui'].includes(this.request.status);
+            if (!this.request) return false;
+            if (!['diajukan', 'disetujui'].includes(this.request.status)) return false;
+            const auth = window.Alpine?.store?.('auth');
+            if (auth?.isAny(['laboran'])) return true;
+            return this.request.requested_by?.id === currentUserId()
+                || this.request.requested_by === currentUserId();
         },
         init() {
             this.load();
@@ -422,23 +478,55 @@ export function disposalsPage() {
         targetType: 'alat',
         items: [],
         units: [],
-        loading: true,
+        list: [],
+        listMeta: null,
+        listLoading: true,
+        listError: null,
+        filters: { status: '' },
+        optionsLoading: true,
         form: { item_unit_id: '', item_id: '', reason: 'rusak_total', notes: '' },
         submitting: false,
+        busy: false,
         errors: {},
+        rejectOpen: false,
+        rejectTarget: null,
+        rejectionReason: '',
         async loadOptions() {
+            this.optionsLoading = true;
             try {
                 const [itemsRes, unitsRes] = await Promise.all([
                     api.get('/items', { params: { per_page: 100, sort_by: 'name', sort_order: 'asc' } }),
                     api.get('/item-units', { params: { per_page: 100 } }),
                 ]);
                 this.items = (itemsRes.data?.data ?? []).filter((i) => i.type === 'bahan');
-                this.units = unitsRes.data?.data ?? [];
+                this.units = (unitsRes.data?.data ?? []).filter((u) => u.condition !== 'dihapus');
             } catch (e) {
                 toast(errorMessage(e), 'error');
             } finally {
+                this.optionsLoading = false;
                 this.loading = false;
             }
+        },
+        async loadList() {
+            this.listLoading = true;
+            this.listError = null;
+            try {
+                const params = { per_page: 20, page: this.listMeta?.current_page ?? 1 };
+                if (this.filters.status) params.status = this.filters.status;
+                const res = await api.get('/asset-disposals', { params });
+                this.list = res.data?.data ?? [];
+                this.listMeta = res.data?.meta ?? null;
+            } catch (e) {
+                this.list = [];
+                this.listMeta = null;
+                this.listError = errorMessage(e);
+            } finally {
+                this.listLoading = false;
+            }
+        },
+        applyFilters() {
+            this.listMeta = { ...(this.listMeta ?? {}), current_page: 1 };
+            this.loadList();
         },
         async submit() {
             this.submitting = true;
@@ -453,6 +541,7 @@ export function disposalsPage() {
                 await api.post('/asset-disposals', payload);
                 toast('Usulan disposal berhasil diajukan.');
                 this.form = { item_unit_id: '', item_id: '', reason: 'rusak_total', notes: '' };
+                await this.loadList();
             } catch (e) {
                 const data = e.response?.data;
                 if (data?.errors) this.errors = data.errors;
@@ -461,8 +550,57 @@ export function disposalsPage() {
                 this.submitting = false;
             }
         },
+        async approve(d) {
+            const ok = await confirmAction({
+                title: 'Setujui disposal',
+                message: `Setujui usulan disposal #${d.id}?`,
+                confirmLabel: 'Setujui',
+                danger: false,
+            });
+            if (!ok) return;
+            this.busy = true;
+            try {
+                await api.patch(`/asset-disposals/${d.id}/approve`);
+                toast('Disposal disetujui.');
+                await this.loadList();
+            } catch (e) {
+                toast(errorMessage(e), 'error');
+            } finally {
+                this.busy = false;
+            }
+        },
+        openReject(d) {
+            this.rejectTarget = d;
+            this.rejectionReason = '';
+            this.rejectOpen = true;
+        },
+        async reject() {
+            if (!this.rejectionReason.trim()) return;
+            this.busy = true;
+            try {
+                await api.patch(`/asset-disposals/${this.rejectTarget.id}/reject`, {
+                    rejection_reason: this.rejectionReason,
+                });
+                toast('Disposal ditolak.');
+                this.rejectOpen = false;
+                await this.loadList();
+            } catch (e) {
+                toast(errorMessage(e), 'error');
+            } finally {
+                this.busy = false;
+            }
+        },
+        targetLabel(d) {
+            if (d.item_unit) {
+                return d.item_unit.serial_number
+                    ?? d.item_unit.asset_tag
+                    ?? `Unit #${d.item_unit_id}`;
+            }
+            return d.item?.name ?? `Item #${d.item_id}`;
+        },
         init() {
             this.loadOptions();
+            this.loadList();
         },
     };
 }

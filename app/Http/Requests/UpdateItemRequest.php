@@ -13,7 +13,6 @@ class UpdateItemRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Adjust based on your auth logic
         return true;
     }
 
@@ -28,17 +27,12 @@ class UpdateItemRequest extends FormRequest
             'category_id' => 'sometimes|required|exists:categories,id',
             'code' => ['sometimes', 'required', 'string', 'max:50', Rule::unique('items')->ignore($this->item)],
             'name' => 'sometimes|required|string|max:150',
-            'type' => 'sometimes|required|string|in:alat,bahan',
+            'type' => 'sometimes|nullable|string|in:alat,bahan',
             'unit' => 'sometimes|required|string|max:30',
             'stock_quantity' => 'sometimes|required|numeric|min:0',
             'minimum_stock' => 'sometimes|required|numeric|min:0',
             'location' => 'sometimes|nullable|string|max:100',
-            'condition_status' => 'sometimes|required|string|in:baik,rusak,maintenance,kadaluarsa',
             'manufacturer' => 'sometimes|nullable|string|max:100',
-            'serial_number' => ['sometimes', 'nullable', 'string', 'max:100', Rule::unique('items')->ignore($this->item)],
-            'purchase_date' => 'sometimes|nullable|date',
-            'expiry_date' => 'sometimes|nullable|date',
-            'next_calibration_date' => 'sometimes|nullable|date',
             'description' => 'sometimes|nullable|string',
             'created_by' => 'sometimes|required|exists:users,id',
         ];
@@ -52,7 +46,6 @@ class UpdateItemRequest extends FormRequest
         return [
             'category_id.exists' => 'Kategori tidak ditemukan.',
             'code.unique' => 'Kode item sudah digunakan.',
-            'serial_number.unique' => 'Nomor seri sudah digunakan.',
         ];
     }
 
@@ -61,11 +54,26 @@ class UpdateItemRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        // Add the item ID to the request so Rule::unique can ignore it
         if ($this->route('item')) {
             $this->merge([
                 'item' => $this->route('item')->id,
             ]);
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function validated($key = null, $default = null)
+    {
+        $data = parent::validated($key, $default);
+
+        if ($key !== null) {
+            return $data;
+        }
+
+        unset($data['type'], $data['item']);
+
+        return $data;
     }
 }

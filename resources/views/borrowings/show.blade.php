@@ -122,6 +122,38 @@
                             </div>
                         </div>
                     </template>
+                    <div x-show="!(request.items ?? []).length" class="px-5 py-10 text-center text-sm text-zinc-400">
+                        Belum ada item pada permintaan ini.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-6 overflow-hidden">
+                <div class="border-b border-zinc-100 px-5 py-4">
+                    <h2 class="font-display text-base font-semibold text-zinc-900">Lampiran</h2>
+                </div>
+                <div x-show="attachmentsLoading" class="flex items-center justify-center py-10">
+                    <div class="h-6 w-6 animate-spin rounded-full border-2 border-zinc-200 border-t-brand-600"></div>
+                </div>
+                <div x-show="!attachmentsLoading" class="divide-y divide-zinc-50">
+                    <template x-for="a in attachments" :key="a.id">
+                        <div class="flex items-center gap-4 px-5 py-4">
+                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                                <x-icon name="paperclip" class="h-4 w-4" />
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-sm font-semibold text-zinc-900" x-text="a.original_filename"></p>
+                                <p class="mt-0.5 text-xs text-zinc-400" x-text="`${a.type ?? 'dokumen'} · ${a.size_human ?? ''} · ${fmt.fmtDateTime(a.created_at)}`"></p>
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-sm" @click="downloadAttachment(a)">
+                                <x-icon name="download" class="h-3.5 w-3.5" />
+                                Unduh
+                            </button>
+                        </div>
+                    </template>
+                    <div x-show="!attachments.length" class="px-5 py-10 text-center text-sm text-zinc-400">
+                        Belum ada lampiran untuk peminjaman ini.
+                    </div>
                 </div>
             </div>
 

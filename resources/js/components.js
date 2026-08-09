@@ -56,6 +56,7 @@ export function appShell() {
         sidebarOpen: false,
         unread: 0,
         notifs: [],
+        notifsLoading: false,
         async loadUnread() {
             try {
                 const res = await api.get('/notifications/unread-count');
@@ -65,13 +66,15 @@ export function appShell() {
             }
         },
         async toggleNotif() {
-            if (!this.notifs.length) {
-                try {
-                    const res = await api.get('/notifications', { params: { per_page: 6 } });
-                    this.notifs = res.data?.data ?? [];
-                } catch (e) {
-                    /* ignore */
-                }
+            this.notifsLoading = true;
+            try {
+                const res = await api.get('/notifications', { params: { per_page: 6 } });
+                this.notifs = res.data?.data ?? [];
+                await this.loadUnread();
+            } catch (e) {
+                /* ignore */
+            } finally {
+                this.notifsLoading = false;
             }
         },
         async markRead(n) {
@@ -80,6 +83,7 @@ export function appShell() {
                 await api.patch(`/notifications/${n.id}/read`);
                 n.read_at = new Date().toISOString();
                 this.unread = Math.max(0, this.unread - 1);
+                window.dispatchEvent(new CustomEvent('simlab:unread-refresh'));
             } catch (e) {
                 /* ignore */
             }
@@ -96,7 +100,9 @@ export function appShell() {
                 return;
             }
             this.loadUnread();
-            setInterval(() => this.loadUnread(), 60000);
+            // Poll ringan: backend tidak expose websocket/SSE.
+            this._unreadTimer = setInterval(() => this.loadUnread(), 30000);
+            window.addEventListener('simlab:unread-refresh', () => this.loadUnread());
         },
     };
 }

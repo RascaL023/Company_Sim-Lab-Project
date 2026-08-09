@@ -62,6 +62,12 @@
                     <input type="text" x-model="purpose" :class="errors.purpose ? 'input input-error' : 'input'" placeholder="Praktikum, penelitian..." />
                     <p x-show="errors.purpose" class="mt-1 text-xs text-rose-600" x-text="errors.purpose?.[0]"></p>
                 </div>
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-zinc-700">Lampiran surat izin <span class="font-normal text-zinc-400">(opsional)</span></label>
+                    <input type="file" class="input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" @change="onAttachment($event)" />
+                    <p class="mt-1 text-xs text-zinc-400">PDF/gambar/dokumen pendukung. Akan dilampirkan ke pengajuan setelah berhasil dibuat.</p>
+                    <p x-show="attachmentFile" class="mt-1 truncate text-xs font-medium text-brand-700" x-text="attachmentFile?.name"></p>
+                </div>
                 <div class="flex items-center justify-between rounded-2xl bg-zinc-50 px-4 py-3">
                     <p class="text-sm text-zinc-500">Total item</p>
                     <p class="font-display text-lg font-bold text-zinc-900" x-text="`${selected.length} jenis`"></p>

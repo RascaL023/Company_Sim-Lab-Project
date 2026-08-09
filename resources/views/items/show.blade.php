@@ -48,8 +48,8 @@
 
                 <dl class="mt-6 grid grid-cols-2 gap-4 border-t border-zinc-100 pt-6 sm:grid-cols-3 lg:grid-cols-4">
                     <div>
-                        <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Kondisi</dt>
-                        <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="fmt.conditionLabel(item.condition_status)"></dd>
+                        <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Tipe</dt>
+                        <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="fmt.typeLabel(item.type)"></dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Stok minimum</dt>
@@ -63,24 +63,6 @@
                         <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Manufacturer</dt>
                         <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="item.manufacturer || '—'"></dd>
                     </div>
-                    <template x-if="item.serial_number">
-                        <div>
-                            <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Serial number</dt>
-                            <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="item.serial_number"></dd>
-                        </div>
-                    </template>
-                    <template x-if="item.expiry_date">
-                        <div>
-                            <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Tanggal kedaluwarsa</dt>
-                            <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="fmt.fmtDate(item.expiry_date)"></dd>
-                        </div>
-                    </template>
-                    <template x-if="item.next_calibration_date">
-                        <div>
-                            <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Kalibrasi berikutnya</dt>
-                            <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="fmt.fmtDate(item.next_calibration_date)"></dd>
-                        </div>
-                    </template>
                     <template x-if="item.description">
                         <div class="col-span-2 sm:col-span-3 lg:col-span-4">
                             <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Deskripsi</dt>

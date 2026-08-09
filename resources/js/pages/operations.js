@@ -308,6 +308,7 @@ export function attachmentsPage() {
     const attachableOptions = [
         { value: 'App\\Models\\Item', label: 'Item (katalog)' },
         { value: 'App\\Models\\ItemUnit', label: 'Item Unit' },
+        { value: 'App\\Models\\BorrowingRequest', label: 'Borrowing Request' },
         { value: 'App\\Models\\BorrowingItem', label: 'Borrowing Item' },
         { value: 'App\\Models\\Usage', label: 'Pemakaian' },
     ];

@@ -376,6 +376,7 @@ Status usage: `dicatat` → `diverifikasi` | `ditolak`.
 
 | Method | Path | Role |
 |--------|------|------|
+| `GET` | `/asset-disposals` | `laboran`, `kepala_lab`, atau `admin_sistem`; filter `status?`, paginated |
 | `POST` | `/asset-disposals` | `laboran` atau `admin_sistem` |
 | `PATCH` | `/asset-disposals/{id}/approve` | **kepala_lab**; status harus `diusulkan` |
 | `PATCH` | `/asset-disposals/{id}/reject` | **kepala_lab**; wajib `rejection_reason` |

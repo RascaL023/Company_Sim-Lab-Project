@@ -15,6 +15,23 @@ use Illuminate\Validation\ValidationException;
 
 class AssetDisposalController extends Controller
 {
+    public function index(Request $request)
+    {
+        Gate::authorize('viewAny', AssetDisposal::class);
+
+        $query = AssetDisposal::query()
+            ->with(['item', 'itemUnit.item', 'proposer', 'reviewer'])
+            ->orderByDesc('proposed_at');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->get('status'));
+        }
+
+        $disposals = $query->paginate($request->query('per_page', 20));
+
+        return AssetDisposalResource::collection($disposals);
+    }
+
     public function store(Request $request)
     {
         Gate::authorize('create', AssetDisposal::class);

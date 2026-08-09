@@ -4,19 +4,83 @@
 
 @section('content')
 <div x-data="disposalsPage" x-cloak>
-    <x-page-header title="Disposal" subtitle="Ajukan penghapusan aset yang rusak total, kedaluwarsa, atau hilang." />
+    <x-page-header title="Disposal" subtitle="Usulkan dan tinjau penghapusan aset yang rusak total, kedaluwarsa, atau hilang." />
 
-    <div class="mt-6 grid gap-6 lg:grid-cols-3">
+    <div class="mt-6 card overflow-hidden">
+        <div class="flex flex-wrap items-center gap-3 border-b border-zinc-100 px-5 py-4">
+            <h2 class="font-display text-base font-semibold text-zinc-900">Daftar Usulan</h2>
+            <select x-model="filters.status" @change="applyFilters()" class="input ml-auto !w-auto">
+                <option value="">Semua status</option>
+                <option value="diusulkan">Diusulkan</option>
+                <option value="disetujui">Disetujui</option>
+                <option value="ditolak">Ditolak</option>
+            </select>
+        </div>
+
+        <div x-show="listError" class="border-b border-rose-100 bg-rose-50 px-5 py-3 text-sm text-rose-700" x-text="listError"></div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[720px]">
+                <thead class="bg-zinc-50/70">
+                    <tr>
+                        <th class="table-th">ID</th>
+                        <th class="table-th">Target</th>
+                        <th class="table-th">Alasan</th>
+                        <th class="table-th">Status</th>
+                        <th class="table-th">Pengusul</th>
+                        <th class="table-th text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-100">
+                    <template x-for="d in list" :key="d.id">
+                        <tr class="transition hover:bg-zinc-50/60">
+                            <td class="table-td font-mono text-xs text-zinc-500" x-text="`#${d.id}`"></td>
+                            <td class="table-td">
+                                <p class="text-sm font-semibold text-zinc-900" x-text="targetLabel(d)"></p>
+                                <p class="text-xs text-zinc-400" x-text="d.item_unit_id ? 'Unit alat' : 'Bahan'"></p>
+                            </td>
+                            <td class="table-td text-sm text-zinc-600" x-text="fmt.statusLabel(d.reason) === d.reason ? d.reason.replaceAll('_', ' ') : fmt.statusLabel(d.reason)"></td>
+                            <td class="table-td">
+                                <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset" :class="fmt.badgeClass(d.status)">
+                                    <span x-text="fmt.statusLabel(d.status)"></span>
+                                </span>
+                            </td>
+                            <td class="table-td text-sm text-zinc-600" x-text="d.proposed_by?.name ?? '—'"></td>
+                            <td class="table-td text-right">
+                                <div class="inline-flex gap-1">
+                                    <template x-if="d.status === 'diusulkan' && $store.auth.isAny(['kepala_lab'])">
+                                        <button type="button" class="btn btn-primary btn-sm" :disabled="busy" @click="approve(d)">Setujui</button>
+                                    </template>
+                                    <template x-if="d.status === 'diusulkan' && $store.auth.isAny(['kepala_lab'])">
+                                        <button type="button" class="btn btn-secondary btn-sm" @click="openReject(d)">Tolak</button>
+                                    </template>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+
+            <div x-show="listLoading" class="flex items-center justify-center py-16">
+                <div class="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-brand-600"></div>
+            </div>
+            <div x-show="!listLoading && !list.length" x-cloak>
+                <x-empty-state title="Belum ada usulan" subtitle="Belum ada usulan disposal yang cocok dengan filter." icon="trash" />
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-3" x-show="$store.auth.isAny(['laboran', 'admin_sistem'])">
         <div class="card lg:col-span-2">
             <div class="border-b border-zinc-100 px-5 py-4">
-                <h2 class="font-display text-base font-semibold text-zinc-900">Usulan Disposal</h2>
+                <h2 class="font-display text-base font-semibold text-zinc-900">Ajukan Usulan</h2>
             </div>
             <div class="p-5">
-                <div x-show="loading" class="flex items-center justify-center py-12">
+                <div x-show="optionsLoading" class="flex items-center justify-center py-12">
                     <div class="h-7 w-7 animate-spin rounded-full border-2 border-zinc-200 border-t-brand-600"></div>
                 </div>
 
-                <div x-show="!loading" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div x-show="!optionsLoading" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div class="sm:col-span-2">
                         <label class="mb-1.5 block text-sm font-medium text-zinc-700">Jenis aset</label>
                         <div class="grid grid-cols-2 gap-2">
@@ -83,14 +147,14 @@
                     <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-sm font-bold text-zinc-500">1</div>
                     <div>
                         <p class="text-sm font-semibold text-zinc-800">Pengajuan</p>
-                        <p class="mt-0.5 text-xs text-zinc-500">Usulan dicatat dengan status <span class="font-medium">diusulkan</span>.</p>
+                        <p class="mt-0.5 text-xs text-zinc-500">Laboran/Admin mengajukan usulan berstatus <span class="font-medium">diusulkan</span>.</p>
                     </div>
                 </div>
                 <div class="flex gap-3">
                     <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-sm font-bold text-zinc-500">2</div>
                     <div>
                         <p class="text-sm font-semibold text-zinc-800">Persetujuan</p>
-                        <p class="mt-0.5 text-xs text-zinc-500">Disetujui atau ditolak oleh pihak yang berwenang.</p>
+                        <p class="mt-0.5 text-xs text-zinc-500">Hanya <span class="font-medium">Kepala Lab</span> yang dapat menyetujui atau menolak.</p>
                     </div>
                 </div>
                 <div class="flex gap-3">
@@ -103,5 +167,18 @@
             </div>
         </div>
     </div>
+
+    <x-modal open="rejectOpen" title="Tolak Disposal" subtitle="Sampaikan alasan penolakan usulan ini.">
+        <div class="grid gap-4">
+            <div>
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Alasan penolakan</label>
+                <textarea x-model="rejectionReason" rows="3" class="input" placeholder="Alasan penolakan..."></textarea>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button type="button" class="btn btn-secondary" @click="rejectOpen = false">Batal</button>
+                <button type="button" class="btn btn-danger" :disabled="busy || !rejectionReason.trim()" @click="reject()">Tolak Usulan</button>
+            </div>
+        </div>
+    </x-modal>
 </div>
 @endsection

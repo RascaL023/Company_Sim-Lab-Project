@@ -88,6 +88,11 @@ export function statusLabel(value) {
     return STATUS_LABEL[value] ?? value ?? '—';
 }
 
+/** Alias dipakai template Blade untuk kondisi unit / after-return. */
+export function conditionLabel(value) {
+    return statusLabel(value);
+}
+
 export function roleLabel(role) {
     const map = {
         admin_sistem: 'Admin Sistem',

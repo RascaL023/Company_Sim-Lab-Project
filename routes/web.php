@@ -9,7 +9,11 @@ Route::view('/dashboard', 'dashboard')->name('dashboard');
 // Katalog
 Route::view('/items', 'items.index');
 Route::redirect('/items/create', '/items');
-Route::view('/items/{item}', 'items.show');
+// Route::view() is fine in current Laravel for simple params, but we pass IDs
+// explicitly so Blade always receives the raw route segment for Alpine SPA pages.
+Route::get('/items/{item}', function (string $item) {
+    return view('items.show', ['item' => $item]);
+});
 Route::view('/categories', 'categories.index');
 Route::view('/locations', 'locations.index');
 Route::view('/item-units', 'item-units.index');
@@ -17,7 +21,9 @@ Route::view('/item-units', 'item-units.index');
 // Transaksi
 Route::view('/borrowings', 'borrowings.index');
 Route::view('/borrowings/create', 'borrowings.create');
-Route::view('/borrowings/{borrowingRequest}', 'borrowings.show');
+Route::get('/borrowings/{borrowingRequest}', function (string $borrowingRequest) {
+    return view('borrowings.show', ['borrowingRequest' => $borrowingRequest]);
+});
 Route::view('/usages', 'usages.index');
 Route::view('/stock-opname', 'stock-opname.index');
 Route::view('/disposals', 'disposals.index');

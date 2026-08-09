@@ -41,6 +41,7 @@ class BorrowingRequestController extends Controller
             'requested_by' => $validated['requested_by'],
             'purpose' => $validated['purpose'],
             'status' => 'diajukan',
+            'requested_at' => now(),
         ]);
 
         foreach ($validated['items'] as $itemData) {
@@ -51,12 +52,21 @@ class BorrowingRequestController extends Controller
             ]);
         }
 
-        return (new BorrowingRequestResource($request))->response()->setStatusCode(201);
+        return (new BorrowingRequestResource(
+            $request->load(['requestedBy', 'items.item'])
+        ))->response()->setStatusCode(201);
     }
 
     public function show(BorrowingRequest $borrowingRequest)
     {
         Gate::authorize('view', $borrowingRequest);
+
+        $borrowingRequest->load([
+            'requestedBy',
+            'approvedBy',
+            'items.item',
+            'items.itemUnit',
+        ]);
 
         return new BorrowingRequestResource($borrowingRequest);
     }

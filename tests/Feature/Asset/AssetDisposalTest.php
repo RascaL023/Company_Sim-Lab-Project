@@ -214,4 +214,24 @@ class AssetDisposalTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath('message', 'Usulan dengan status saat ini tidak bisa disetujui.');
     }
+
+    public function test_kepala_lab_can_list_disposals(): void
+    {
+        $laboran = User::factory()->laboran()->create();
+        $kepala = User::factory()->kepalaLab()->create();
+        $bahan = Item::factory()->bahan()->create(['stock_quantity' => 5]);
+
+        AssetDisposal::create([
+            'item_id' => $bahan->id,
+            'reason' => 'kedaluwarsa',
+            'proposed_by' => $laboran->id,
+            'proposed_at' => now(),
+            'status' => 'diusulkan',
+        ]);
+
+        $this->withToken($this->tokenFor($kepala))
+            ->getJson('/api/asset-disposals')
+            ->assertOk()
+            ->assertJsonPath('data.0.status', 'diusulkan');
+    }
 }

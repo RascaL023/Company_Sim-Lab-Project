@@ -173,6 +173,7 @@ export function notificationsPage() {
             try {
                 await api.patch(`/notifications/${n.id}/read`);
                 n.read_at = new Date().toISOString();
+                window.dispatchEvent(new CustomEvent('simlab:unread-refresh'));
             } catch (e) {
                 /* ignore */
             }
