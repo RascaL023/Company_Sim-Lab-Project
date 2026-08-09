@@ -1,0 +1,75 @@
+### Variables
+@baseUrl = http://localhost:8000
+
+### List borrowing requests (with optional status filter)
+GET {{baseUrl}}/api/borrowing-requests
+Accept: application/json
+
+### Filter by status
+GET {{baseUrl}}/api/borrowing-requests?status=diajukan
+Accept: application/json
+
+### Get pending requests
+GET {{baseUrl}}/api/borrowing-requests?status=diajukan&per_page=10
+Accept: application/json
+
+### Create borrowing request
+POST {{baseUrl}}/api/borrowing-requests
+Content-Type: application/json
+Accept: application/json
+
+{
+  "requested_by": 1,
+  "purpose": "Pengujian rutin bahan kimia untuk analisis sampel air",
+  "items": [
+    {
+      "item_id": 1,
+      "item_unit_id": null,
+      "quantity": 1
+    }
+  ]
+}
+
+### Approve borrowing request
+PUT {{baseUrl}}/api/borrowing-requests/1/approve
+Content-Type: application/json
+Accept: application/json
+
+{
+  "approved_by": 1,
+  "notes": "Disetujui untuk keperluan pengujian"
+}
+
+### Reject borrowing request
+PUT {{baseUrl}}/api/borrowing-requests/1/reject
+Content-Type: application/json
+Accept: application/json
+
+{
+  "rejected_by": 1,
+  "rejection_reason": "Bahan yang diminta tergolong berbahaya, perlunya izin tambahan"
+}
+
+### Cancel borrowing request
+PUT {{baseUrl}}/api/borrowing-requests/1/cancel
+Content-Type: application/json
+Accept: application/json
+
+{
+  "cancelled_by": 1,
+  "cancellation_reason": "Permintaan tidak diperlukan lagi"
+}
+
+### Complete borrowing (after return)
+PUT {{baseUrl}}/api/borrowing-requests/1/complete
+Content-Type: application/json
+Accept: application/json
+
+{
+  "completed_by": 1,
+  "notes": "Semua barang dikembalikan"
+}
+
+### Get single borrowing request with items
+GET {{baseUrl}}/api/borrowing-requests/1
+Accept: application/json

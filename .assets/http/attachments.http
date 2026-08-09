@@ -1,0 +1,36 @@
+### Variables
+@baseUrl = http://localhost:8000
+
+### List attachments for an item
+GET {{baseUrl}}/api/items/1/attachments
+Accept: application/json
+
+### List attachments for an item unit
+GET {{baseUrl}}/api/items/1/units/1/attachments
+Accept: application/json
+
+### List attachments for a borrowing request
+GET {{baseUrl}}/api/borrowing-requests/1/attachments
+Accept: application/json
+
+### Get attachment by ID
+GET {{baseUrl}}/api/attachments/1
+Accept: application/json
+
+### Download attachment
+GET {{baseUrl}}/api/attachments/1/download
+Accept: application/json
+
+### Upload attachment (form-data)
+POST {{baseUrl}}/api/attachments
+Content-Type: multipart/form-data
+Accept: application/json
+
+### Parameters for form-data:
+### attachable_type: App\Models\ItemUnit
+### attachable_id: 1
+### type: condition_after
+### file: [select file]
+
+### Delete attachment
+DELETE {{baseUrl}}/api/attachments/1

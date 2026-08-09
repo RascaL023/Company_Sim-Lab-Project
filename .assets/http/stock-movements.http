@@ -1,0 +1,71 @@
+### Variables
+@baseUrl = http://localhost:8000
+
+### List stock movements (with filters)
+GET {{baseUrl}}/api/stock-movements
+Accept: application/json
+
+### Filter by movement type (in_purchase, out_usage, out_borrow, etc.)
+GET {{baseUrl}}/api/stock-movements?type=in_purchase
+Accept: application/json
+
+### Filter by item
+GET {{baseUrl}}/api/stock-movements?item_id=1
+Accept: application/json
+
+### Get movement history for an item
+GET {{baseUrl}}/api/items/1/stock-movements
+Accept: application/json
+
+### Get incoming movements only
+GET {{baseUrl}}/api/stock-movements?type=in_purchase,in_return,in_adjustment
+Accept: application/json
+
+### Get outgoing movements only
+GET {{baseUrl}}/api/stock-movements?type=out_usage,out_borrow,out_disposal
+Accept: application/json
+
+### Create purchase movement
+POST {{baseUrl}}/api/stock-movements
+Content-Type: application/json
+Accept: application/json
+
+{
+  "item_id": 1,
+  "type": "in_purchase",
+  "quantity": 50.00,
+  "notes": "Pembelian baru dari supplier ABC",
+  "occurred_at": "2026-08-07T10:00:00.000000Z"
+}
+
+### Create usage movement (bahan consumed)
+POST {{baseUrl}}/api/stock-movements
+Content-Type: application/json
+Accept: application/json
+
+{
+  "item_id": 5,
+  "type": "out_usage",
+  "quantity": 29.94,
+  "notes": "Penggunaan untuk analisis sampel air"
+}
+
+### Create disposal movement
+POST {{baseUrl}}/api/stock-movements
+Content-Type: application/json
+Accept: application/json
+
+{
+  "item_id": 10,
+  "type": "out_disposal",
+  "quantity": 5.00,
+  "notes": "Bahan kadaluarsa dibuang"
+}
+
+### Get stock balance for an item
+GET {{baseUrl}}/api/items/1/stock-balance
+Accept: application/json
+
+### Reconcile stock (GET current reconciliation)
+GET {{baseUrl}}/api/stock-reconciliation
+Accept: application/json

@@ -1,0 +1,30 @@
+### Variables
+@baseUrl = http://localhost:8000
+
+### List recent audit trails
+GET {{baseUrl}}/api/audit-trails
+Accept: application/json
+
+### Filter by action type
+GET {{baseUrl}}/api/audit-trails?action=created
+Accept: application/json
+
+### Filter by user
+GET {{baseUrl}}/api/audit-trails?user_id=1
+Accept: application/json
+
+### Get audit trail for specific model (polymorphic)
+GET {{baseUrl}}/api/audit-trails?auditable_type=App\Models\BorrowingRequest&auditable_id=1
+Accept: application/json
+
+### Get audit trail for an item
+GET {{baseUrl}}/api/items/1/audit-trails
+Accept: application/json
+
+### Get audit trail for a borrowing request
+GET {{baseUrl}}/api/borrowing-requests/1/audit-trails
+Accept: application/json
+
+### Search in recent audit trails
+GET {{baseUrl}}/api/audit-trails?search=admin
+Accept: application/json

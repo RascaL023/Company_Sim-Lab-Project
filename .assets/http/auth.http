@@ -1,0 +1,24 @@
+@authBaseUrl = http://localhost:8000/api
+# @token = {{login.response.body.$.token}}
+
+### Login
+# @name login
+POST {{authBaseUrl}}/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "admin@wiralab.com",
+  "password": "password",
+  "device_name": "http-client"
+}
+
+### Get current authenticated user
+GET {{authBaseUrl}}/user
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Logout
+POST {{authBaseUrl}}/logout
+Authorization: Bearer {{token}}
+Accept: application/json

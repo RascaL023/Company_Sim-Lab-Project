@@ -1,0 +1,49 @@
+### Variables
+@baseUrl = http://localhost:8000
+
+### List categories
+GET {{baseUrl}}/api/categories
+Accept: application/json
+
+### Filter categories by type (alat/bahan)
+GET {{baseUrl}}/api/categories?type=alat
+Accept: application/json
+
+### Get single category
+GET {{baseUrl}}/api/categories/1
+Accept: application/json
+
+### Create category (equipment type)
+POST {{baseUrl}}/api/categories
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Mikroskop",
+  "type": "alat",
+  "description": "Mikroskop optik dan elektron untuk pengamatan sampel"
+}
+
+### Create category (bahan tipo)
+POST {{baseUrl}}/api/categories
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Bahan Kimia",
+  "type": "bahan",
+  "description": "Bahan-bahan kimia untuk penggunaan laboratorium"
+}
+
+### Update category
+PATCH {{baseUrl}}/api/categories/1
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Mikroskop Baru",
+  "description": "Updated description"
+}
+
+### Delete category
+DELETE {{baseUrl}}/api/categories/1

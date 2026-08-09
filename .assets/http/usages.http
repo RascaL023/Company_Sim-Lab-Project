@@ -1,0 +1,58 @@
+### Variables
+@baseUrl = http://localhost:8000
+
+### List usages (verified only by default)
+GET {{baseUrl}}/api/usages
+Accept: application/json
+
+### Filter by status
+GET {{baseUrl}}/api/usages?status=diverifikasi
+Accept: application/json
+
+### Filter pending verification
+GET {{baseUrl}}/api/usages?status=dicatat
+Accept: application/json
+
+### Get usage records for an item
+GET {{baseUrl}}/api/items/5/usages
+Accept: application/json
+
+### Create usage record (bahan consumption)
+POST {{baseUrl}}/api/usages
+Content-Type: application/json
+Accept: application/json
+
+{
+  "item_id": 5,
+  "item_unit_id": null,
+  "user_id": 2,
+  "quantity_used": 29.94,
+  "quantity_before": 100.00,
+  "quantity_after": 70.06,
+  "purpose": "Penggunaan untuk analisis sampel air",
+  "status": "dicatat"
+}
+
+### Verify usage record
+PUT {{baseUrl}}/api/usages/1/verify
+Content-Type: application/json
+Accept: application/json
+
+{
+  "verified_by": 1,
+  "status": "diverifikasi"
+}
+
+### Reject usage record
+PUT {{baseUrl}}/api/usages/1/reject
+Content-Type: application/json
+Accept: application/json
+
+{
+  "rejected_by": 1,
+  "rejection_reason": "Kuantitas tidak sesuai dengan rekaman penggunaan"
+}
+
+### Get single usage record
+GET {{baseUrl}}/api/usages/1
+Accept: application/json

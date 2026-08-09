@@ -1,0 +1,52 @@
+### Variables
+@baseUrl = http://localhost:8000
+
+### List calibrations (all equipment units)
+GET {{baseUrl}}/api/calibrations
+Accept: application/json
+
+### Filter calibration needs (due within next period)
+GET {{baseUrl}}/api/calibrations/needs-calibration
+Accept: application/json
+
+### Get calibration history for a unit
+GET {{baseUrl}/api/items/1/units/1/calibrations
+Accept: application/json
+
+### Create calibration record
+POST {{baseUrl}}/api/calibrations
+Content-Type: application/json
+Accept: application/json
+
+{
+  "item_unit_id": 1,
+  "calibration_date": "2026-08-01",
+  "next_calibration_date": "2027-02-01",
+  "calibrated_by": "Dr. Ahmad",
+  "certificate_number": "CERT-2026-001",
+  "result": "lulus",
+  "notes": "Kalibrasi berhasil, hasil dalam batas toleransi"
+}
+
+### Get maintenance records for a unit
+GET {{baseUrl}}/api/items/1/units/1/maintenances
+Accept: application/json
+
+### Create maintenance record
+POST {{baseUrl}}/api/maintenances
+Content-Type: application/json
+Accept: application/json
+
+{
+  "item_unit_id": 1,
+  "maintenance_date": "2026-08-07",
+  "description": "Perbaikan housing mikroskop akibat retakan",
+  "performed_by": "Teknik Laboratorium",
+  "cost": 750000,
+  "status": "selesai",
+  "notes": "Perbaikan selesai dengan baik"
+}
+
+### Get maintenance history for an item
+GET {{baseUrl}}/api/items/1/maintenances
+Accept: application/json
