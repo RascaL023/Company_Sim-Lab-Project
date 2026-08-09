@@ -1,7 +1,7 @@
 ### ============================================================
 ### Usages
 ### POST membuat Usage + StockMovement out_usage otomatis
-### verify/reject = admin only, method PATCH
+### verify/reject = laboran only, method PATCH
 ### ============================================================
 
 @baseUrl = {{baseUrl}}

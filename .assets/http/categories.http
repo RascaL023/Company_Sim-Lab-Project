@@ -1,5 +1,6 @@
 ### ============================================================
 ### Categories
+### Lihat: semua role | Kelola (POST/PATCH/DELETE): admin_sistem
 ### ============================================================
 
 @baseUrl = {{baseUrl}}
