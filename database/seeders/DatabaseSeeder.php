@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             CategorySeeder::class,
             ItemSeeder::class,
+            LocationSeeder::class,
             ItemUnitSeeder::class,
             BorrowingLifecycleSeeder::class,
             UsageLifecycleSeeder::class,

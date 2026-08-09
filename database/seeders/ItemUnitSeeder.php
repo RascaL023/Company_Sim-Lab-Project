@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Item;
 use App\Models\ItemUnit;
+use App\Models\Location;
 use Illuminate\Database\Seeder;
 
 class ItemUnitSeeder extends Seeder
@@ -22,6 +23,11 @@ class ItemUnitSeeder extends Seeder
             // Create 2-5 units per alat item
             $unitCount = rand(2, 5);
 
+            $locationId = null;
+            if ($item->location) {
+                $locationId = Location::firstOrCreateFromName($item->location)->id;
+            }
+
             for ($i = 1; $i <= $unitCount; $i++) {
                 $condition = $i === 1 ? 'baik' : fake()->randomElement(['baik', 'rusak_ringan', 'rusak_berat']);
 
@@ -30,7 +36,7 @@ class ItemUnitSeeder extends Seeder
                     'serial_number' => $item->code.'-'.str_pad($i, 3, '0', STR_PAD_LEFT),
                     'asset_tag' => 'AT-'.strtoupper($item->code).'-'.str_pad($i, 3, '0', STR_PAD_LEFT),
                     'condition' => $condition,
-                    'location' => $item->location,
+                    'location_id' => $locationId,
                     'purchase_date' => fake()->dateTimeBetween('-3 years', '-6 months'),
                     'last_calibration_date' => fake()->dateTimeBetween('-1 year', 'now'),
                     'next_calibration_date' => fake()->dateTimeBetween('now', '+1 year'),

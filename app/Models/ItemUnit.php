@@ -23,7 +23,7 @@ class ItemUnit extends Model
         'serial_number',
         'asset_tag',
         'condition',
-        'location',
+        'location_id',
         'purchase_date',
         'expiry_date',
         'next_calibration_date',
@@ -41,6 +41,7 @@ class ItemUnit extends Model
     {
         return [
             'condition' => 'string',
+            'location_id' => 'integer',
             'purchase_date' => 'date',
             'expiry_date' => 'date',
             'next_calibration_date' => 'date',
@@ -55,6 +56,14 @@ class ItemUnit extends Model
     public function item(): BelongsTo
     {
         return $this->belongsTo(Item::class);
+    }
+
+    /**
+     * Get the rack/room location for this unit.
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
     }
 
     /**

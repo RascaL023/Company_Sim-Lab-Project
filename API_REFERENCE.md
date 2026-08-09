@@ -22,6 +22,9 @@ Kontrak resmi untuk frontend. Base URL: `/api`. Semua path di bawah relatif terh
 | `POST /login` | `{ "token", "token_type", "user": { ... } }` | Envelope auth (token + profil); `user` = atribut UserResource (tanpa wrap `data` ganda) |
 | `POST /logout` | `204` | Tidak ada payload |
 | `GET .../attachments/{id}/download` | binary file | Bukan JSON |
+| `GET /reports/inventory?format=pdf\|excel` | binary PDF / Excel | Unduhan laporan, bukan JSON Resource |
+| `GET /reports/borrowings?format=pdf\|excel` | binary PDF / Excel | Unduhan laporan, bukan JSON Resource |
+| `GET /reports/damaged-assets?format=pdf\|excel` | binary PDF / Excel | Unduhan laporan, bukan JSON Resource |
 | `DELETE` / soft-cancel sukses | `204` | Tidak ada payload |
 | Guard / immutable ledger errors | `{ "message": "..." }` + `422`/`405` | Bukan resource entity |
 
@@ -31,7 +34,7 @@ Auth header untuk endpoint terproteksi:
 Authorization: Bearer {token}
 ```
 
-Role: `admin` | `staf`. Kolom status domain memakai bahasa Indonesia (lihat `SCHEMA_CHANGES.md`).
+Role: `admin_sistem` | `laboran` | `kepala_lab` | `peminjam`. Kolom status domain memakai bahasa Indonesia (lihat `SCHEMA_CHANGES.md`).
 
 ---
 
@@ -363,6 +366,34 @@ Resource: `AuditTrailResource` (`old_values` / `new_values` = changed fields saj
 | `GET` | `/attachments/{id}` | `AttachmentResource` |
 | `DELETE` | `/attachments/{id}` | `204` |
 | `GET` | `/attachments/{id}/download` | binary file |
+
+---
+
+## Reports
+
+Unduhan binary (PDF via DomPDF, Excel via Maatwebsite). Parameter wajib: `format=pdf|excel`.
+
+Akses: `kepala_lab`, `laboran`, `admin_sistem`. `peminjam` → `403`.
+
+| Method | Path | Query | Response |
+|--------|------|-------|----------|
+| `GET` | `/reports/inventory` | `format=pdf\|excel` | file `laporan-stok-inventaris.pdf/.xlsx` |
+| `GET` | `/reports/borrowings` | `format=pdf\|excel`, `from?`, `to?` (ISO date; filter `requested_at`) | file `laporan-riwayat-peminjaman.pdf/.xlsx` |
+| `GET` | `/reports/damaged-assets` | `format=pdf\|excel` | file `laporan-aset-rusak-hilang.pdf/.xlsx` |
+
+Contoh:
+
+```http
+GET /api/reports/inventory?format=pdf
+Authorization: Bearer {token}
+```
+
+```http
+GET /api/reports/borrowings?format=excel&from=2026-01-01&to=2026-01-31
+Authorization: Bearer {token}
+```
+
+Content-Type tipikal: `application/pdf` atau `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
 
 ---
 

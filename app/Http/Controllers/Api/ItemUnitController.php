@@ -13,10 +13,14 @@ class ItemUnitController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ItemUnit::with('item.calibrations', 'item.maintenances');
+        $query = ItemUnit::with(['item.calibrations', 'item.maintenances', 'location']);
 
         if ($request->filled('condition')) {
             $query->where('condition', $request->get('condition'));
+        }
+
+        if ($request->filled('location_id')) {
+            $query->where('location_id', $request->get('location_id'));
         }
 
         if ($request->filled('needs_calibration')) {
@@ -31,14 +35,23 @@ class ItemUnitController extends Controller
 
     public function show(ItemUnit $itemUnit)
     {
+        $itemUnit->load(['item', 'location']);
+
         return new ItemUnitResource($itemUnit);
     }
 
     public function update(Request $request, ItemUnit $itemUnit)
     {
-        $itemUnit->update($request->only([
-            'condition', 'location', 'notes', 'last_calibration_date', 'next_calibration_date',
-        ]));
+        $validated = $request->validate([
+            'condition' => 'sometimes|in:baik,rusak_ringan,rusak_berat,hilang,dihapus',
+            'location_id' => 'sometimes|nullable|exists:locations,id',
+            'notes' => 'sometimes|nullable|string',
+            'last_calibration_date' => 'sometimes|nullable|date',
+            'next_calibration_date' => 'sometimes|nullable|date',
+        ]);
+
+        $itemUnit->update($validated);
+        $itemUnit->load('location');
 
         return new ItemUnitResource($itemUnit);
     }

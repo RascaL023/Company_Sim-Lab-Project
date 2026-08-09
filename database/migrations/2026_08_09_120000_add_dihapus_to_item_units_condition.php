@@ -15,7 +15,7 @@ return new class extends Migration
         $driver = Schema::getConnection()->getDriverName();
 
         if ($driver === 'mysql') {
-            DB::statement("ALTER TABLE item_units MODIFY COLUMN condition ENUM('baik', 'rusak_ringan', 'rusak_berat', 'hilang', 'dihapus') NOT NULL DEFAULT 'baik'");
+            DB::statement("ALTER TABLE item_units MODIFY COLUMN `condition` ENUM('baik', 'rusak_ringan', 'rusak_berat', 'hilang', 'dihapus') NOT NULL DEFAULT 'baik'");
 
             return;
         }
@@ -57,7 +57,7 @@ return new class extends Migration
 
         if ($driver === 'mysql') {
             DB::table('item_units')->where('condition', 'dihapus')->update(['condition' => 'hilang']);
-            DB::statement("ALTER TABLE item_units MODIFY COLUMN condition ENUM('baik', 'rusak_ringan', 'rusak_berat', 'hilang') NOT NULL DEFAULT 'baik'");
+            DB::statement("ALTER TABLE item_units MODIFY COLUMN `condition` ENUM('baik', 'rusak_ringan', 'rusak_berat', 'hilang') NOT NULL DEFAULT 'baik'");
 
             return;
         }

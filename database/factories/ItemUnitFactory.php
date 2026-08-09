@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Item;
 use App\Models\ItemUnit;
+use App\Models\Location;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -24,7 +25,7 @@ class ItemUnitFactory extends Factory
             'serial_number' => fake()->unique()->bothify('SN-########'),
             'asset_tag' => fake()->unique()->bothify('AT-#####'),
             'condition' => fake()->randomElement(['baik', 'rusak_ringan', 'rusak_berat', 'hilang']),
-            'location' => fake()->randomElement(['Ruang Lab 1', 'Ruang Lab 2', 'Gudang A', 'Gudang B', 'Lokasi Luar']),
+            'location_id' => Location::factory(),
             'purchase_date' => fake()->dateTimeBetween('-5 years', 'now'),
             'expiry_date' => fake()->optional(0.3)->dateTimeBetween('now', '+3 years'),
             'next_calibration_date' => fake()->optional(0.7)->dateTimeBetween('now', '+1 year'),

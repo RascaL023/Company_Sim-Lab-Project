@@ -10,8 +10,10 @@ use App\Http\Controllers\Api\CalibrationController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ItemController;
 use App\Http\Controllers\Api\ItemUnitController;
+use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\MaintenanceController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\StockMovementController;
 use App\Http\Controllers\Api\StockOpnameController;
 use App\Http\Controllers\Api\UsageController;
@@ -52,6 +54,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Category API
     Route::apiResource('categories', CategoryController::class);
 
+    // Location (rack/room) master data
+    Route::apiResource('locations', LocationController::class);
+
     // Borrowing API
     Route::apiResource('borrowing-requests', BorrowingRequestController::class);
     Route::patch('borrowing-requests/{borrowingRequest}/approve', [BorrowingRequestController::class, 'approve']);
@@ -87,6 +92,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('asset-disposals', [AssetDisposalController::class, 'store']);
     Route::patch('asset-disposals/{assetDisposal}/approve', [AssetDisposalController::class, 'approve']);
     Route::patch('asset-disposals/{assetDisposal}/reject', [AssetDisposalController::class, 'reject']);
+
+    // Reports (PDF / Excel)
+    Route::get('reports/inventory', [ReportController::class, 'inventory']);
+    Route::get('reports/borrowings', [ReportController::class, 'borrowings']);
+    Route::get('reports/damaged-assets', [ReportController::class, 'damagedAssets']);
 
     // In-app notifications
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
