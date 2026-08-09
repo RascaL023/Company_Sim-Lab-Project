@@ -14,6 +14,7 @@ use App\Models\Usage;
 use App\Models\User;
 use App\Observers\AuditableObserver;
 use App\Observers\BorrowingItemObserver;
+use App\Observers\BorrowingRequestNotificationObserver;
 use App\Observers\StockMovementObserver;
 use App\Policies\AssetDisposalPolicy;
 use App\Policies\BorrowingItemPolicy;
@@ -50,6 +51,7 @@ class AppServiceProvider extends ServiceProvider
 
         StockMovement::observe(StockMovementObserver::class);
         BorrowingItem::observe(BorrowingItemObserver::class);
+        BorrowingRequest::observe(BorrowingRequestNotificationObserver::class);
 
         $auditableObserver = AuditableObserver::class;
 

@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ItemController;
 use App\Http\Controllers\Api\ItemUnitController;
 use App\Http\Controllers\Api\MaintenanceController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\StockMovementController;
 use App\Http\Controllers\Api\StockOpnameController;
 use App\Http\Controllers\Api\UsageController;
@@ -86,6 +87,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('asset-disposals', [AssetDisposalController::class, 'store']);
     Route::patch('asset-disposals/{assetDisposal}/approve', [AssetDisposalController::class, 'approve']);
     Route::patch('asset-disposals/{assetDisposal}/reject', [AssetDisposalController::class, 'reject']);
+
+    // In-app notifications
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::patch('notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 
     // Attachments API
     Route::apiResource('attachments', AttachmentController::class);
