@@ -67,6 +67,9 @@
                             </td>
                             <td class="table-td text-right">
                                 <div class="inline-flex items-center gap-1">
+                                    <a :href="`/items/${unit.item?.id}`" class="btn btn-ghost btn-sm" title="Lihat item">
+                                        <x-icon name="eye" class="h-3.5 w-3.5" />
+                                    </a>
                                     <template x-if="$store.auth.isAny(['laboran', 'admin_sistem'])">
                                         <button type="button" class="btn btn-ghost btn-sm" title="Ubah" @click="openEdit(unit)">
                                             <x-icon name="pencil" class="h-3.5 w-3.5" />

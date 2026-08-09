@@ -20,7 +20,7 @@ const blankItemForm = {
 export function itemsPage() {
     return {
         ...pagedList({ endpoint: '/items', perPage: 15 }),
-        filters: { search: '', type: '', low_stock: '', needs_calibration: '', expired: '' },
+        filters: { search: '', type: '', category_id: '', low_stock: '', needs_calibration: '', expired: '' },
         categories: [],
         formOpen: false,
         editId: null,
@@ -40,7 +40,7 @@ export function itemsPage() {
             this.load();
         },
         resetFilters() {
-            this.filters = { search: '', type: '', low_stock: '', needs_calibration: '', expired: '' };
+            this.filters = { search: '', type: '', category_id: '', low_stock: '', needs_calibration: '', expired: '' };
             this.query = { page: 1 };
             this.load();
         },
@@ -120,6 +120,11 @@ export function itemsPage() {
             }
         },
         init() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('category_id')) {
+                this.filters.category_id = params.get('category_id');
+                this.query = { ...this.query, category_id: this.filters.category_id, page: 1 };
+            }
             this.load();
             this.loadCategories();
         },
@@ -400,6 +405,11 @@ export function itemUnitsPage() {
             }
         },
         init() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('location_id')) {
+                this.filters.location_id = params.get('location_id');
+                this.query = { ...this.query, location_id: this.filters.location_id, page: 1 };
+            }
             this.load();
             this.loadLocations();
         },

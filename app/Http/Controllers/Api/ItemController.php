@@ -56,6 +56,9 @@ class ItemController extends Controller
                         ->orWhere('code', 'like', "%{$search}%")
                         ->orWhere('description', 'like', "%{$search}%");
                 });
+            })
+            ->when($request->filled('category_id'), function ($q) use ($request) {
+                return $q->where('category_id', $request->get('category_id'));
             });
 
         // Get sort parameters

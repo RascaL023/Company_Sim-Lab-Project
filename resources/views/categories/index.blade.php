@@ -48,6 +48,9 @@
                             <td class="table-td text-sm text-zinc-500" x-text="cat.description ?? '—'"></td>
                             <td class="table-td text-right">
                                 <div class="inline-flex items-center gap-1">
+                                    <a :href="`/items?category_id=${cat.id}`" class="btn btn-ghost btn-sm" title="Lihat item kategori ini">
+                                        <x-icon name="eye" class="h-3.5 w-3.5" />
+                                    </a>
                                     <template x-if="$store.auth.isAny(['admin_sistem'])">
                                         <button type="button" class="btn btn-ghost btn-sm" title="Ubah" @click="openEdit(cat)">
                                             <x-icon name="pencil" class="h-3.5 w-3.5" />

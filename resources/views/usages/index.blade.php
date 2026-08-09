@@ -61,6 +61,9 @@
                             </td>
                             <td class="table-td text-right">
                                 <div class="inline-flex items-center gap-1">
+                                    <a :href="`/items/${u.item?.id}`" class="btn btn-ghost btn-sm" title="Lihat item">
+                                        <x-icon name="eye" class="h-3.5 w-3.5" />
+                                    </a>
                                     <template x-if="u.status === 'dicatat' && $store.auth.isAny(['laboran'])">
                                         <button type="button" class="btn btn-ghost btn-sm !text-emerald-600 hover:!bg-emerald-50" title="Verifikasi" @click="verify(u)">
                                             <x-icon name="check" class="h-3.5 w-3.5" />

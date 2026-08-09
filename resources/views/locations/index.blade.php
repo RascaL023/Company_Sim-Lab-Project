@@ -42,6 +42,9 @@
                             <td class="table-td text-sm text-zinc-500" x-text="loc.description ?? '—'"></td>
                             <td class="table-td text-right">
                                 <div class="inline-flex items-center gap-1">
+                                    <a :href="`/item-units?location_id=${loc.id}`" class="btn btn-ghost btn-sm" title="Lihat unit di lokasi ini">
+                                        <x-icon name="eye" class="h-3.5 w-3.5" />
+                                    </a>
                                     <template x-if="$store.auth.isAny(['admin_sistem'])">
                                         <button type="button" class="btn btn-ghost btn-sm" title="Ubah" @click="openEdit(loc)">
                                             <x-icon name="pencil" class="h-3.5 w-3.5" />
