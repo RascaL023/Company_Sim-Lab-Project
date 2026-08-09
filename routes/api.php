@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AssetDisposalController;
 use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\AuditTrailController;
 use App\Http\Controllers\Api\AuthController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Api\ItemController;
 use App\Http\Controllers\Api\ItemUnitController;
 use App\Http\Controllers\Api\MaintenanceController;
 use App\Http\Controllers\Api\StockMovementController;
+use App\Http\Controllers\Api\StockOpnameController;
 use App\Http\Controllers\Api\UsageController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -59,6 +61,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Stock Movements API
     Route::apiResource('stock-movements', StockMovementController::class);
+    Route::post('stock-opname', [StockOpnameController::class, 'store']);
 
     // Usages API
     Route::apiResource('usages', UsageController::class);
@@ -78,6 +81,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Audit Trails API
     Route::get('audit-trails/recent', [AuditTrailController::class, 'recent']);
     Route::apiResource('audit-trails', AuditTrailController::class)->only(['index', 'show']);
+
+    // Asset disposals (write-off approval)
+    Route::post('asset-disposals', [AssetDisposalController::class, 'store']);
+    Route::patch('asset-disposals/{assetDisposal}/approve', [AssetDisposalController::class, 'approve']);
+    Route::patch('asset-disposals/{assetDisposal}/reject', [AssetDisposalController::class, 'reject']);
 
     // Attachments API
     Route::apiResource('attachments', AttachmentController::class);
