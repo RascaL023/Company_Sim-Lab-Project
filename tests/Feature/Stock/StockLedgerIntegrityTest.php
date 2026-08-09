@@ -31,7 +31,7 @@ class StockLedgerIntegrityTest extends TestCase
             ])
             ->assertCreated();
 
-        $usageId = $response->json('data.id') ?? $response->json('id');
+        $usageId = $response->json('data.id');
 
         $this->assertDatabaseHas('stock_movements', [
             'item_id' => $item->id,
@@ -127,7 +127,7 @@ class StockLedgerIntegrityTest extends TestCase
             ])
             ->assertCreated();
 
-        $movementId = $create->json('data.id') ?? $create->json('id');
+        $movementId = $create->json('data.id');
         $originalQuantity = (float) StockMovement::findOrFail($movementId)->quantity;
 
         $this->withToken($token)

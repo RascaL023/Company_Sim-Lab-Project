@@ -23,7 +23,9 @@ class StockMovementController extends Controller
             $query->where('item_id', $request->get('item_id'));
         }
 
-        return $query->orderBy('occurred_at', 'desc')->paginate($request->query('per_page', 15));
+        return StockMovementResource::collection(
+            $query->orderBy('occurred_at', 'desc')->paginate($request->query('per_page', 15))
+        );
     }
 
     public function store(Request $request)

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AuditTrailResource;
 use App\Models\AuditTrail;
 use Illuminate\Http\Request;
 
@@ -28,19 +29,24 @@ class AuditTrailController extends Controller
             $query->where('user_id', $request->get('user_id'));
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($request->query('per_page', 50));
+        $audits = $query->orderBy('created_at', 'desc')
+            ->paginate($request->query('per_page', 50));
+
+        return AuditTrailResource::collection($audits);
     }
 
     public function show(AuditTrail $auditTrail)
     {
-        return $auditTrail;
+        return new AuditTrailResource($auditTrail->load(['user', 'auditable']));
     }
 
     public function recent(Request $request)
     {
-        return AuditTrail::with(['user', 'auditable'])
+        $audits = AuditTrail::with(['user', 'auditable'])
             ->orderBy('created_at', 'desc')
             ->limit($request->get('limit', 20))
             ->get();
+
+        return AuditTrailResource::collection($audits);
     }
 }

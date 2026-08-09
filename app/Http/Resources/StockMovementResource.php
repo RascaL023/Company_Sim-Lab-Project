@@ -17,7 +17,7 @@ class StockMovementResource extends JsonResource
             'quantity' => $this->quantity,
             'quantity_before' => $this->quantity_before,
             'quantity_after' => $this->quantity_after,
-            'performed_by' => new UserResource($this->whenLoaded('performedBy')),
+            'performed_by' => new UserResource($this->whenLoaded('performer')),
             'notes' => $this->notes,
             'occurred_at' => $this->occurred_at,
         ];

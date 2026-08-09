@@ -41,7 +41,7 @@ class AutomaticAuditTrailTest extends TestCase
             ])
             ->assertCreated();
 
-        $borrowingRequestId = $createResponse->json('data.id') ?? $createResponse->json('id');
+        $borrowingRequestId = $createResponse->json('data.id');
 
         $this->assertDatabaseHas('audit_trails', [
             'action' => 'created',
@@ -73,7 +73,7 @@ class AutomaticAuditTrailTest extends TestCase
             ])
             ->assertCreated();
 
-        $usageId = $usageResponse->json('data.id') ?? $usageResponse->json('id');
+        $usageId = $usageResponse->json('data.id');
 
         $this->actingAsUser($admin)
             ->patchJson("/api/usages/{$usageId}/verify")

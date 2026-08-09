@@ -17,7 +17,9 @@ class MaintenanceController extends Controller
             $query->where('status', $request->get('status'));
         }
 
-        return $query->orderBy('maintenance_date', 'desc')->paginate($request->query('per_page', 15));
+        return MaintenanceResource::collection(
+            $query->orderBy('maintenance_date', 'desc')->paginate($request->query('per_page', 15))
+        );
     }
 
     public function store(Request $request)

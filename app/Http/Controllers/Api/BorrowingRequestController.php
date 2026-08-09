@@ -14,10 +14,12 @@ class BorrowingRequestController extends Controller
     {
         Gate::authorize('viewAny', BorrowingRequest::class);
 
-        return BorrowingRequest::with(['requestedBy', 'approvedBy', 'items.item'])
-            ->when(! $request->user()->isAdmin(), fn ($q) => $q->where('requested_by', $request->user()->id))
-            ->when($request->filled('status'), fn ($q, $s) => $q->where('status', $s))
-            ->paginate($request->query('per_page', 15));
+        return BorrowingRequestResource::collection(
+            BorrowingRequest::with(['requestedBy', 'approvedBy', 'items.item'])
+                ->when(! $request->user()->isAdmin(), fn ($q) => $q->where('requested_by', $request->user()->id))
+                ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))
+                ->paginate($request->query('per_page', 15))
+        );
     }
 
     public function store(Request $request)

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CalibrationResource;
 use App\Http\Resources\ItemUnitResource;
+use App\Http\Resources\MaintenanceResource;
 use App\Models\ItemUnit;
 use Illuminate\Http\Request;
 
@@ -22,7 +24,9 @@ class ItemUnitController extends Controller
                 ->where('next_calibration_date', '<=', now()->addDays(30));
         }
 
-        return $query->paginate($request->query('per_page', 15));
+        return ItemUnitResource::collection(
+            $query->paginate($request->query('per_page', 15))
+        );
     }
 
     public function show(ItemUnit $itemUnit)
@@ -48,11 +52,15 @@ class ItemUnitController extends Controller
 
     public function calibrations(ItemUnit $itemUnit)
     {
-        return $itemUnit->calibrations()->paginate(15);
+        return CalibrationResource::collection(
+            $itemUnit->calibrations()->paginate(15)
+        );
     }
 
     public function maintenances(ItemUnit $itemUnit)
     {
-        return $itemUnit->maintenances()->paginate(15);
+        return MaintenanceResource::collection(
+            $itemUnit->maintenances()->paginate(15)
+        );
     }
 }

@@ -56,8 +56,7 @@ class StockMovementSeeder extends Seeder
                 $quantityBefore = $item->stock_quantity - $quantity; // Simulate what it was before
                 $quantityAfter = $quantityBefore + $quantity;
 
-                // Create stock movement
-                StockMovement::create([
+                $movement = StockMovement::create([
                     'item_id' => $item->id,
                     'item_unit_id' => null,
                     'type' => 'in_purchase',
@@ -78,13 +77,12 @@ class StockMovementSeeder extends Seeder
                     $item->update(['stock_quantity' => $quantityAfter]);
                 }
 
-                // Create audit trail
                 AuditTrail::create([
                     'user_id' => $staff->id,
                     'auditable_type' => StockMovement::class,
-                    'auditable_id' => StockMovement::latest()->first()->id,
+                    'auditable_id' => $movement->id,
                     'action' => 'created',
-                    'new_values' => StockMovement::latest()->first()->toArray(),
+                    'new_values' => $movement->toArray(),
                 ]);
             }
         }
@@ -115,8 +113,7 @@ class StockMovementSeeder extends Seeder
                 $quantityBefore = $item->stock_quantity; // For alat, stock is conceptual
                 $quantityAfter = $quantityBefore + $quantity;
 
-                // Create stock movement
-                StockMovement::create([
+                $movement = StockMovement::create([
                     'item_id' => $item->id,
                     'item_unit_id' => $unit->id,
                     'type' => 'in_return',
@@ -130,13 +127,12 @@ class StockMovementSeeder extends Seeder
                     'occurred_at' => fake()->dateTimeBetween('-3 months', 'now'),
                 ]);
 
-                // Create audit trail
                 AuditTrail::create([
                     'user_id' => $staff->id,
                     'auditable_type' => StockMovement::class,
-                    'auditable_id' => StockMovement::latest()->first()->id,
+                    'auditable_id' => $movement->id,
                     'action' => 'created',
-                    'new_values' => StockMovement::latest()->first()->toArray(),
+                    'new_values' => $movement->toArray(),
                 ]);
             }
         }
@@ -159,8 +155,7 @@ class StockMovementSeeder extends Seeder
                     ? $quantityBefore + $quantity
                     : max(0, $quantityBefore - $quantity);
 
-                // Create stock movement
-                StockMovement::create([
+                $movement = StockMovement::create([
                     'item_id' => $item->id,
                     'item_unit_id' => null,
                     'type' => $adjustmentType,
@@ -175,16 +170,14 @@ class StockMovementSeeder extends Seeder
                     'occurred_at' => fake()->dateTimeBetween('-2 months', 'now'),
                 ]);
 
-                // Update item stock
                 $item->update(['stock_quantity' => $quantityAfter]);
 
-                // Create audit trail
                 AuditTrail::create([
                     'user_id' => $admin->id,
                     'auditable_type' => StockMovement::class,
-                    'auditable_id' => StockMovement::latest()->first()->id,
+                    'auditable_id' => $movement->id,
                     'action' => 'created',
-                    'new_values' => StockMovement::latest()->first()->toArray(),
+                    'new_values' => $movement->toArray(),
                 ]);
             }
         }
@@ -202,8 +195,7 @@ class StockMovementSeeder extends Seeder
                 $quantityBefore = $item->stock_quantity;
                 $quantityAfter = max(0, $quantityBefore - $quantity);
 
-                // Create stock movement
-                StockMovement::create([
+                $movement = StockMovement::create([
                     'item_id' => $item->id,
                     'item_unit_id' => null,
                     'type' => 'out_disposal',
@@ -217,16 +209,14 @@ class StockMovementSeeder extends Seeder
                     'occurred_at' => fake()->dateTimeBetween('-1 month', 'now'),
                 ]);
 
-                // Update item stock
                 $item->update(['stock_quantity' => $quantityAfter]);
 
-                // Create audit trail
                 AuditTrail::create([
                     'user_id' => $admin->id,
                     'auditable_type' => StockMovement::class,
-                    'auditable_id' => StockMovement::latest()->first()->id,
+                    'auditable_id' => $movement->id,
                     'action' => 'created',
-                    'new_values' => StockMovement::latest()->first()->toArray(),
+                    'new_values' => $movement->toArray(),
                 ]);
             }
         }
@@ -244,8 +234,7 @@ class StockMovementSeeder extends Seeder
                 $quantityBefore = $item->stock_quantity;
                 $quantityAfter = $quantityBefore - $quantity; // Outgoing transfer
 
-                // Create outgoing transfer
-                StockMovement::create([
+                $movement = StockMovement::create([
                     'item_id' => $item->id,
                     'item_unit_id' => null,
                     'type' => 'transfer_out',
@@ -259,16 +248,14 @@ class StockMovementSeeder extends Seeder
                     'occurred_at' => fake()->dateTimeBetween('-2 months', 'now'),
                 ]);
 
-                // Update item stock
                 $item->update(['stock_quantity' => $quantityAfter]);
 
-                // Create audit trail
                 AuditTrail::create([
                     'user_id' => $staff->id,
                     'auditable_type' => StockMovement::class,
-                    'auditable_id' => StockMovement::latest()->first()->id,
+                    'auditable_id' => $movement->id,
                     'action' => 'created',
-                    'new_values' => StockMovement::latest()->first()->toArray(),
+                    'new_values' => $movement->toArray(),
                 ]);
             }
         });

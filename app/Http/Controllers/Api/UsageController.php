@@ -30,7 +30,9 @@ class UsageController extends Controller
             $query->where('item_id', $request->get('item_id'));
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($request->query('per_page', 15));
+        return UsageResource::collection(
+            $query->orderBy('created_at', 'desc')->paginate($request->query('per_page', 15))
+        );
     }
 
     public function store(Request $request)

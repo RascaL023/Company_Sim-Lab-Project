@@ -17,7 +17,9 @@ class CalibrationController extends Controller
             $query->where('next_calibration_date', '<=', now()->addDays(30));
         }
 
-        return $query->orderBy('calibration_date', 'desc')->paginate($request->query('per_page', 15));
+        return CalibrationResource::collection(
+            $query->orderBy('calibration_date', 'desc')->paginate($request->query('per_page', 15))
+        );
     }
 
     public function store(Request $request)

@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\ItemUnitController;
 use App\Http\Controllers\Api\MaintenanceController;
 use App\Http\Controllers\Api\StockMovementController;
 use App\Http\Controllers\Api\UsageController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,6 +32,9 @@ Route::post('/login', [AuthController::class, 'login'])
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // User management (admin only)
+    Route::apiResource('users', UserController::class);
 
     // Item API endpoints
     Route::apiResource('items', ItemController::class);
@@ -72,8 +76,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('maintenances', MaintenanceController::class);
 
     // Audit Trails API
-    Route::apiResource('audit-trails', AuditTrailController::class);
     Route::get('audit-trails/recent', [AuditTrailController::class, 'recent']);
+    Route::apiResource('audit-trails', AuditTrailController::class)->only(['index', 'show']);
 
     // Attachments API
     Route::apiResource('attachments', AttachmentController::class);

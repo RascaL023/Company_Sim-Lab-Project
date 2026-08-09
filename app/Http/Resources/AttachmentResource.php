@@ -21,7 +21,7 @@ class AttachmentResource extends JsonResource
             'size_human' => $this->file_size ? round($this->file_size / 1024, 2).' KB' : null,
             'disk' => $this->disk,
             'description' => $this->description,
-            'uploaded_by' => new UserResource($this->whenLoaded('uploadedBy')),
+            'uploaded_by' => new UserResource($this->whenLoaded('uploader')),
             'created_at' => $this->created_at,
         ];
     }
