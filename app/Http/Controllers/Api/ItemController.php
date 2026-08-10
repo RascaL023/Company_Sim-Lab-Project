@@ -14,7 +14,12 @@ use App\Http\Resources\MaintenanceResource;
 use App\Http\Resources\StockMovementResource;
 use App\Http\Resources\UsageResource;
 use App\Models\AuditTrail;
+use App\Models\BorrowingItem;
 use App\Models\Item;
+use App\Models\ItemCalibration;
+use App\Models\ItemMaintenance;
+use App\Models\StockMovement;
+use App\Models\Usage;
 use Illuminate\Http\Request;
 
 class ItemController extends Controller
@@ -172,9 +177,36 @@ class ItemController extends Controller
 
     public function auditTrails(Item $item, Request $request)
     {
+        $unitIds = $item->units()->pluck('id');
+
         $audits = AuditTrail::query()
-            ->where('auditable_type', Item::class)
-            ->where('auditable_id', $item->id)
+            ->where(function ($query) use ($item, $unitIds) {
+                $query
+                    ->where(function ($q) use ($item) {
+                        $q->where('auditable_type', Item::class)
+                            ->where('auditable_id', $item->id);
+                    })
+                    ->orWhere(function ($q) use ($item) {
+                        $q->where('auditable_type', BorrowingItem::class)
+                            ->whereIn('auditable_id', BorrowingItem::query()->select('id')->where('item_id', $item->id));
+                    })
+                    ->orWhere(function ($q) use ($item) {
+                        $q->where('auditable_type', Usage::class)
+                            ->whereIn('auditable_id', Usage::query()->select('id')->where('item_id', $item->id));
+                    })
+                    ->orWhere(function ($q) use ($item) {
+                        $q->where('auditable_type', StockMovement::class)
+                            ->whereIn('auditable_id', StockMovement::query()->select('id')->where('item_id', $item->id));
+                    })
+                    ->orWhere(function ($q) use ($unitIds) {
+                        $q->where('auditable_type', ItemCalibration::class)
+                            ->whereIn('auditable_id', ItemCalibration::query()->select('id')->whereIn('item_unit_id', $unitIds));
+                    })
+                    ->orWhere(function ($q) use ($unitIds) {
+                        $q->where('auditable_type', ItemMaintenance::class)
+                            ->whereIn('auditable_id', ItemMaintenance::query()->select('id')->whereIn('item_unit_id', $unitIds));
+                    });
+            })
             ->with('user')
             ->orderBy('created_at', 'desc')
             ->paginate($request->query('per_page', 15));

@@ -36,17 +36,23 @@ class BorrowingLifecycleSeeder extends Seeder
             return;
         }
 
-        // Scenario 1: Normal borrowing and return
+        // Scenario 1: Normal borrowing and return (fully completed)
         $this->createNormalBorrowingCycle($alatItemsWithUnits, $admin, $staff);
 
-        // Scenario 2: Borrowing with damage -> maintenance record
+        // Scenario 2: Borrowing with damage -> maintenance record (fully completed)
         $this->createDamageBorrowingCycle($alatItemsWithUnits, $admin, $staff);
 
-        // Scenario 3: Overdue borrowing
+        // Scenario 3: Overdue borrowing (checked out, not yet returned)
         $this->createOverdueBorrowing($alatItemsWithUnits, $admin, $staff);
 
         // Scenario 4: Request rejected
         $this->createRejectedRequest($alatItemsWithUnits, $admin, $staff);
+
+        // Scenario 5: Request pending approval (never processed)
+        $this->createPendingRequest($alatItemsWithUnits, $admin, $staff);
+
+        // Scenario 6: Approved request whose items are not yet checked out
+        $this->createApprovedNotCheckedOutRequest($alatItemsWithUnits, $admin, $staff);
 
         $this->command->info('Created borrowing lifecycle records');
     }
@@ -67,7 +73,7 @@ class BorrowingLifecycleSeeder extends Seeder
             'request_number' => 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999)),
             'requested_by' => $staff->id,
             'approved_by' => $admin->id,
-            'status' => 'disetujui',
+            'status' => 'selesai',
             'purpose' => 'Pengujian rutin bahan kimia',
             'requested_at' => now()->subDays(5),
             'approved_at' => now()->subDays(4),
@@ -159,7 +165,7 @@ class BorrowingLifecycleSeeder extends Seeder
             'request_number' => 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999)),
             'requested_by' => $staff->id,
             'approved_by' => $admin->id,
-            'status' => 'disetujui',
+            'status' => 'selesai',
             'purpose' => 'Pengujian bahan korosif',
             'requested_at' => now()->subDays(10),
             'approved_at' => now()->subDays(9),
@@ -379,5 +385,112 @@ class BorrowingLifecycleSeeder extends Seeder
         ]);
 
         $this->command->info('Created rejected borrowing request');
+    }
+
+    /**
+     * Create a request that was just submitted and never processed
+     * (for demoing the Approve/Reject buttons).
+     */
+    private function createPendingRequest($alatItems, $admin, $staff)
+    {
+        $item = $alatItems->random();
+        $unit = $item->units()->where('condition', 'baik')->first();
+
+        if (! $unit) {
+            return;
+        }
+
+        $request = BorrowingRequest::create([
+            'request_number' => 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999)),
+            'requested_by' => $staff->id,
+            'status' => 'diajukan',
+            'purpose' => 'Pengujian sampel air untuk praktikum lingkungan',
+            'requested_at' => now()->subHours(3),
+        ]);
+
+        BorrowingItem::create([
+            'borrowing_request_id' => $request->id,
+            'item_id' => $item->id,
+            'item_unit_id' => $unit->id,
+            'quantity' => 1,
+            'condition_before' => 'baik',
+            'condition_after' => null,
+            'is_damaged' => false,
+            'borrow_date' => null,
+            'expected_return_date' => null,
+            'actual_return_date' => null,
+            'checked_by' => null,
+            'checked_at' => null,
+            'check_notes' => null,
+        ]);
+
+        AuditTrail::create([
+            'user_id' => $staff->id,
+            'auditable_type' => BorrowingRequest::class,
+            'auditable_id' => $request->id,
+            'action' => 'created',
+            'new_values' => $request->toArray(),
+        ]);
+
+        $this->command->info('Created pending borrowing request');
+    }
+
+    /**
+     * Create an approved request whose items are not yet checked out
+     * (for demoing the Checkout button).
+     */
+    private function createApprovedNotCheckedOutRequest($alatItems, $admin, $staff)
+    {
+        $item = $alatItems->random();
+        $unit = $item->units()->where('condition', 'baik')->first();
+
+        if (! $unit) {
+            return;
+        }
+
+        $request = BorrowingRequest::create([
+            'request_number' => 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999)),
+            'requested_by' => $staff->id,
+            'approved_by' => $admin->id,
+            'status' => 'disetujui',
+            'purpose' => 'Pengukuran spektrofotometri sampel laboratorium',
+            'requested_at' => now()->subDay(),
+            'approved_at' => now()->subHours(6),
+        ]);
+
+        BorrowingItem::create([
+            'borrowing_request_id' => $request->id,
+            'item_id' => $item->id,
+            'item_unit_id' => $unit->id,
+            'quantity' => 1,
+            'condition_before' => 'baik',
+            'condition_after' => null,
+            'is_damaged' => false,
+            'borrow_date' => null,
+            'expected_return_date' => null,
+            'actual_return_date' => null,
+            'checked_by' => null,
+            'checked_at' => null,
+            'check_notes' => null,
+        ]);
+
+        AuditTrail::create([
+            'user_id' => $staff->id,
+            'auditable_type' => BorrowingRequest::class,
+            'auditable_id' => $request->id,
+            'action' => 'created',
+            'new_values' => $request->toArray(),
+        ]);
+
+        AuditTrail::create([
+            'user_id' => $admin->id,
+            'auditable_type' => BorrowingRequest::class,
+            'auditable_id' => $request->id,
+            'action' => 'approved',
+            'old_values' => ['status' => 'diajukan'],
+            'new_values' => ['status' => 'disetujui'],
+        ]);
+
+        $this->command->info('Created approved borrowing request awaiting checkout');
     }
 }

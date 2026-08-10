@@ -6,6 +6,7 @@ use App\Models\AssetDisposal;
 use App\Models\BorrowingItem;
 use App\Models\BorrowingRequest;
 use App\Models\Category;
+use App\Models\Item;
 use App\Models\ItemCalibration;
 use App\Models\ItemMaintenance;
 use App\Models\Location;
@@ -60,6 +61,7 @@ class AppServiceProvider extends ServiceProvider
 
         $auditableObserver = AuditableObserver::class;
 
+        Item::observe($auditableObserver);
         BorrowingRequest::observe($auditableObserver);
         BorrowingItem::observe($auditableObserver);
         Usage::observe($auditableObserver);

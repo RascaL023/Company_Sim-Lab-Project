@@ -33,7 +33,7 @@
                             </span>
                             <span x-show="item.is_low_stock" class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">Stok menipis</span>
                             <span x-show="item.is_expired" class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">Kedaluwarsa</span>
-                            <span x-show="item.needs_calibration" class="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 ring-1 ring-inset ring-violet-600/20">Perlu kalibrasi</span>
+                            <span x-show="item.is_alat && item.needs_calibration" class="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 ring-1 ring-inset ring-violet-600/20">Perlu kalibrasi</span>
                         </div>
                         <h1 class="mt-3 font-display text-2xl font-bold tracking-tight text-zinc-900" x-text="item.name"></h1>
                         <p class="mt-1 text-sm text-zinc-500" x-text="item.category?.name"></p>
@@ -74,11 +74,11 @@
 
             <div class="mt-6">
                 <div class="flex flex-wrap gap-1 border-b border-zinc-100">
-                    <button type="button" @click="setTab('units')" class="px-4 py-2.5 text-sm font-medium transition" :class="tab === 'units' ? 'border-b-2 border-brand-600 text-brand-700' : 'text-zinc-500 hover:text-zinc-800'">Unit</button>
+                    <button type="button" x-show="item.is_alat" @click="setTab('units')" class="px-4 py-2.5 text-sm font-medium transition" :class="tab === 'units' ? 'border-b-2 border-brand-600 text-brand-700' : 'text-zinc-500 hover:text-zinc-800'">Unit</button>
                     <button type="button" @click="setTab('movements')" class="px-4 py-2.5 text-sm font-medium transition" :class="tab === 'movements' ? 'border-b-2 border-brand-600 text-brand-700' : 'text-zinc-500 hover:text-zinc-800'">Mutasi Stok</button>
                     <button type="button" @click="setTab('usages')" class="px-4 py-2.5 text-sm font-medium transition" :class="tab === 'usages' ? 'border-b-2 border-brand-600 text-brand-700' : 'text-zinc-500 hover:text-zinc-800'">Pemakaian</button>
-                    <button type="button" @click="setTab('calibrations')" class="px-4 py-2.5 text-sm font-medium transition" :class="tab === 'calibrations' ? 'border-b-2 border-brand-600 text-brand-700' : 'text-zinc-500 hover:text-zinc-800'">Kalibrasi</button>
-                    <button type="button" @click="setTab('maintenances')" class="px-4 py-2.5 text-sm font-medium transition" :class="tab === 'maintenances' ? 'border-b-2 border-brand-600 text-brand-700' : 'text-zinc-500 hover:text-zinc-800'">Perawatan</button>
+                    <button type="button" x-show="item.is_alat" @click="setTab('calibrations')" class="px-4 py-2.5 text-sm font-medium transition" :class="tab === 'calibrations' ? 'border-b-2 border-brand-600 text-brand-700' : 'text-zinc-500 hover:text-zinc-800'">Kalibrasi</button>
+                    <button type="button" x-show="item.is_alat" @click="setTab('maintenances')" class="px-4 py-2.5 text-sm font-medium transition" :class="tab === 'maintenances' ? 'border-b-2 border-brand-600 text-brand-700' : 'text-zinc-500 hover:text-zinc-800'">Perawatan</button>
                     <button type="button" @click="setTab('audit')" class="px-4 py-2.5 text-sm font-medium transition" :class="tab === 'audit' ? 'border-b-2 border-brand-600 text-brand-700' : 'text-zinc-500 hover:text-zinc-800'">Audit Trail</button>
                 </div>
 

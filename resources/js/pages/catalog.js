@@ -179,8 +179,9 @@ export function itemDetailPage(opts = {}) {
         setTabPage(p) {
             this.loadTab(p);
         },
-        init() {
-            this.loadItem();
+        async init() {
+            await this.loadItem();
+            this.tab = this.item?.is_bahan ? 'movements' : 'units';
             this.loadTab(1);
         },
     };
