@@ -28,30 +28,22 @@
             </div>
 
             <div class="relative">
-                <p class="font-display text-4xl font-bold leading-tight tracking-tight text-white">
-                    Inventarisasi, peminjaman,<br />
-                    dan mutasi alat lab<br />
-                    <span class="bg-gradient-to-r from-brand-200 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">dalam satu tempat.</span>
-                </p>
-                <p class="mt-5 max-w-md text-[15px] leading-relaxed text-brand-100/70">
-                    SIMLab mencatat seluruh siklus hidup aset laboratorium — dari katalog, kalibrasi, pemakaian, hingga audit trail — sesuai standar GLP.
-                </p>
-            </div>
+                <div class="flex items-center justify-center gap-4">
+                    <img src="{{ asset('images/login-1.jpeg') }}" alt="Foto laboratorium" class="h-40 w-44 rounded-2xl object-cover shadow-xl ring-1 ring-white/15" />
+                    <img src="{{ asset('images/login-3.jpeg') }}" alt="Foto laboratorium" class="h-40 w-44 rounded-2xl object-cover shadow-xl ring-1 ring-white/15" />
+                    <img src="{{ asset('images/login-2.jpeg') }}" alt="Foto laboratorium" class="h-40 w-44 rounded-2xl object-cover shadow-xl ring-1 ring-white/15" />
+                </div>
 
-            <div class="relative grid grid-cols-3 gap-4">
-                @php
-                    $features = [
-                        ['value' => 'Katalog', 'label' => 'Alat & bahan terpusat'],
-                        ['value' => 'Audit', 'label' => 'Setiap aksi tercatat'],
-                        ['value' => 'Laporan', 'label' => 'PDF & Excel siap unduh'],
-                    ];
-                @endphp
-                @foreach ($features as $feature)
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                        <p class="font-display text-sm font-semibold text-white">{{ $feature['value'] }}</p>
-                        <p class="mt-1 text-xs leading-snug text-brand-100/60">{{ $feature['label'] }}</p>
-                    </div>
-                @endforeach
+                <div class="mt-10">
+                    <p class="font-display text-4xl font-bold leading-tight tracking-tight text-white">
+                        Inventarisasi, peminjaman,<br />
+                        dan mutasi alat lab<br />
+                        <span class="bg-gradient-to-r from-brand-200 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">dalam satu tempat.</span>
+                    </p>
+                    <p class="mt-5 max-w-md text-[15px] leading-relaxed text-brand-100/70">
+                        SIMLab mencatat seluruh siklus hidup aset laboratorium — dari katalog, kalibrasi, pemakaian, hingga audit trail — sesuai standar GLP.
+                    </p>
+                </div>
             </div>
         </div>
 
