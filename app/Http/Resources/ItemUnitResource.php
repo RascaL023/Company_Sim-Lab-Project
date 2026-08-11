@@ -25,6 +25,7 @@ class ItemUnitResource extends JsonResource
             'is_good' => $this->condition === 'baik',
             'needs_calibration' => $this->needsCalibration(),
             'is_expired' => $this->expiry_date?->isPast(),
+            'is_borrowed' => $this->is_borrowed,
         ];
     }
 }

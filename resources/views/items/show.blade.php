@@ -137,6 +137,7 @@
                                     <th class="table-th">Kondisi</th>
                                     <th class="table-th">Lokasi</th>
                                     <th class="table-th">Status</th>
+                                    <th class="table-th text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-zinc-100">
@@ -154,10 +155,18 @@
                                         <td class="table-td text-sm text-zinc-600" x-text="u.location?.name ?? '—'"></td>
                                         <td class="table-td">
                                             <div class="flex flex-wrap gap-1">
+                                                <span x-show="u.is_borrowed" class="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">Dipinjam</span>
                                                 <span x-show="u.needs_calibration" class="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 ring-1 ring-inset ring-violet-600/20">Kalibrasi</span>
                                                 <span x-show="u.is_expired" class="rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">Expired</span>
-                                                <span x-show="!u.needs_calibration && !u.is_expired" class="text-xs text-zinc-400">Normal</span>
+                                                <span x-show="!u.is_borrowed && !u.needs_calibration && !u.is_expired" class="text-xs text-zinc-400">Tersedia</span>
                                             </div>
+                                        </td>
+                                        <td class="table-td text-right">
+                                            <template x-if="$store.auth.isAny(['laboran', 'admin_sistem'])">
+                                                <button type="button" class="btn btn-ghost btn-sm" title="Ubah" @click="openUnitEdit(u)">
+                                                    <x-icon name="pencil" class="h-3.5 w-3.5" />
+                                                </button>
+                                            </template>
                                         </td>
                                     </tr>
                                 </template>
@@ -392,6 +401,59 @@
                 <button type="submit" class="btn btn-primary" :disabled="unitSaving">
                     <span x-show="unitSaving" class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
                     <span>Tambah Unit</span>
+                </button>
+            </div>
+        </form>
+    </x-modal>
+
+    {{-- Edit Unit modal (alat) --}}
+    <x-modal open="unitEditOpen" title="Ubah Unit" subtitle="Perbarui kondisi, lokasi, dan catatan unit." maxWidth="max-w-2xl">
+        <form class="grid grid-cols-1 gap-4 sm:grid-cols-2" @submit.prevent="saveUnitEdit()">
+            <div class="sm:col-span-2">
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Serial number</label>
+                <input type="text" class="input bg-zinc-50" :value="tabItems.find(u => u.id === editUnitId)?.serial_number || tabItems.find(u => u.id === editUnitId)?.asset_tag || '—'" disabled />
+            </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Kondisi</label>
+                <select x-model="unitEditForm.condition" :class="unitEditErrors.condition ? 'input input-error' : 'input'">
+                    <option value="baik">Baik</option>
+                    <option value="rusak_ringan">Rusak ringan</option>
+                    <option value="rusak_berat">Rusak berat</option>
+                    <option value="hilang">Hilang</option>
+                    <option value="dihapus">Dihapus</option>
+                </select>
+                <p x-show="unitEditErrors.condition" class="mt-1 text-xs text-rose-600" x-text="unitEditErrors.condition?.[0]"></p>
+            </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Lokasi</label>
+                <select x-model="unitEditForm.location_id" :class="unitEditErrors.location_id ? 'input input-error' : 'input'">
+                    <option value="">— Tanpa lokasi —</option>
+                    <template x-for="loc in locations" :key="loc.id">
+                        <option :value="loc.id" x-text="loc.name"></option>
+                    </template>
+                </select>
+                <p x-show="unitEditErrors.location_id" class="mt-1 text-xs text-rose-600" x-text="unitEditErrors.location_id?.[0]"></p>
+            </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Kalibrasi terakhir</label>
+                <input type="date" x-model="unitEditForm.last_calibration_date" :class="unitEditErrors.last_calibration_date ? 'input input-error' : 'input'" />
+                <p x-show="unitEditErrors.last_calibration_date" class="mt-1 text-xs text-rose-600" x-text="unitEditErrors.last_calibration_date?.[0]"></p>
+            </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Kalibrasi berikutnya</label>
+                <input type="date" x-model="unitEditForm.next_calibration_date" :class="unitEditErrors.next_calibration_date ? 'input input-error' : 'input'" />
+                <p x-show="unitEditErrors.next_calibration_date" class="mt-1 text-xs text-rose-600" x-text="unitEditErrors.next_calibration_date?.[0]"></p>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Catatan</label>
+                <textarea x-model="unitEditForm.notes" rows="3" :class="unitEditErrors.notes ? 'input input-error' : 'input'" placeholder="Catatan unit..."></textarea>
+                <p x-show="unitEditErrors.notes" class="mt-1 text-xs text-rose-600" x-text="unitEditErrors.notes?.[0]"></p>
+            </div>
+            <div class="flex justify-end gap-2 sm:col-span-2">
+                <button type="button" class="btn btn-secondary" @click="unitEditOpen = false">Batal</button>
+                <button type="submit" class="btn btn-primary" :disabled="unitEditSaving">
+                    <span x-show="unitEditSaving" class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+                    <span>Simpan Perubahan</span>
                 </button>
             </div>
         </form>

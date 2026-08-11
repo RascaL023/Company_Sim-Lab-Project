@@ -173,6 +173,11 @@ export function itemDetailPage(opts = {}) {
         unitSaving: false,
         unitErrors: {},
         unitForm: { ...blankUnitForm },
+        editUnitId: null,
+        unitEditOpen: false,
+        unitEditSaving: false,
+        unitEditErrors: {},
+        unitEditForm: { condition: 'baik', location_id: null, notes: '', last_calibration_date: '', next_calibration_date: '' },
         unitCounts: { total: null, available: null },
         async loadItem() {
             try {
@@ -236,6 +241,40 @@ export function itemDetailPage(opts = {}) {
                 toast(errorMessage(e), 'error');
             } finally {
                 this.unitSaving = false;
+            }
+        },
+        openUnitEdit(unit) {
+            this.unitErrors = {};
+            this.editUnitId = unit.id;
+            this.unitEditForm = {
+                condition: unit.condition ?? 'baik',
+                location_id: unit.location_id ?? null,
+                notes: unit.notes ?? '',
+                last_calibration_date: unit.last_calibration_date ?? '',
+                next_calibration_date: unit.next_calibration_date ?? '',
+            };
+            this.unitEditOpen = true;
+        },
+        async saveUnitEdit() {
+            this.unitEditSaving = true;
+            this.unitErrors = {};
+            try {
+                await api.patch(`/item-units/${this.editUnitId}`, {
+                    condition: this.unitEditForm.condition,
+                    location_id: this.unitEditForm.location_id || null,
+                    notes: this.unitEditForm.notes || null,
+                    last_calibration_date: this.unitEditForm.last_calibration_date || null,
+                    next_calibration_date: this.unitEditForm.next_calibration_date || null,
+                });
+                toast('Unit item diperbarui.');
+                this.unitEditOpen = false;
+                await this.loadTab(this.tabMeta?.current_page ?? 1);
+            } catch (e) {
+                const data = e.response?.data;
+                if (data?.errors) this.unitErrors = data.errors;
+                toast(errorMessage(e), 'error');
+            } finally {
+                this.unitEditSaving = false;
             }
         },
         async loadTab(page = 1) {

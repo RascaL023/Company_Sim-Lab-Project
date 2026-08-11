@@ -107,6 +107,29 @@ class ItemUnit extends Model
     }
 
     /**
+     * Active (not yet returned) borrowing for this unit, if any.
+     */
+    public function activeBorrowing()
+    {
+        return $this->hasOne(BorrowingItem::class, 'item_unit_id')
+            ->whereNotNull('borrow_date')
+            ->whereNull('actual_return_date');
+    }
+
+    /**
+     * Whether this unit is currently checked out (on loan).
+     * Reads the withExists attribute when eager-loaded, else queries.
+     */
+    public function getIsBorrowedAttribute(): bool
+    {
+        if (array_key_exists('is_borrowed', $this->attributes)) {
+            return (bool) $this->attributes['is_borrowed'];
+        }
+
+        return $this->activeBorrowing()->exists();
+    }
+
+    /**
      * Get the attachments for this unit.
      */
     public function attachments(): MorphMany

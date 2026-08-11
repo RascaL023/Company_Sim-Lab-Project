@@ -218,6 +218,7 @@ class ItemController extends Controller
     {
         $units = $item->units()
             ->with(['item', 'location'])
+            ->withExists('activeBorrowing as is_borrowed')
             ->when($request->boolean('available'), function ($q) {
                 $q->whereNotIn('id', BorrowingItem::query()
                     ->select('item_unit_id')
