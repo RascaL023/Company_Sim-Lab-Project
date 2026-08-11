@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\MasterData;
 
+use App\Models\Category;
 use App\Models\Item;
 use App\Models\ItemUnit;
 use App\Models\Location;
@@ -142,5 +143,126 @@ class LocationTest extends TestCase
             'id' => $unit->location_id,
             'name' => 'Ruang Mikroskopi',
         ]);
+    }
+
+    public function test_bahan_item_can_have_valid_location(): void
+    {
+        $user = User::factory()->laboran()->create();
+        $category = Category::factory()->bahan()->create();
+        $location = Location::factory()->create(['code' => 'GUDANG-A', 'name' => 'Gudang Bahan A']);
+
+        $this->withToken($this->tokenFor($user))
+            ->postJson('/api/items', [
+                'category_id' => $category->id,
+                'code' => 'BHN-001',
+                'name' => 'Asam Klorida',
+                'unit' => 'liter',
+                'stock_quantity' => 20,
+                'minimum_stock' => 5,
+                'location_id' => $location->id,
+                'created_by' => $user->id,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.location_id', $location->id)
+            ->assertJsonPath('data.location.name', 'Gudang Bahan A');
+
+        $this->assertSame('bahan', Item::where('code', 'BHN-001')->first()->type);
+    }
+
+    public function test_bahan_item_rejects_invalid_location(): void
+    {
+        $user = User::factory()->laboran()->create();
+        $category = Category::factory()->bahan()->create();
+
+        $this->withToken($this->tokenFor($user))
+            ->postJson('/api/items', [
+                'category_id' => $category->id,
+                'code' => 'BHN-002',
+                'name' => 'NaOH',
+                'unit' => 'kg',
+                'stock_quantity' => 10,
+                'minimum_stock' => 2,
+                'location_id' => 99999,
+                'created_by' => $user->id,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.location_id.0', 'Lokasi tidak ditemukan.');
+
+        $this->assertDatabaseMissing('items', ['code' => 'BHN-002']);
+    }
+
+    public function test_alat_item_unit_has_valid_location(): void
+    {
+        $laboran = User::factory()->laboran()->create();
+        $itemAlat = Item::factory()->alat()->create();
+        $location = Location::factory()->create(['code' => 'RAK-A', 'name' => 'Rak Mikroskop A']);
+
+        $this->withToken($this->tokenFor($laboran))
+            ->postJson('/api/item-units', [
+                'item_id' => $itemAlat->id,
+                'serial_number' => 'CX23-LOC-001',
+                'condition' => 'baik',
+                'location_id' => $location->id,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.location_id', $location->id)
+            ->assertJsonPath('data.location.name', 'Rak Mikroskop A');
+
+        $this->assertNull(Item::find($itemAlat->id)->location_id);
+    }
+
+    public function test_move_item_unit_to_another_location(): void
+    {
+        $laboran = User::factory()->laboran()->create();
+        $itemAlat = Item::factory()->alat()->create();
+        $locA = Location::factory()->create(['code' => 'RAK-A', 'name' => 'Rak A']);
+        $locB = Location::factory()->create(['code' => 'RAK-B', 'name' => 'Rak B']);
+        $unit = ItemUnit::factory()->for($itemAlat)->create(['location_id' => $locA->id]);
+
+        $this->withToken($this->tokenFor($laboran))
+            ->patchJson("/api/item-units/{$unit->id}", [
+                'location_id' => $locB->id,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.location_id', $locB->id)
+            ->assertJsonPath('data.location.name', 'Rak B');
+
+        $this->assertSame($locB->id, ItemUnit::find($unit->id)->location_id);
+    }
+
+    public function test_cannot_delete_location_still_in_use(): void
+    {
+        $admin = User::factory()->adminSistem()->create();
+        $location = Location::factory()->create(['code' => 'USED-1', 'name' => 'Lokasi Dipakai']);
+
+        // Lokasi dipakai oleh item bahan.
+        $category = Category::factory()->bahan()->create();
+        Item::factory()->create([
+            'category_id' => $category->id,
+            'code' => 'BHN-USED',
+            'location_id' => $location->id,
+            'stock_quantity' => 5,
+            'minimum_stock' => 1,
+        ]);
+
+        $this->withToken($this->tokenFor($admin))
+            ->deleteJson("/api/locations/{$location->id}")
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.location.0', fn ($m) => str_contains($m, 'masih digunakan'));
+
+        $this->assertDatabaseHas('locations', ['id' => $location->id]);
+        $this->assertSame('USED-1', Location::find($location->id)->code);
+    }
+
+    public function test_can_delete_location_when_unused(): void
+    {
+        $admin = User::factory()->adminSistem()->create();
+        $location = Location::factory()->create(['code' => 'FREE-1', 'name' => 'Lokasi Kosong']);
+
+        $this->withToken($this->tokenFor($admin))
+            ->deleteJson("/api/locations/{$location->id}")
+            ->assertNoContent();
+
+        $this->assertDatabaseMissing('locations', ['id' => $location->id]);
     }
 }

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\LocationResource;
+use App\Models\Item;
+use App\Models\ItemUnit;
 use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -66,6 +68,21 @@ class LocationController extends Controller
     public function destroy(Location $location)
     {
         Gate::authorize('delete', $location);
+
+        // Location yang masih dipakai tidak boleh dihapus; biarkan FK invalid
+        // (orphan / null) tidak terjadi. Guard ini mengembalikan 422 yang ramah;
+        // FK di DB juga restrictOnDelete() sebagai safety net.
+        $usedByItems = Item::where('location_id', $location->id)->exists();
+        $usedByUnits = ItemUnit::where('location_id', $location->id)->exists();
+
+        if ($usedByItems || $usedByUnits) {
+            return response()->json([
+                'message' => 'Lokasi masih digunakan dan tidak dapat dihapus.',
+                'errors' => [
+                    'location' => ['Lokasi masih digunakan oleh item bahan atau unit alat. Pindahkan terlebih dahulu sebelum menghapus.'],
+                ],
+            ], 422);
+        }
 
         $location->delete();
 
