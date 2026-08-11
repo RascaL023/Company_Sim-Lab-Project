@@ -83,6 +83,15 @@
                 </div>
 
                 <div class="card mt-4 overflow-hidden">
+                    <div x-show="tab === 'units' && item.is_alat" x-cloak class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 px-4 py-3">
+                        <p class="text-sm font-medium text-zinc-600">Unit fisik alat ini</p>
+                        <template x-if="$store.auth.isAny(['laboran', 'admin_sistem'])">
+                            <button type="button" class="btn btn-primary btn-sm" @click="openUnitCreate()">
+                                <x-icon name="plus" class="h-3.5 w-3.5" />
+                                Tambah Unit
+                            </button>
+                        </template>
+                    </div>
                     <div class="overflow-x-auto">
                         {{-- Units --}}
                         <table x-show="tab === 'units'" class="w-full min-w-[640px]">
@@ -278,5 +287,78 @@
             </div>
         </div>
     </template>
+
+    {{-- Tambah Unit modal (alat) --}}
+    <x-modal open="unitFormOpen" title="Tambah Unit" subtitle="Tambah unit fisik untuk item ini." maxWidth="max-w-2xl">
+        <form class="grid grid-cols-1 gap-4 sm:grid-cols-2" @submit.prevent="saveUnit()">
+            <div class="sm:col-span-2">
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Item (alat)</label>
+                <input type="text" class="input bg-zinc-50" :value="`${item?.name} (${item?.code})`" disabled />
+            </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Serial number</label>
+                <input type="text" x-model="unitForm.serial_number" :class="unitErrors.serial_number ? 'input input-error' : 'input'" placeholder="SN-2026-0001" />
+                <p x-show="unitErrors.serial_number" class="mt-1 text-xs text-rose-600" x-text="unitErrors.serial_number?.[0]"></p>
+            </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Asset tag</label>
+                <input type="text" x-model="unitForm.asset_tag" :class="unitErrors.asset_tag ? 'input input-error' : 'input'" placeholder="AT-0001" />
+                <p x-show="unitErrors.asset_tag" class="mt-1 text-xs text-rose-600" x-text="unitErrors.asset_tag?.[0]"></p>
+            </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Kondisi</label>
+                <select x-model="unitForm.condition" :class="unitErrors.condition ? 'input input-error' : 'input'">
+                    <option value="baik">Baik</option>
+                    <option value="rusak_ringan">Rusak ringan</option>
+                    <option value="rusak_berat">Rusak berat</option>
+                    <option value="hilang">Hilang</option>
+                    <option value="dihapus">Dihapus</option>
+                </select>
+                <p x-show="unitErrors.condition" class="mt-1 text-xs text-rose-600" x-text="unitErrors.condition?.[0]"></p>
+            </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Lokasi</label>
+                <select x-model="unitForm.location_id" :class="unitErrors.location_id ? 'input input-error' : 'input'">
+                    <option value="">— Tanpa lokasi —</option>
+                    <template x-for="loc in locations" :key="loc.id">
+                        <option :value="loc.id" x-text="loc.name"></option>
+                    </template>
+                </select>
+                <p x-show="unitErrors.location_id" class="mt-1 text-xs text-rose-600" x-text="unitErrors.location_id?.[0]"></p>
+            </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Tanggal pembelian</label>
+                <input type="date" x-model="unitForm.purchase_date" :class="unitErrors.purchase_date ? 'input input-error' : 'input'" />
+                <p x-show="unitErrors.purchase_date" class="mt-1 text-xs text-rose-600" x-text="unitErrors.purchase_date?.[0]"></p>
+            </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Tanggal kedaluwarsa</label>
+                <input type="date" x-model="unitForm.expiry_date" :class="unitErrors.expiry_date ? 'input input-error' : 'input'" />
+                <p x-show="unitErrors.expiry_date" class="mt-1 text-xs text-rose-600" x-text="unitErrors.expiry_date?.[0]"></p>
+            </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Kalibrasi terakhir</label>
+                <input type="date" x-model="unitForm.last_calibration_date" :class="unitErrors.last_calibration_date ? 'input input-error' : 'input'" />
+                <p x-show="unitErrors.last_calibration_date" class="mt-1 text-xs text-rose-600" x-text="unitErrors.last_calibration_date?.[0]"></p>
+            </div>
+            <div>
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Kalibrasi berikutnya</label>
+                <input type="date" x-model="unitForm.next_calibration_date" :class="unitErrors.next_calibration_date ? 'input input-error' : 'input'" />
+                <p x-show="unitErrors.next_calibration_date" class="mt-1 text-xs text-rose-600" x-text="unitErrors.next_calibration_date?.[0]"></p>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Catatan</label>
+                <textarea x-model="unitForm.notes" rows="3" :class="unitErrors.notes ? 'input input-error' : 'input'" placeholder="Catatan unit..."></textarea>
+                <p x-show="unitErrors.notes" class="mt-1 text-xs text-rose-600" x-text="unitErrors.notes?.[0]"></p>
+            </div>
+            <div class="flex justify-end gap-2 sm:col-span-2">
+                <button type="button" class="btn btn-secondary" @click="unitFormOpen = false">Batal</button>
+                <button type="submit" class="btn btn-primary" :disabled="unitSaving">
+                    <span x-show="unitSaving" class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+                    <span>Tambah Unit</span>
+                </button>
+            </div>
+        </form>
+    </x-modal>
 </div>
 @endsection

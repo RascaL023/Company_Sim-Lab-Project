@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BorrowingItemResource;
 use App\Models\BorrowingItem;
+use App\Models\ItemUnit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
@@ -28,11 +29,49 @@ class BorrowingItemController extends Controller
             ], 422);
         }
 
-        $validated = $request->validate([
+        $isAlat = $borrowingItem->item->isAlat();
+
+        $rules = [
             'expected_return_date' => 'required|date|after:now',
+            'item_unit_id' => $isAlat ? ['required'] : ['nullable'],
+        ];
+
+        if ($isAlat) {
+            $rules['item_unit_id'][] = 'exists:item_units,id';
+            $rules['item_unit_id'][] = function ($attribute, $value, $fail) use ($borrowingItem) {
+                $unit = ItemUnit::find($value);
+
+                if (! $unit) {
+                    return;
+                }
+
+                if ($unit->item_id !== $borrowingItem->item_id) {
+                    $fail('Unit yang dipilih bukan milik item ini.');
+                }
+
+                if (in_array($unit->condition, ['hilang', 'dihapus'])) {
+                    $fail('Unit dengan status hilang atau dihapus tidak dapat di-checkout.');
+                }
+
+                $active = BorrowingItem::query()
+                    ->where('item_unit_id', $value)
+                    ->where('id', '!=', $borrowingItem->id)
+                    ->whereNotNull('borrow_date')
+                    ->whereNull('actual_return_date')
+                    ->exists();
+
+                if ($active) {
+                    $fail('Unit ini sedang dipinjam pada peminjaman lain.');
+                }
+            };
+        }
+
+        $validated = $request->validate($rules, [
+            'item_unit_id.required' => 'Pilih unit fisik yang akan di-checkout.',
         ]);
 
         $borrowingItem->update([
+            'item_unit_id' => $isAlat ? $validated['item_unit_id'] : null,
             'borrow_date' => now(),
             'checked_out_by' => $request->user()->id,
             'expected_return_date' => $validated['expected_return_date'],

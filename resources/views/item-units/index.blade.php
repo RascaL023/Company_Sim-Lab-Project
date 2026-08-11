@@ -4,7 +4,19 @@
 
 @section('content')
 <div x-data="itemUnitsPage">
-    <x-page-header title="Unit Item" subtitle="Unit fisik alat/bahan: serial, kondisi, dan lokasi." />
+    <x-page-header title="Unit Item" subtitle="Unit fisik alat/bahan: serial, kondisi, dan lokasi.">
+        <x-slot:actions>
+            <button
+                type="button"
+                x-show="$store.auth.isAny(['laboran', 'admin_sistem'])"
+                @click="openCreate()"
+                class="btn btn-primary"
+            >
+                <x-icon name="plus" class="h-4 w-4" />
+                Tambah Unit
+            </button>
+        </x-slot:actions>
+    </x-page-header>
 
     <div class="card mt-6 overflow-hidden">
         <div class="flex flex-wrap items-center gap-3 border-b border-zinc-100 p-4">
@@ -99,8 +111,62 @@
         <x-pagination />
     </div>
 
-    <x-modal open="formOpen" title="Ubah Unit" subtitle="Perbarui kondisi dan lokasi unit." subtitle-expr="editId ? 'Perbarui kondisi dan lokasi unit.' : ''">
-        <form class="grid grid-cols-1 gap-4" @submit.prevent="save()">
+    <x-modal open="formOpen" title="Tambah Unit" title-expr="editId ? 'Ubah Unit' : 'Tambah Unit'" subtitle="Tambah unit fisik alat." subtitle-expr="editId ? 'Perbarui kondisi dan lokasi unit.' : 'Tambah unit fisik untuk alat.'" maxWidth="max-w-2xl">
+        <form class="grid grid-cols-1 gap-4 sm:grid-cols-2" @submit.prevent="save()">
+            <template x-if="!editId">
+                <div class="sm:col-span-2">
+                    <label class="mb-1.5 block text-sm font-medium text-zinc-700">Item (alat)</label>
+                    <select x-model="form.item_id" :class="errors.item_id ? 'input input-error' : 'input'">
+                        <option value="">— Pilih item alat —</option>
+                        <template x-for="it in itemOptions" :key="it.id">
+                            <option :value="it.id" x-text="`${it.name} (${it.code})`"></option>
+                        </template>
+                    </select>
+                    <p x-show="errors.item_id" class="mt-1 text-xs text-rose-600" x-text="errors.item_id?.[0]"></p>
+                </div>
+            </template>
+            <template x-if="!editId">
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-zinc-700">Serial number</label>
+                    <input type="text" x-model="form.serial_number" :class="errors.serial_number ? 'input input-error' : 'input'" placeholder="SN-2026-0001" />
+                    <p x-show="errors.serial_number" class="mt-1 text-xs text-rose-600" x-text="errors.serial_number?.[0]"></p>
+                </div>
+            </template>
+            <template x-if="!editId">
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-zinc-700">Asset tag</label>
+                    <input type="text" x-model="form.asset_tag" :class="errors.asset_tag ? 'input input-error' : 'input'" placeholder="AT-0001" />
+                    <p x-show="errors.asset_tag" class="mt-1 text-xs text-rose-600" x-text="errors.asset_tag?.[0]"></p>
+                </div>
+            </template>
+            <template x-if="!editId">
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-zinc-700">Tanggal pembelian</label>
+                    <input type="date" x-model="form.purchase_date" :class="errors.purchase_date ? 'input input-error' : 'input'" />
+                    <p x-show="errors.purchase_date" class="mt-1 text-xs text-rose-600" x-text="errors.purchase_date?.[0]"></p>
+                </div>
+            </template>
+            <template x-if="!editId">
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-zinc-700">Tanggal kedaluwarsa</label>
+                    <input type="date" x-model="form.expiry_date" :class="errors.expiry_date ? 'input input-error' : 'input'" />
+                    <p x-show="errors.expiry_date" class="mt-1 text-xs text-rose-600" x-text="errors.expiry_date?.[0]"></p>
+                </div>
+            </template>
+            <template x-if="!editId">
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-zinc-700">Kalibrasi terakhir</label>
+                    <input type="date" x-model="form.last_calibration_date" :class="errors.last_calibration_date ? 'input input-error' : 'input'" />
+                    <p x-show="errors.last_calibration_date" class="mt-1 text-xs text-rose-600" x-text="errors.last_calibration_date?.[0]"></p>
+                </div>
+            </template>
+            <template x-if="!editId">
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-zinc-700">Kalibrasi berikutnya</label>
+                    <input type="date" x-model="form.next_calibration_date" :class="errors.next_calibration_date ? 'input input-error' : 'input'" />
+                    <p x-show="errors.next_calibration_date" class="mt-1 text-xs text-rose-600" x-text="errors.next_calibration_date?.[0]"></p>
+                </div>
+            </template>
             <div>
                 <label class="mb-1.5 block text-sm font-medium text-zinc-700">Kondisi</label>
                 <select x-model="form.condition" :class="errors.condition ? 'input input-error' : 'input'">
@@ -108,6 +174,7 @@
                     <option value="rusak_ringan">Rusak ringan</option>
                     <option value="rusak_berat">Rusak berat</option>
                     <option value="hilang">Hilang</option>
+                    <option value="dihapus">Dihapus</option>
                 </select>
                 <p x-show="errors.condition" class="mt-1 text-xs text-rose-600" x-text="errors.condition?.[0]"></p>
             </div>
@@ -121,16 +188,16 @@
                 </select>
                 <p x-show="errors.location_id" class="mt-1 text-xs text-rose-600" x-text="errors.location_id?.[0]"></p>
             </div>
-            <div>
+            <div class="sm:col-span-2">
                 <label class="mb-1.5 block text-sm font-medium text-zinc-700">Catatan</label>
                 <textarea x-model="form.notes" rows="3" :class="errors.notes ? 'input input-error' : 'input'" placeholder="Catatan unit..."></textarea>
                 <p x-show="errors.notes" class="mt-1 text-xs text-rose-600" x-text="errors.notes?.[0]"></p>
             </div>
-            <div class="flex justify-end gap-2">
+            <div class="flex justify-end gap-2 sm:col-span-2">
                 <button type="button" class="btn btn-secondary" @click="formOpen = false">Batal</button>
                 <button type="submit" class="btn btn-primary" :disabled="saving">
                     <span x-show="saving" class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
-                    <span>Simpan Perubahan</span>
+                    <span x-text="editId ? 'Simpan Perubahan' : 'Tambah Unit'"></span>
                 </button>
             </div>
         </form>

@@ -109,6 +109,7 @@ class ItemAuditTrailAggregationTest extends TestCase
         $this->actingAsUser($admin)
             ->patchJson("/api/borrowing-items/{$borrowingItem->id}/checkout", [
                 'expected_return_date' => now()->addDays(3)->toIso8601String(),
+                'item_unit_id' => $borrowingItem->item_unit_id,
             ])
             ->assertSuccessful();
 
@@ -259,6 +260,7 @@ class ItemAuditTrailAggregationTest extends TestCase
         $this->actingAsUser($admin)
             ->patchJson("/api/borrowing-items/{$borrowingItemId}/checkout", [
                 'expected_return_date' => now()->addDays(3)->toIso8601String(),
+                'item_unit_id' => BorrowingItem::find($borrowingItemId)->item_unit_id,
             ])
             ->assertSuccessful();
 

@@ -16,6 +16,19 @@ const blankItemForm = {
     created_by: null,
 };
 
+const blankUnitForm = {
+    item_id: '',
+    serial_number: '',
+    asset_tag: '',
+    condition: 'baik',
+    location_id: '',
+    purchase_date: '',
+    expiry_date: '',
+    last_calibration_date: '',
+    next_calibration_date: '',
+    notes: '',
+};
+
 export function itemsPage() {
     return {
         ...pagedList({ endpoint: '/items', perPage: 15 }),
@@ -146,6 +159,11 @@ export function itemDetailPage(opts = {}) {
         tabItems: [],
         tabMeta: null,
         tabLoading: false,
+        locations: [],
+        unitFormOpen: false,
+        unitSaving: false,
+        unitErrors: {},
+        unitForm: { ...blankUnitForm },
         async loadItem() {
             try {
                 const res = await api.get(`/items/${this.id}`);
@@ -154,6 +172,46 @@ export function itemDetailPage(opts = {}) {
                 this.error = errorMessage(e);
             } finally {
                 this.loading = false;
+            }
+        },
+        async loadLocations() {
+            try {
+                const res = await api.get('/locations', { params: { per_page: 100 } });
+                this.locations = res.data?.data ?? [];
+            } catch (e) {
+                /* ignore */
+            }
+        },
+        openUnitCreate() {
+            this.unitErrors = {};
+            this.unitForm = { ...blankUnitForm, item_id: this.id, condition: 'baik' };
+            this.unitFormOpen = true;
+        },
+        async saveUnit() {
+            this.unitSaving = true;
+            this.unitErrors = {};
+            try {
+                await api.post('/item-units', {
+                    item_id: this.unitForm.item_id,
+                    serial_number: this.unitForm.serial_number,
+                    asset_tag: this.unitForm.asset_tag || null,
+                    condition: this.unitForm.condition,
+                    location_id: this.unitForm.location_id || null,
+                    purchase_date: this.unitForm.purchase_date || null,
+                    expiry_date: this.unitForm.expiry_date || null,
+                    last_calibration_date: this.unitForm.last_calibration_date || null,
+                    next_calibration_date: this.unitForm.next_calibration_date || null,
+                    notes: this.unitForm.notes || null,
+                });
+                toast('Unit item ditambahkan.');
+                this.unitFormOpen = false;
+                await this.loadTab(this.tabMeta?.current_page ?? 1);
+            } catch (e) {
+                const data = e.response?.data;
+                if (data?.errors) this.unitErrors = data.errors;
+                toast(errorMessage(e), 'error');
+            } finally {
+                this.unitSaving = false;
             }
         },
         async loadTab(page = 1) {
@@ -182,6 +240,7 @@ export function itemDetailPage(opts = {}) {
         async init() {
             await this.loadItem();
             this.tab = this.item?.is_bahan ? 'movements' : 'units';
+            this.loadLocations();
             this.loadTab(1);
         },
     };
@@ -338,15 +397,24 @@ export function itemUnitsPage() {
         ...pagedList({ endpoint: '/item-units', perPage: 15 }),
         filters: { condition: '', location_id: '', needs_calibration: '' },
         locations: [],
+        itemOptions: [],
         formOpen: false,
         editId: null,
         saving: false,
         errors: {},
-        form: { condition: 'baik', location_id: '', notes: '' },
+        form: { ...blankUnitForm },
         async loadLocations() {
             try {
                 const res = await api.get('/locations', { params: { per_page: 100 } });
                 this.locations = res.data?.data ?? [];
+            } catch (e) {
+                /* ignore */
+            }
+        },
+        async loadItemOptions() {
+            try {
+                const res = await api.get('/items', { params: { per_page: 100, type: 'alat', sort_by: 'name', sort_order: 'asc' } });
+                this.itemOptions = res.data?.data ?? [];
             } catch (e) {
                 /* ignore */
             }
@@ -360,12 +428,25 @@ export function itemUnitsPage() {
             this.query = { page: 1 };
             this.load();
         },
+        openCreate() {
+            this.editId = null;
+            this.errors = {};
+            this.form = { ...blankUnitForm };
+            this.formOpen = true;
+        },
         openEdit(unit) {
             this.editId = unit.id;
             this.errors = {};
             this.form = {
+                item_id: unit.item?.id ?? '',
+                serial_number: unit.serial_number ?? '',
+                asset_tag: unit.asset_tag ?? '',
                 condition: unit.condition ?? 'baik',
                 location_id: unit.location_id ?? '',
+                purchase_date: unit.purchase_date ?? '',
+                expiry_date: unit.expiry_date ?? '',
+                last_calibration_date: unit.last_calibration_date ?? '',
+                next_calibration_date: unit.next_calibration_date ?? '',
                 notes: unit.notes ?? '',
             };
             this.formOpen = true;
@@ -374,13 +455,29 @@ export function itemUnitsPage() {
             this.saving = true;
             this.errors = {};
             try {
-                const payload = {
-                    condition: this.form.condition,
-                    location_id: this.form.location_id || null,
-                    notes: this.form.notes || null,
-                };
-                await api.patch(`/item-units/${this.editId}`, payload);
-                toast('Unit item diperbarui.');
+                if (this.editId) {
+                    await api.patch(`/item-units/${this.editId}`, {
+                        condition: this.form.condition,
+                        location_id: this.form.location_id || null,
+                        notes: this.form.notes || null,
+                    });
+                    toast('Unit item diperbarui.');
+                } else {
+                    const payload = {
+                        item_id: this.form.item_id,
+                        serial_number: this.form.serial_number,
+                        asset_tag: this.form.asset_tag || null,
+                        condition: this.form.condition,
+                        location_id: this.form.location_id || null,
+                        purchase_date: this.form.purchase_date || null,
+                        expiry_date: this.form.expiry_date || null,
+                        last_calibration_date: this.form.last_calibration_date || null,
+                        next_calibration_date: this.form.next_calibration_date || null,
+                        notes: this.form.notes || null,
+                    };
+                    await api.post('/item-units', payload);
+                    toast('Unit item ditambahkan.');
+                }
                 this.formOpen = false;
                 this.load();
             } catch (e) {
@@ -410,6 +507,7 @@ export function itemUnitsPage() {
             }
             this.load();
             this.loadLocations();
+            this.loadItemOptions();
         },
     };
 }

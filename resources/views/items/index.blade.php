@@ -168,7 +168,7 @@
                 <input type="number" min="0" step="any" x-model="form.minimum_stock" :class="errors.minimum_stock ? 'input input-error' : 'input'" />
                 <p x-show="errors.minimum_stock" class="mt-1 text-xs text-rose-600" x-text="errors.minimum_stock?.[0]"></p>
             </div>
-            <div>
+            <div x-show="form.type === 'bahan'">
                 <label class="mb-1.5 block text-sm font-medium text-zinc-700">Lokasi (katalog)</label>
                 <input type="text" x-model="form.location" :class="errors.location ? 'input input-error' : 'input'" placeholder="Ruang Lab 1" />
                 <p x-show="errors.location" class="mt-1 text-xs text-rose-600" x-text="errors.location?.[0]"></p>

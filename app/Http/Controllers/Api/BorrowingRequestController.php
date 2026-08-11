@@ -15,7 +15,7 @@ class BorrowingRequestController extends Controller
         Gate::authorize('viewAny', BorrowingRequest::class);
 
         return BorrowingRequestResource::collection(
-            BorrowingRequest::with(['requestedBy', 'approvedBy', 'items.item'])
+            BorrowingRequest::with(['requestedBy', 'approvedBy', 'items.item', 'items.itemUnit'])
                 ->when(! $request->user()->canViewAllLabRecords(), fn ($q) => $q->where('requested_by', $request->user()->id))
                 ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))
                 ->paginate($request->query('per_page', 15))

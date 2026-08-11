@@ -46,6 +46,7 @@ Kolom status domain memakai bahasa Indonesia (lihat `SCHEMA_CHANGES.md`).
 |------|------------|-----------|--------------|----------------|
 | Katalog items/categories (lihat) | ✓ | ✓ | ✓ | ✓ |
 | Kelola categories / locations | — | — | — | ✓ |
+| Kelola item units (tambah/ubah/hapus) | — | ✓ | — | ✓ |
 | Kelola users | — | — | — | ✓ |
 | Buat pengajuan peminjaman | ✓ (milik sendiri) | — | — | — |
 | Approve/reject peminjaman | — | ✓ | — | — |
@@ -225,14 +226,43 @@ Catatan: `items.location` masih string katalog umum (bukan FK). Lokasi fisik uni
 
 ## Item units
 
-| Method | Path |
-|--------|------|
-| `GET` | `/item-units` |
-| `GET` | `/item-units/{id}` |
-| `PATCH`/`PUT` | `/item-units/{id}` |
-| `DELETE` | `/item-units/{id}` |
+Unit fisik (serial, kondisi, lokasi) dari item alat. `POST`/`PATCH`/`DELETE` → `laboran` atau `admin_sistem`; `GET` → semua role login.
+
+| Method | Path | Role |
+|--------|------|------|
+| `GET` | `/item-units` | semua role |
+| `GET` | `/item-units/{id}` | semua role |
+| `POST` | `/item-units` | `laboran` / `admin_sistem` |
+| `PATCH`/`PUT` | `/item-units/{id}` | `laboran` / `admin_sistem` |
+| `DELETE` | `/item-units/{id}` | `laboran` / `admin_sistem` |
 
 Query `index`: `condition`, `location_id`, `needs_calibration`, `per_page`.
+
+`POST` body:
+
+```json
+{
+  "item_id": 1,
+  "serial_number": "SN-2026-0001",
+  "asset_tag": "AT-0001",
+  "condition": "baik",
+  "location_id": 14,
+  "purchase_date": "2025-06-01",
+  "expiry_date": null,
+  "last_calibration_date": null,
+  "next_calibration_date": "2027-01-01",
+  "notes": "Unit baru"
+}
+```
+
+- `item_id` **wajib** dan harus item **alat** (bahan → `422` `"Item bahan tidak dapat memiliki unit fisik."`)
+- `serial_number` wajib + unik (`422` `"Serial number sudah digunakan."`)
+- `asset_tag` opsional + unik
+- `condition`: `baik`|`rusak_ringan`|`rusak_berat`|`hilang`|`dihapus`
+- `location_id` opsional; lokasi tidak valid → `422` `"Lokasi yang dipilih tidak valid."`
+- `expiry_date` harus `after_or_equal:purchase_date`; `next_calibration_date` harus `after_or_equal:last_calibration_date`
+- `created_by` diisi otomatis dari user yang login
+- Response `201`: `ItemUnitResource`
 
 `PATCH` body (contoh):
 
@@ -244,8 +274,9 @@ Query `index`: `condition`, `location_id`, `needs_calibration`, `per_page`.
 }
 ```
 
-- `condition`: `baik`|`rusak_ringan`|`rusak_berat`|`hilang`|`dihapus`
 - Resource memuat `location_id` + objek `location` (saat di-load)
+
+`GET /items/{id}/units` mendukung query `available=1` → hanya unit yang **tidak sedang dipinjam aktif** (tidak ada `borrowing_items` dengan `item_unit_id` yang sama, `borrow_date` terisi, `actual_return_date` null) dan `condition` bukan `hilang`/`dihapus`.
 
 ---
 
@@ -291,9 +322,13 @@ Perubahan status ke `disetujui`/`ditolak`/`diproses`/`selesai` memicu notifikasi
 
 ```json
 {
-  "expected_return_date": "2026-08-20"
+  "expected_return_date": "2026-08-20",
+  "item_unit_id": 68
 }
 ```
+
+- `item_unit_id` **wajib** untuk item **alat** (`422` `"Pilih unit fisik yang akan di-checkout."`); diabaikan untuk bahan
+- Validasi `item_unit_id`: harus unit dari item yang sama, `condition` bukan `hilang`/`dihapus`, dan tidak sedang aktif dipinjam pada `borrowing_items` lain (`422` sesuai kasus)
 
 Setelah **semua** item checkout → parent `diproses`.
 

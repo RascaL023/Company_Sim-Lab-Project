@@ -11,6 +11,9 @@ function borrowingActions() {
         checkoutOpen: false,
         checkoutTarget: null,
         expectedReturnDate: '',
+        checkoutUnitId: '',
+        checkoutUnits: [],
+        unitsLoading: false,
         returnOpen: false,
         returnTarget: null,
         returnForm: { condition_after: 'baik', is_damaged: false, damage_notes: '', check_notes: '' },
@@ -69,15 +72,38 @@ function borrowingActions() {
                 toast(errorMessage(e), 'error');
             }
         },
+        unitLabel(u) {
+            return u.serial_number ?? u.asset_tag ?? `Unit #${u.id}`;
+        },
+        async loadCheckoutUnits() {
+            const bi = this.checkoutTarget;
+            if (!bi || !bi.item?.is_alat) return;
+            this.unitsLoading = true;
+            try {
+                const res = await api.get(`/items/${bi.item.id}/units`, { params: { per_page: 100, available: 1 } });
+                this.checkoutUnits = res.data?.data ?? [];
+            } catch (e) {
+                this.checkoutUnits = [];
+            } finally {
+                this.unitsLoading = false;
+            }
+        },
         openCheckout(bi) {
             this.checkoutTarget = bi;
             this.expectedReturnDate = '';
+            this.checkoutUnitId = '';
+            this.checkoutUnits = [];
             this.checkoutOpen = true;
+            this.loadCheckoutUnits();
         },
         async doCheckout() {
             this.busy = true;
             try {
-                await api.patch(`/borrowing-items/${this.checkoutTarget.id}/checkout`, { expected_return_date: this.expectedReturnDate });
+                const payload = { expected_return_date: this.expectedReturnDate };
+                if (this.checkoutTarget?.item?.is_alat) {
+                    payload.item_unit_id = this.checkoutUnitId;
+                }
+                await api.patch(`/borrowing-items/${this.checkoutTarget.id}/checkout`, payload);
                 toast('Item berhasil di-checkout.');
                 this.checkoutOpen = false;
                 await this.load();

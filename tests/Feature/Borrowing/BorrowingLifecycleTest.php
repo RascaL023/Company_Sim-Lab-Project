@@ -62,6 +62,7 @@ class BorrowingLifecycleTest extends TestCase
             $this->actingAsUser($admin)
                 ->patchJson("/api/borrowing-items/{$item->id}/checkout", [
                     'expected_return_date' => now()->addDays(3)->toIso8601String(),
+                    'item_unit_id' => $item->item_unit_id,
                 ])
                 ->assertSuccessful();
         }
@@ -94,6 +95,7 @@ class BorrowingLifecycleTest extends TestCase
         $this->actingAsUser($admin)
             ->patchJson("/api/borrowing-items/{$item->id}/checkout", [
                 'expected_return_date' => now()->addDays(5)->toIso8601String(),
+                'item_unit_id' => $item->item_unit_id,
             ])
             ->assertSuccessful();
 
@@ -112,6 +114,7 @@ class BorrowingLifecycleTest extends TestCase
         $this->actingAsUser($admin)
             ->patchJson("/api/borrowing-items/{$items[0]->id}/checkout", [
                 'expected_return_date' => now()->addDays(2)->toIso8601String(),
+                'item_unit_id' => $items[0]->item_unit_id,
             ])
             ->assertSuccessful();
 
@@ -120,6 +123,7 @@ class BorrowingLifecycleTest extends TestCase
         $this->actingAsUser($admin)
             ->patchJson("/api/borrowing-items/{$items[1]->id}/checkout", [
                 'expected_return_date' => now()->addDays(2)->toIso8601String(),
+                'item_unit_id' => $items[1]->item_unit_id,
             ])
             ->assertSuccessful();
 

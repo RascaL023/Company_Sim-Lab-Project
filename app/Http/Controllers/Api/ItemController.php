@@ -217,7 +217,15 @@ class ItemController extends Controller
     public function units(Item $item, Request $request)
     {
         $units = $item->units()
-            ->with(['item'])
+            ->with(['item', 'location'])
+            ->when($request->boolean('available'), function ($q) {
+                $q->whereNotIn('id', BorrowingItem::query()
+                    ->select('item_unit_id')
+                    ->whereNotNull('item_unit_id')
+                    ->whereNotNull('borrow_date')
+                    ->whereNull('actual_return_date'))
+                    ->whereNotIn('condition', ['hilang', 'dihapus']);
+            })
             ->orderBy('created_at', 'desc')
             ->paginate($request->query('per_page', 15));
 

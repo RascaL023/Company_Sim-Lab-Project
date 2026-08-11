@@ -98,6 +98,7 @@
                             <div class="min-w-0 flex-1">
                                 <p class="truncate text-sm font-semibold text-zinc-900" x-text="bi.item?.name ?? '—'"></p>
                                 <p class="mt-0.5 text-xs text-zinc-400" x-text="`${bi.item?.code ?? ''} · Qty ${fmt.fmtNum(bi.quantity)}`"></p>
+                                <p x-show="bi.item_unit?.serial_number" class="mt-0.5 font-mono text-xs text-zinc-500" x-text="`Unit: ${bi.item_unit.serial_number}`"></p>
                             </div>
                             <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500">
                                 <span x-show="bi.borrow_date" x-text="`Dipinjam ${fmt.fmtDateTime(bi.borrow_date)}`"></span>
@@ -174,13 +175,26 @@
             {{-- Checkout modal --}}
             <x-modal open="checkoutOpen" title="Checkout Item" subtitle="Serahkan item kepada peminjam.">
                 <div class="grid gap-4">
+                    <template x-if="checkoutTarget?.item?.is_alat">
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-zinc-700">Unit fisik yang diserahkan</label>
+                            <select x-model="checkoutUnitId" class="input">
+                                <option value="">— Pilih unit —</option>
+                                <template x-for="u in checkoutUnits" :key="u.id">
+                                    <option :value="u.id" x-text="`${unitLabel(u)}${u.location?.name ? ' · ' + u.location.name : ''}`"></option>
+                                </template>
+                            </select>
+                            <p x-show="unitsLoading" class="mt-1 text-xs text-zinc-400">Memuat unit tersedia...</p>
+                            <p x-show="!unitsLoading && !checkoutUnits.length" class="mt-1 text-xs font-medium text-amber-600">Tidak ada unit tersedia untuk item ini.</p>
+                        </div>
+                    </template>
                     <div>
                         <label class="mb-1.5 block text-sm font-medium text-zinc-700">Estimasi tanggal kembali</label>
                         <input type="date" x-model="expectedReturnDate" class="input" />
                     </div>
                     <div class="flex justify-end gap-2">
                         <button type="button" class="btn btn-secondary" @click="checkoutOpen = false">Batal</button>
-                        <button type="button" class="btn btn-primary" :disabled="busy || !expectedReturnDate" @click="doCheckout()">Konfirmasi Checkout</button>
+                        <button type="button" class="btn btn-primary" :disabled="busy || !expectedReturnDate || (checkoutTarget?.item?.is_alat && !checkoutUnitId)" @click="doCheckout()">Konfirmasi Checkout</button>
                     </div>
                 </div>
             </x-modal>
