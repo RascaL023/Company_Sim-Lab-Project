@@ -10,7 +10,7 @@ const blankItemForm = {
     unit: '',
     stock_quantity: 0,
     minimum_stock: 0,
-    location: '',
+    location_id: null,
     manufacturer: '',
     description: '',
     created_by: null,
@@ -34,6 +34,7 @@ export function itemsPage() {
         ...pagedList({ endpoint: '/items', perPage: 15 }),
         filters: { search: '', type: '', category_id: '', low_stock: '', needs_calibration: '', expired: '' },
         categories: [],
+        locations: [],
         formOpen: false,
         editId: null,
         saving: false,
@@ -43,6 +44,14 @@ export function itemsPage() {
             try {
                 const res = await api.get('/categories', { params: { per_page: 100 } });
                 this.categories = res.data?.data ?? [];
+            } catch (e) {
+                /* ignore */
+            }
+        },
+        async loadLocations() {
+            try {
+                const res = await api.get('/locations', { params: { per_page: 100 } });
+                this.locations = res.data?.data ?? [];
             } catch (e) {
                 /* ignore */
             }
@@ -73,7 +82,7 @@ export function itemsPage() {
                 unit: item.unit ?? '',
                 stock_quantity: item.stock_quantity ?? 0,
                 minimum_stock: item.minimum_stock ?? 0,
-                location: item.location ?? '',
+                location_id: item.location_id ?? null,
                 manufacturer: item.manufacturer ?? '',
                 description: item.description ?? '',
                 created_by: currentUserId(),
@@ -88,11 +97,10 @@ export function itemsPage() {
                     category_id: this.form.category_id,
                     code: this.form.code,
                     name: this.form.name,
-                    type: this.form.type,
                     unit: this.form.unit,
                     stock_quantity: this.form.stock_quantity,
                     minimum_stock: this.form.minimum_stock,
-                    location: this.form.location || null,
+                    location_id: this.form.location_id || null,
                     manufacturer: this.form.manufacturer || null,
                     description: this.form.description || null,
                     created_by: this.form.created_by,
@@ -137,6 +145,7 @@ export function itemsPage() {
             }
             this.load();
             this.loadCategories();
+            this.loadLocations();
         },
     };
 }
@@ -164,6 +173,7 @@ export function itemDetailPage(opts = {}) {
         unitSaving: false,
         unitErrors: {},
         unitForm: { ...blankUnitForm },
+        unitCounts: { total: null, available: null },
         async loadItem() {
             try {
                 const res = await api.get(`/items/${this.id}`);
@@ -172,6 +182,20 @@ export function itemDetailPage(opts = {}) {
                 this.error = errorMessage(e);
             } finally {
                 this.loading = false;
+            }
+        },
+        async loadUnitCounts() {
+            if (! this.item?.is_alat) return;
+            try {
+                const [totalRes, availRes] = await Promise.all([
+                    api.get(`/items/${this.id}/units`, { params: { per_page: 1 } }),
+                    api.get(`/items/${this.id}/units`, { params: { per_page: 1, available: 1 } }),
+                ]);
+                this.unitCounts.total = totalRes.data?.meta?.total ?? 0;
+                this.unitCounts.available = availRes.data?.meta?.total ?? 0;
+            } catch (e) {
+                this.unitCounts.total = null;
+                this.unitCounts.available = null;
             }
         },
         async loadLocations() {
@@ -241,6 +265,7 @@ export function itemDetailPage(opts = {}) {
             await this.loadItem();
             this.tab = this.item?.is_bahan ? 'movements' : 'units';
             this.loadLocations();
+            this.loadUnitCounts();
             this.loadTab(1);
         },
     };

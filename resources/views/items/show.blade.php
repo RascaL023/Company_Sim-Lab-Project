@@ -38,11 +38,37 @@
                         <h1 class="mt-3 font-display text-2xl font-bold tracking-tight text-zinc-900" x-text="item.name"></h1>
                         <p class="mt-1 text-sm text-zinc-500" x-text="item.category?.name"></p>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <div class="rounded-2xl bg-brand-50 px-5 py-3 text-center">
-                            <p class="font-display text-2xl font-bold text-brand-700" x-text="`${fmt.fmtNum(item.stock_quantity)} ${item.unit}`"></p>
-                            <p class="text-[11px] font-medium uppercase tracking-wide text-brand-500">Stok tersedia</p>
-                        </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        {{-- Alat: jumlah unit & unit tersedia --}}
+                        <template x-if="item.is_alat">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div class="rounded-2xl bg-brand-50 px-5 py-3 text-center">
+                                    <p class="font-display text-2xl font-bold text-brand-700" x-text="fmt.fmtNum(unitCounts.total ?? 0)"></p>
+                                    <p class="text-[11px] font-medium uppercase tracking-wide text-brand-500">Jumlah unit</p>
+                                </div>
+                                <div class="rounded-2xl bg-emerald-50 px-5 py-3 text-center">
+                                    <p class="font-display text-2xl font-bold text-emerald-700" x-text="fmt.fmtNum(unitCounts.available ?? 0)"></p>
+                                    <p class="text-[11px] font-medium uppercase tracking-wide text-emerald-500">Unit tersedia</p>
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <button type="button" class="btn btn-primary btn-sm" @click="setTab('units')">
+                                        <x-icon name="eye" class="h-3.5 w-3.5" /> Lihat Daftar Unit
+                                    </button>
+                                    <template x-if="$store.auth.isAny(['laboran', 'admin_sistem'])">
+                                        <button type="button" class="btn btn-secondary btn-sm" @click="openUnitCreate()">
+                                            <x-icon name="plus" class="h-3.5 w-3.5" /> Tambah Unit
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                        {{-- Bahan: stok --}}
+                        <template x-if="item.is_bahan">
+                            <div class="rounded-2xl bg-brand-50 px-5 py-3 text-center">
+                                <p class="font-display text-2xl font-bold text-brand-700" x-text="`${fmt.fmtNum(item.stock_quantity)} ${item.unit}`"></p>
+                                <p class="text-[11px] font-medium uppercase tracking-wide text-brand-500">Stok tersedia</p>
+                            </div>
+                        </template>
                     </div>
                 </div>
 
@@ -51,14 +77,24 @@
                         <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Tipe</dt>
                         <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="fmt.typeLabel(item.type)"></dd>
                     </div>
-                    <div>
-                        <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Stok minimum</dt>
-                        <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="`${fmt.fmtNum(item.minimum_stock)} ${item.unit}`"></dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Lokasi (katalog)</dt>
-                        <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="item.location?.name || '—'"></dd>
-                    </div>
+                    <template x-if="item.is_bahan">
+                        <div>
+                            <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Stok minimum</dt>
+                            <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="`${fmt.fmtNum(item.minimum_stock)} ${item.unit}`"></dd>
+                        </div>
+                    </template>
+                    <template x-if="item.is_bahan">
+                        <div>
+                            <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Lokasi (katalog)</dt>
+                            <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="item.location?.name || '—'"></dd>
+                        </div>
+                    </template>
+                    <template x-if="item.is_alat">
+                        <div>
+                            <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Lokasi unit</dt>
+                            <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="`Per-unit (lihat tab Unit)`"></dd>
+                        </div>
+                    </template>
                     <div>
                         <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Manufacturer</dt>
                         <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="item.manufacturer || '—'"></dd>

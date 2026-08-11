@@ -44,6 +44,7 @@ class ItemResource extends JsonResource
             'location' => LocationResource::make($this->whenLoaded('location')),
 
             // Counts for collections (optional, can be heavy)
+            'units_count' => $this->whenCounted('units'),
             'calibrations_count' => $this->whenCounted('calibrations'),
             'maintenances_count' => $this->whenCounted('maintenances'),
             'borrowings_count' => $this->whenCounted('borrowings'),

@@ -77,8 +77,18 @@
                                 </span>
                             </td>
                             <td class="table-td">
-                                <p class="font-medium text-zinc-800" x-text="`${fmt.fmtNum(item.stock_quantity)} ${item.unit}`"></p>
-                                <p class="text-xs text-zinc-400" x-text="`min. ${fmt.fmtNum(item.minimum_stock)}`"></p>
+                                <template x-if="item.is_bahan">
+                                    <div>
+                                        <p class="font-medium text-zinc-800" x-text="`${fmt.fmtNum(item.stock_quantity)} ${item.unit}`"></p>
+                                        <p class="text-xs text-zinc-400" x-text="`min. ${fmt.fmtNum(item.minimum_stock)}`"></p>
+                                    </div>
+                                </template>
+                                <template x-if="item.is_alat">
+                                    <div>
+                                        <p class="font-medium text-zinc-800" x-text="`${fmt.fmtNum(item.units_count ?? 0)} unit`"></p>
+                                        <p class="text-xs text-zinc-400">Fisik per unit</p>
+                                    </div>
+                                </template>
                             </td>
                             <td class="table-td">
                                 <div class="flex flex-wrap gap-1">
@@ -147,10 +157,11 @@
             </div>
             <div>
                 <label class="mb-1.5 block text-sm font-medium text-zinc-700">Tipe</label>
-                <select x-model="form.type" :class="errors.type ? 'input input-error' : 'input'">
+                <select x-model="form.type" :disabled="true" :class="errors.type ? 'input input-error' : 'input'">
                     <option value="alat">Alat</option>
                     <option value="bahan">Bahan</option>
                 </select>
+                <p class="mt-1 text-xs text-zinc-400">Tipe diambil dari kategori.</p>
                 <p x-show="errors.type" class="mt-1 text-xs text-rose-600" x-text="errors.type?.[0]"></p>
             </div>
             <div>
@@ -158,20 +169,25 @@
                 <input type="text" x-model="form.unit" :class="errors.unit ? 'input input-error' : 'input'" placeholder="pcs, set, liter..." />
                 <p x-show="errors.unit" class="mt-1 text-xs text-rose-600" x-text="errors.unit?.[0]"></p>
             </div>
-            <div>
+            <div x-show="form.type === 'bahan'">
                 <label class="mb-1.5 block text-sm font-medium text-zinc-700">Stok</label>
                 <input type="number" min="0" step="any" x-model="form.stock_quantity" :class="errors.stock_quantity ? 'input input-error' : 'input'" />
                 <p x-show="errors.stock_quantity" class="mt-1 text-xs text-rose-600" x-text="errors.stock_quantity?.[0]"></p>
             </div>
-            <div>
+            <div x-show="form.type === 'bahan'">
                 <label class="mb-1.5 block text-sm font-medium text-zinc-700">Stok Minimum</label>
                 <input type="number" min="0" step="any" x-model="form.minimum_stock" :class="errors.minimum_stock ? 'input input-error' : 'input'" />
                 <p x-show="errors.minimum_stock" class="mt-1 text-xs text-rose-600" x-text="errors.minimum_stock?.[0]"></p>
             </div>
             <div x-show="form.type === 'bahan'">
                 <label class="mb-1.5 block text-sm font-medium text-zinc-700">Lokasi (katalog)</label>
-                <input type="text" x-model="form.location" :class="errors.location ? 'input input-error' : 'input'" placeholder="Ruang Lab 1" />
-                <p x-show="errors.location" class="mt-1 text-xs text-rose-600" x-text="errors.location?.[0]"></p>
+                <select x-model="form.location_id" :class="errors.location_id ? 'input input-error' : 'input'">
+                    <option value="">— Pilih lokasi —</option>
+                    <template x-for="loc in locations" :key="loc.id">
+                        <option :value="loc.id" x-text="loc.name"></option>
+                    </template>
+                </select>
+                <p x-show="errors.location_id" class="mt-1 text-xs text-rose-600" x-text="errors.location_id?.[0]"></p>
             </div>
             <div>
                 <label class="mb-1.5 block text-sm font-medium text-zinc-700">Manufacturer</label>
