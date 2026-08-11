@@ -14,15 +14,13 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             CategorySeeder::class,
-            ItemSeeder::class,
             LocationSeeder::class,
+            ItemSeeder::class,
             ItemUnitSeeder::class,
             BorrowingLifecycleSeeder::class,
             UsageLifecycleSeeder::class,
             StockMovementSeeder::class,
             CalibrationMaintenanceSeeder::class,
-            AuditTrailSeeder::class,
-            AttachmentSeeder::class,
         ]);
     }
 }

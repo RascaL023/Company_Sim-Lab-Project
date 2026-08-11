@@ -220,7 +220,7 @@ Auth: Bearer.
 
 Single: `ItemResource` di `data`. Index: paginated.
 
-Catatan: `items.location` masih string katalog umum (bukan FK). Lokasi fisik unit = `item_units.location_id`.
+Catatan: `items.location_id` (FK ke `locations`) hanya dipakai untuk **bahan**. Alat bernilai `NULL` (lokasi fisik ada di `item_units.location_id`). `stock_quantity`/`minimum_stock` hanya untuk bahan; alat bernilai `NULL` (jumlah unit dari `item_units`).
 
 ---
 

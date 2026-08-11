@@ -57,7 +57,7 @@
                     </div>
                     <div>
                         <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Lokasi (katalog)</dt>
-                        <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="item.location || '—'"></dd>
+                        <dd class="mt-1 text-sm font-medium text-zinc-800" x-text="item.location?.name || '—'"></dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium uppercase tracking-wide text-zinc-400">Manufacturer</dt>

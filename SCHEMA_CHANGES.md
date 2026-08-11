@@ -5,6 +5,26 @@ Dokumen ini menjelaskan perubahan yang telah dilakukan pada skema database SIMLa
 
 ## Daftar Perubahan
 
+### H. Lokasi Katalog Item & Stok Berbasis Tipe (Struktural) — Phase 1 Cleanup
+**Masalah**: `items.location` berupa string bebas sehingga tidak konsisten dengan `locations`, dan `stock_quantity`/`minimum_stock` dianggap berlaku untuk semua item padahal alat dilacak lewat `item_units`.
+
+**Solusi**:
+- `items.location` (string) dihapus; diganti `items.location_id` (FK → `locations.id`, `nullOnDelete`).
+- `items.location_id` HANYA digunakan untuk **bahan**. Untuk **alat** nilainya `NULL` — lokasi fisik alat ada di `item_units.location_id`.
+- `items.stock_quantity` dan `items.minimum_stock` dibuat **nullable**:
+  - alat → `NULL` (jumlah alat = jumlah `item_units`, bukan stok)
+  - bahan → `>= 0`
+- Constraint CHECK non-negatif ditambahkan untuk MySQL (`items_stock_quantity_non_negative`, `items_minimum_stock_non_negative`). SQLite tidak mendukung ALTER ADD CHECK; ditegakkan oleh business logic + seeder + `DatabaseDataValidationTest`.
+- Migrasi backfill `2026_08_11_000001_add_items_location_id_and_nullable_stock.php` memetakan nilai legacy `items.location` ke `locations` sebelum kolom lama dihapus, dan meng-null-kan stok/lokasi untuk alat.
+
+**Pola data final**:
+```
+Category → Item (alat) → ItemUnit → Location
+          Item (bahan) → location_id + stock_quantity/minimum_stock
+```
+
+## Ringkasan Perubahan File
+
 ### A. Alur Persetujuan untuk Peminjaman (Kritis)
 **Masalah**: Tabel borrowings asli tidak memiliki alur persetujuan yang tepat dengan stempel waktu terpisah untuk permintaan, persetujuan, dan peminjaman sebenarnya.
 

@@ -26,7 +26,7 @@ class ItemResource extends JsonResource
             'unit' => $this->unit,
             'stock_quantity' => $this->stock_quantity,
             'minimum_stock' => $this->minimum_stock,
-            'location' => $this->location,
+            'location_id' => $this->location_id,
             'manufacturer' => $this->manufacturer,
             'description' => $this->description,
             'is_alat' => $this->isAlat(),
@@ -41,6 +41,7 @@ class ItemResource extends JsonResource
             // Relationships (eager loaded)
             'category' => CategoryResource::make($this->whenLoaded('category')),
             'creator' => UserResource::make($this->whenLoaded('creator')),
+            'location' => LocationResource::make($this->whenLoaded('location')),
 
             // Counts for collections (optional, can be heavy)
             'calibrations_count' => $this->whenCounted('calibrations'),

@@ -29,9 +29,9 @@ class UpdateItemRequest extends FormRequest
             'name' => 'sometimes|required|string|max:150',
             'type' => 'sometimes|nullable|string|in:alat,bahan',
             'unit' => 'sometimes|required|string|max:30',
-            'stock_quantity' => 'sometimes|required|numeric|min:0',
-            'minimum_stock' => 'sometimes|required|numeric|min:0',
-            'location' => 'sometimes|nullable|string|max:100',
+            'stock_quantity' => 'sometimes|nullable|numeric|min:0',
+            'minimum_stock' => 'sometimes|nullable|numeric|min:0',
+            'location_id' => 'sometimes|nullable|exists:locations,id',
             'manufacturer' => 'sometimes|nullable|string|max:100',
             'description' => 'sometimes|nullable|string',
             'created_by' => 'sometimes|required|exists:users,id',
@@ -46,6 +46,7 @@ class UpdateItemRequest extends FormRequest
         return [
             'category_id.exists' => 'Kategori tidak ditemukan.',
             'code.unique' => 'Kode item sudah digunakan.',
+            'location_id.exists' => 'Lokasi tidak ditemukan.',
         ];
     }
 

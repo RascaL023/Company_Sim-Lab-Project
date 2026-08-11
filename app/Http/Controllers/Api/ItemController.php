@@ -33,7 +33,7 @@ class ItemController extends Controller
     {
         // Get query parameters for filtering
         $query = Item::query()
-            ->with(['category', 'creator'])->withCount(['calibrations', 'maintenances', 'borrowings', 'usages']) // Prevent N+1 queries
+            ->with(['category', 'creator', 'location'])->withCount(['calibrations', 'maintenances', 'borrowings', 'usages']) // Prevent N+1 queries
             ->when($request->query('type'), function ($q, string $type) {
                 return $q->whereHas('category', fn ($category) => $category->where('type', $type));
             })
@@ -93,7 +93,7 @@ class ItemController extends Controller
         $item = Item::create($request->validated());
 
         // Load relationships for the response
-        $item->load(['category', 'creator'])->loadCount(['calibrations', 'maintenances', 'borrowings', 'usages']);
+        $item->load(['category', 'creator', 'location'])->loadCount(['calibrations', 'maintenances', 'borrowings', 'usages']);
 
         return (new ItemResource($item))
             ->response()
@@ -107,7 +107,7 @@ class ItemController extends Controller
      */
     public function show(Item $item)
     {
-        $item->load(['category', 'creator'])->loadCount(['calibrations', 'maintenances', 'borrowings', 'usages']);
+        $item->load(['category', 'creator', 'location'])->loadCount(['calibrations', 'maintenances', 'borrowings', 'usages']);
 
         return new ItemResource($item);
     }
@@ -120,7 +120,7 @@ class ItemController extends Controller
         $item->update($request->validated());
 
         // Reload with relationships for the response
-        $item->load(['category', 'creator'])->loadCount(['calibrations', 'maintenances', 'borrowings', 'usages']);
+        $item->load(['category', 'creator', 'location'])->loadCount(['calibrations', 'maintenances', 'borrowings', 'usages']);
 
         return new ItemResource($item);
     }

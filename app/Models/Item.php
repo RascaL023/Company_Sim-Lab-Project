@@ -26,7 +26,7 @@ class Item extends Model
         'unit',
         'stock_quantity',
         'minimum_stock',
-        'location',
+        'location_id',
         'manufacturer',
         'description',
         'created_by',
@@ -60,6 +60,15 @@ class Item extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the location of this item (hanya untuk bahan; alat = NULL,
+     * lokasi fisik alat berada di item_units.location_id).
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
     }
 
     /**

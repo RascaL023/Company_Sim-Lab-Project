@@ -29,9 +29,9 @@ class StoreItemRequest extends FormRequest
             // type diambil dari category; boleh dikirim FE untuk UX, diabaikan saat persist
             'type' => 'nullable|string|in:alat,bahan',
             'unit' => 'required|string|max:30',
-            'stock_quantity' => 'required|numeric|min:0',
-            'minimum_stock' => 'required|numeric|min:0',
-            'location' => 'nullable|string|max:100',
+            'stock_quantity' => 'nullable|numeric|min:0',
+            'minimum_stock' => 'nullable|numeric|min:0',
+            'location_id' => 'nullable|exists:locations,id',
             'manufacturer' => 'nullable|string|max:100',
             'description' => 'nullable|string',
             'created_by' => 'required|exists:users,id',
@@ -46,6 +46,7 @@ class StoreItemRequest extends FormRequest
         return [
             'category_id.exists' => 'Kategori tidak ditemukan.',
             'code.unique' => 'Kode item sudah digunakan.',
+            'location_id.exists' => 'Lokasi tidak ditemukan.',
         ];
     }
 

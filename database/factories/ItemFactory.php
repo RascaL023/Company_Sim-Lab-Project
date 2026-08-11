@@ -19,14 +19,16 @@ class ItemFactory extends Factory
      */
     public function definition(): array
     {
+        $category = Category::factory()->create();
+
         return [
-            'category_id' => Category::factory(),
+            'category_id' => $category->id,
             'code' => fake()->unique()->bothify('ITM-######'),
             'name' => fake()->words(2, true),
-            'unit' => fake()->randomElement(['pcs', 'box', 'liter', 'gram', 'kg', 'ml', 'set', 'unit']),
-            'stock_quantity' => fake()->randomFloat(2, 0, 500),
-            'minimum_stock' => fake()->randomFloat(2, 0, 50),
-            'location' => fake()->randomElement(['Ruang Lab 1', 'Ruang Lab 2', 'Gudang A', 'Gudang B', 'Lokasi Luar']),
+            'unit' => $category->type === 'alat' ? 'unit' : fake()->randomElement(['pcs', 'box', 'liter', 'gram', 'kg', 'ml']),
+            'stock_quantity' => $category->type === 'alat' ? null : fake()->randomFloat(2, 0, 500),
+            'minimum_stock' => $category->type === 'alat' ? null : fake()->randomFloat(2, 0, 50),
+            'location_id' => null,
             'manufacturer' => fake()->optional(0.7)->company(),
             'description' => fake()->optional(0.5)->sentence(),
             'created_by' => User::factory(),
@@ -43,9 +45,9 @@ class ItemFactory extends Factory
 
             return [
                 'category_id' => $category->id,
-                'unit' => fake()->randomElement(['pcs', 'unit', 'set']),
-                'stock_quantity' => 0, // alat tracked by units
-                'minimum_stock' => 0,
+                'unit' => 'unit',
+                'stock_quantity' => null, // alat dilacak per ItemUnit, bukan stok
+                'minimum_stock' => null,
             ];
         });
     }

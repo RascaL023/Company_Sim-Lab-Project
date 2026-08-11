@@ -5,52 +5,41 @@ namespace Database\Seeders;
 use App\Models\Item;
 use App\Models\ItemUnit;
 use App\Models\Location;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class ItemUnitSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Beberapa unit fisik untuk setiap alat, masing-masing dengan lokasi.
+     * Bahan tidak memiliki unit (dilacak lewat stock_quantity).
      */
     public function run(): void
     {
-        // Create units for alat items (items with units like 'unit', 'set')
-        $alatItems = Item::whereHas('category', function ($q) {
-            $q->where('type', 'alat');
-        })->get();
+        $createdBy = User::where('role', 'admin_sistem')->value('id') ?? User::first()->id;
+        $labMikroskopi = Location::where('code', 'LOC-MIKROSKOPI')->value('id');
+        $labSentrifugasi = Location::where('code', 'LOC-SENTRIFUGASI')->value('id');
 
-        foreach ($alatItems as $item) {
-            // Create 2-5 units per alat item
-            $unitCount = rand(2, 5);
+        $mikroskop = Item::where('code', 'MCS-001')->first();
+        $sentrifus = Item::where('code', 'SNF-001')->first();
 
-            $locationId = null;
-            if ($item->location) {
-                $locationId = Location::firstOrCreateFromName($item->location)->id;
-            }
+        $units = [
+            ['item_id' => $mikroskop->id, 'serial_number' => 'CX23-001', 'asset_tag' => 'AT-MCS-001', 'condition' => 'baik', 'location_id' => $labMikroskopi],
+            ['item_id' => $mikroskop->id, 'serial_number' => 'CX23-002', 'asset_tag' => 'AT-MCS-002', 'condition' => 'baik', 'location_id' => $labMikroskopi],
+            ['item_id' => $sentrifus->id, 'serial_number' => 'SNF-001', 'asset_tag' => 'AT-SNF-001', 'condition' => 'baik', 'location_id' => $labSentrifugasi],
+            ['item_id' => $sentrifus->id, 'serial_number' => 'SNF-002', 'asset_tag' => 'AT-SNF-002', 'condition' => 'baik', 'location_id' => $labSentrifugasi],
+        ];
 
-            for ($i = 1; $i <= $unitCount; $i++) {
-                $condition = $i === 1 ? 'baik' : fake()->randomElement(['baik', 'rusak_ringan', 'rusak_berat']);
-
-                $unitData = [
-                    'item_id' => $item->id,
-                    'serial_number' => $item->code.'-'.str_pad($i, 3, '0', STR_PAD_LEFT),
-                    'asset_tag' => 'AT-'.strtoupper($item->code).'-'.str_pad($i, 3, '0', STR_PAD_LEFT),
-                    'condition' => $condition,
-                    'location_id' => $locationId,
-                    'purchase_date' => fake()->dateTimeBetween('-3 years', '-6 months'),
-                    'last_calibration_date' => fake()->dateTimeBetween('-1 year', 'now'),
-                    'next_calibration_date' => fake()->dateTimeBetween('now', '+1 year'),
-                    'expiry_date' => $item->isAlat() ? null : fake()->optional(0.1)->dateTimeBetween('now', '+2 years'),
-                    'notes' => fake()->optional(0.3)->sentence(),
-                    'created_by' => 1, // admin
-                ];
-
-                ItemUnit::create($unitData);
-            }
+        foreach ($units as $unit) {
+            ItemUnit::create(array_merge($unit, [
+                'purchase_date' => now()->subYears(2),
+                'last_calibration_date' => now()->subMonths(6),
+                'next_calibration_date' => now()->addMonths(6),
+                'notes' => null,
+                'created_by' => $createdBy,
+            ]));
         }
 
-        // For bahan items, we don't create units (they're tracked by stock quantity)
-        // But we can create some units for special tracking if needed
         $this->command->info('Created '.ItemUnit::count().' item units');
     }
 }

@@ -17,9 +17,9 @@ return new class extends Migration
             $table->string('code', 50)->unique();
             $table->string('name', 150);
             $table->string('unit', 30); // satuan: pcs, box, liter, dll
-            $table->decimal('stock_quantity', 10, 2)->default(0); // untuk bahan (consumable)
-            $table->decimal('minimum_stock', 10, 2)->default(0);
-            $table->string('location', 100)->nullable(); // lokasi umum (ruang, gudang)
+            $table->decimal('stock_quantity', 10, 2)->nullable(); // hanya untuk bahan; alat = NULL (jumlah dari ItemUnit)
+            $table->decimal('minimum_stock', 10, 2)->nullable(); // hanya untuk bahan
+            $table->string('location', 100)->nullable(); // legacy: dipindah ke location_id oleh migrasi 2026_08_11_000001
             $table->string('manufacturer', 100)->nullable();
             $table->text('description')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete()->cascadeOnUpdate();

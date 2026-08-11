@@ -11,72 +11,84 @@ use App\Models\ItemMaintenance;
 use App\Models\ItemUnit;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 
 class BorrowingLifecycleSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Enam skenario peminjaman deterministik untuk menguji workflow:
+     * selesai normal, rusak->maintenance, terlambat, ditolak, diajukan, disetujui.
      */
     public function run(): void
     {
-        $users = User::all();
-        $admin = $users->where('role', 'laboran')->first() ?? $users->first();
-        $staff = $users->where('role', 'peminjam')->first() ?? $users->last();
+        $laboran = User::where('role', 'laboran')->value('id') ?? User::first()->id;
+        $peminjam = User::where('role', 'peminjam')->value('id') ?? User::first()->id;
 
-        // Get some alat items with units
-        $alatItemsWithUnits = Item::whereHas('category', function ($q) {
-            $q->where('type', 'alat');
-        })->whereHas('units', function ($q) {
-            $q->where('condition', 'baik');
-        })->get();
+        $mikroskop = Item::where('code', 'MCS-001')->first();
+        $sentrifus = Item::where('code', 'SNF-001')->first();
 
-        if ($alatItemsWithUnits->isEmpty()) {
-            $this->command->error('No alat items with units found for borrowing');
+        $cx23001 = ItemUnit::where('serial_number', 'CX23-001')->first();
+        $cx23002 = ItemUnit::where('serial_number', 'CX23-002')->first();
+        $snf001 = ItemUnit::where('serial_number', 'SNF-001')->first();
+        $snf002 = ItemUnit::where('serial_number', 'SNF-002')->first();
+
+        if (! $mikroskop || ! $sentrifus || ! $cx23001 || ! $cx23002 || ! $snf001 || ! $snf002) {
+            $this->command->error('Data item/unit alat tidak lengkap untuk skenario peminjaman');
 
             return;
         }
 
-        // Scenario 1: Normal borrowing and return (fully completed)
-        $this->createNormalBorrowingCycle($alatItemsWithUnits, $admin, $staff);
-
-        // Scenario 2: Borrowing with damage -> maintenance record (fully completed)
-        $this->createDamageBorrowingCycle($alatItemsWithUnits, $admin, $staff);
-
-        // Scenario 3: Overdue borrowing (checked out, not yet returned)
-        $this->createOverdueBorrowing($alatItemsWithUnits, $admin, $staff);
-
-        // Scenario 4: Request rejected
-        $this->createRejectedRequest($alatItemsWithUnits, $admin, $staff);
-
-        // Scenario 5: Request pending approval (never processed)
-        $this->createPendingRequest($alatItemsWithUnits, $admin, $staff);
-
-        // Scenario 6: Approved request whose items are not yet checked out
-        $this->createApprovedNotCheckedOutRequest($alatItemsWithUnits, $admin, $staff);
+        $this->normalCompleted($mikroskop, $cx23001, $laboran, $peminjam);
+        $this->damageThenMaintenance($sentrifus, $snf001, $laboran, $peminjam);
+        $this->overdue($mikroskop, $cx23002, $laboran, $peminjam);
+        $this->rejected($sentrifus, $snf002, $laboran, $peminjam);
+        $this->pending($sentrifus, $snf001, $peminjam);
+        $this->approvedNotCheckedOut($sentrifus, $snf002, $laboran, $peminjam);
 
         $this->command->info('Created borrowing lifecycle records');
     }
 
-    /**
-     * Create a normal borrowing request -> approval -> borrow -> return cycle
-     */
-    private function createNormalBorrowingCycle($alatItems, $admin, $staff)
+    private function request(string $number, array $attrs): BorrowingRequest
     {
-        $item = $alatItems->random();
-        $unit = $item->units()->where('condition', 'baik')->first();
+        $request = BorrowingRequest::create(array_merge([
+            'request_number' => $number,
+            'requested_at' => now(),
+        ], $attrs));
 
-        if (! $unit) {
-            return;
-        }
+        AuditTrail::create([
+            'user_id' => $request->requested_by,
+            'auditable_type' => BorrowingRequest::class,
+            'auditable_id' => $request->id,
+            'action' => 'created',
+            'new_values' => $request->toArray(),
+        ]);
 
-        $request = BorrowingRequest::create([
-            'request_number' => 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999)),
-            'requested_by' => $staff->id,
-            'approved_by' => $admin->id,
+        return $request;
+    }
+
+    private function approve(BorrowingRequest $request, int $laboran, Carbon $at): void
+    {
+        $request->update(['approved_by' => $laboran, 'approved_at' => $at, 'status' => 'disetujui']);
+
+        AuditTrail::create([
+            'user_id' => $laboran,
+            'auditable_type' => BorrowingRequest::class,
+            'auditable_id' => $request->id,
+            'action' => 'approved',
+            'old_values' => ['status' => 'diajukan'],
+            'new_values' => ['status' => 'disetujui'],
+        ]);
+    }
+
+    private function normalCompleted($item, $unit, int $laboran, int $peminjam): void
+    {
+        $request = $this->request('BR-2026-0001', [
+            'requested_by' => $peminjam,
             'status' => 'selesai',
-            'purpose' => 'Pengujian rutin bahan kimia',
-            'requested_at' => now()->subDays(5),
-            'approved_at' => now()->subDays(4),
+            'purpose' => 'Pengujian rutin sampel air',
+            'requested_at' => Carbon::parse('-12 days'),
+            'approved_at' => Carbon::parse('-11 days'),
+            'approved_by' => $laboran,
         ]);
 
         $borrowingItem = BorrowingItem::create([
@@ -87,52 +99,22 @@ class BorrowingLifecycleSeeder extends Seeder
             'condition_before' => 'baik',
             'condition_after' => 'baik',
             'is_damaged' => false,
-            'borrow_date' => now()->subDays(3),
-            'expected_return_date' => now()->addDays(2),
-            'actual_return_date' => now()->subHours(2),
-            'checked_by' => $admin->id,
-            'checked_at' => now()->subHours(1),
-            'check_notes' => 'Barang dikembalikan dalam kondisi baik, tidak ada kerusakan terlihat.',
-            'checked_out_by' => $admin->id,
-            'checked_in_by' => $admin->id,
+            'borrow_date' => Carbon::parse('-10 days'),
+            'expected_return_date' => Carbon::parse('-5 days'),
+            'actual_return_date' => Carbon::parse('-2 days'),
+            'checked_by' => $laboran,
+            'checked_at' => Carbon::parse('-2 days')->addHours(2),
+            'check_notes' => 'Barang dikembalikan dalam kondisi baik, tidak ada kerusakan.',
+            'checked_out_by' => $laboran,
+            'checked_in_by' => $laboran,
         ]);
 
         AuditTrail::create([
-            'user_id' => $staff->id,
-            'auditable_type' => BorrowingRequest::class,
-            'auditable_id' => $request->id,
-            'action' => 'created',
-            'new_values' => $request->toArray(),
-        ]);
-
-        AuditTrail::create([
-            'user_id' => $admin->id,
-            'auditable_type' => BorrowingRequest::class,
-            'auditable_id' => $request->id,
-            'action' => 'approved',
-            'old_values' => ['status' => 'diajukan'],
-            'new_values' => ['status' => 'disetujui'],
-        ]);
-
-        AuditTrail::create([
-            'user_id' => $staff->id,
-            'auditable_type' => BorrowingItem::class,
-            'auditable_id' => $borrowingItem->id,
-            'action' => 'updated',
-            'old_values' => ['actual_return_date' => null],
-            'new_values' => ['actual_return_date' => $borrowingItem->actual_return_date],
-        ]);
-
-        AuditTrail::create([
-            'user_id' => $admin->id,
+            'user_id' => $laboran,
             'auditable_type' => BorrowingItem::class,
             'auditable_id' => $borrowingItem->id,
             'action' => 'checked_in',
-            'new_values' => [
-                'actual_return_date' => $borrowingItem->actual_return_date,
-                'checked_by' => $admin->id,
-                'checked_in_by' => $admin->id,
-            ],
+            'new_values' => ['actual_return_date' => $borrowingItem->actual_return_date, 'checked_by' => $laboran],
         ]);
 
         Attachment::create([
@@ -145,30 +127,19 @@ class BorrowingLifecycleSeeder extends Seeder
             'file_size' => 204800,
             'disk' => 'public',
             'description' => 'Foto kondisi barang setelah pemakaian',
-            'uploaded_by' => $admin->id,
+            'uploaded_by' => $laboran,
         ]);
     }
 
-    /**
-     * Create a borrowing where item is returned damaged -> creates maintenance record
-     */
-    private function createDamageBorrowingCycle($alatItems, $admin, $staff)
+    private function damageThenMaintenance($item, $unit, int $laboran, int $peminjam): void
     {
-        $item = $alatItems->random();
-        $unit = $item->units()->where('condition', 'baik')->first();
-
-        if (! $unit) {
-            return;
-        }
-
-        $request = BorrowingRequest::create([
-            'request_number' => 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999)),
-            'requested_by' => $staff->id,
-            'approved_by' => $admin->id,
+        $request = $this->request('BR-2026-0002', [
+            'requested_by' => $peminjam,
             'status' => 'selesai',
             'purpose' => 'Pengujian bahan korosif',
-            'requested_at' => now()->subDays(10),
-            'approved_at' => now()->subDays(9),
+            'requested_at' => Carbon::parse('-25 days'),
+            'approved_at' => Carbon::parse('-24 days'),
+            'approved_by' => $laboran,
         ]);
 
         $borrowingItem = BorrowingItem::create([
@@ -179,104 +150,62 @@ class BorrowingLifecycleSeeder extends Seeder
             'condition_before' => 'baik',
             'condition_after' => 'rusak_berat',
             'is_damaged' => true,
-            'damage_notes' => 'Terjadi retakan pada bagian housing mikroskop akibat jatuh selama pengujian.',
-            'borrow_date' => now()->subDays(7),
-            'expected_return_date' => now()->subDays(2),
-            'actual_return_date' => now()->subDays(1),
-            'checked_by' => $admin->id,
-            'checked_at' => now()->subHours(12),
-            'check_notes' => 'Barang dikembalikan dengan kerusakan berat pada housing bagian kiri. Disarankan perbaikan.',
-            'checked_out_by' => $admin->id,
-            'checked_in_by' => $admin->id,
+            'damage_notes' => 'Retakan pada housing bagian kiri akibat jatuh selama pengujian.',
+            'borrow_date' => Carbon::parse('-20 days'),
+            'expected_return_date' => Carbon::parse('-15 days'),
+            'actual_return_date' => Carbon::parse('-12 days'),
+            'checked_by' => $laboran,
+            'checked_at' => Carbon::parse('-12 days')->addDay(),
+            'check_notes' => 'Kerusakan berat pada housing kiri, disarankan perbaikan.',
+            'checked_out_by' => $laboran,
+            'checked_in_by' => $laboran,
         ]);
 
-        $unit->update([
-            'condition' => 'rusak_berat',
-            'notes' => $unit->notes.' Diperbarui: Rusak berat akibat jatuh selama peminjaman ['.now()->toDateString().']',
-        ]);
+        $unit->update(['condition' => 'rusak_berat']);
 
         $maintenance = ItemMaintenance::create([
             'item_unit_id' => $unit->id,
-            'maintenance_date' => now()->subDays(1),
-            'description' => 'Perbaikan housing mikroskop akibat retakan dari jatuh selama peminjaman',
+            'maintenance_date' => Carbon::parse('-11 days'),
+            'description' => 'Perbaikan housing akibat retakan saat peminjaman',
             'performed_by' => 'Teknik Laboratorium Internal',
             'cost' => 750000,
             'status' => 'selesai',
-            'notes' => 'Perbaikan selesai: penggantian bagian housing kiri dan pengujian fungsional ulang.',
-            'recorded_by' => $admin->id,
+            'notes' => 'Penggantian housing kiri dan uji fungsional ulang.',
+            'recorded_by' => $laboran,
         ]);
 
         $unit->update([
             'condition' => 'baik',
-            'last_calibration_date' => now()->subDays(1),
-            'next_calibration_date' => now()->addMonths(6),
-            'notes' => $unit->notes.' Diperbarui: Setelah perbaikan dan kalibrasi ulang ['.now()->toDateString().']',
+            'last_calibration_date' => Carbon::parse('-11 days'),
+            'next_calibration_date' => Carbon::parse('-11 days')->addMonths(6),
         ]);
 
         AuditTrail::create([
-            'user_id' => $staff->id,
-            'auditable_type' => BorrowingRequest::class,
-            'auditable_id' => $request->id,
-            'action' => 'created',
-            'new_values' => $request->toArray(),
-        ]);
-
-        AuditTrail::create([
-            'user_id' => $admin->id,
-            'auditable_type' => BorrowingRequest::class,
-            'auditable_id' => $request->id,
-            'action' => 'approved',
-            'old_values' => ['status' => 'diajukan'],
-            'new_values' => ['status' => 'disetujui'],
-        ]);
-
-        AuditTrail::create([
-            'user_id' => $staff->id,
+            'user_id' => $laboran,
             'auditable_type' => BorrowingItem::class,
             'auditable_id' => $borrowingItem->id,
-            'action' => 'updated',
-            'old_values' => ['condition_after' => 'baik', 'is_damaged' => false],
-            'new_values' => ['condition_after' => 'rusak_berat', 'is_damaged' => true, 'damage_notes' => $borrowingItem->damage_notes],
+            'action' => 'damaged_reported',
+            'new_values' => ['condition_after' => 'rusak_berat', 'is_damaged' => true],
         ]);
 
         AuditTrail::create([
-            'user_id' => $admin->id,
+            'user_id' => $laboran,
             'auditable_type' => ItemMaintenance::class,
             'auditable_id' => $maintenance->id,
             'action' => 'created',
             'new_values' => $maintenance->toArray(),
         ]);
-
-        AuditTrail::create([
-            'user_id' => $admin->id,
-            'auditable_type' => ItemUnit::class,
-            'auditable_id' => $unit->id,
-            'action' => 'updated',
-            'old_values' => ['condition' => 'rusak_berat'],
-            'new_values' => ['condition' => 'baik'],
-        ]);
     }
 
-    /**
-     * Create an overdue borrowing (not returned on time)
-     */
-    private function createOverdueBorrowing($alatItems, $admin, $staff)
+    private function overdue($item, $unit, int $laboran, int $peminjam): void
     {
-        $item = $alatItems->random();
-        $unit = $item->units()->where('condition', 'baik')->first();
-
-        if (! $unit) {
-            return;
-        }
-
-        $request = BorrowingRequest::create([
-            'request_number' => 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999)),
-            'requested_by' => $staff->id,
-            'approved_by' => $admin->id,
+        $request = $this->request('BR-2026-0003', [
+            'requested_by' => $peminjam,
             'status' => 'diproses',
             'purpose' => 'Penelitian jangka panjang',
-            'requested_at' => now()->subDays(20),
-            'approved_at' => now()->subDays(19),
+            'requested_at' => Carbon::parse('-20 days'),
+            'approved_at' => Carbon::parse('-19 days'),
+            'approved_by' => $laboran,
         ]);
 
         $borrowingItem = BorrowingItem::create([
@@ -287,68 +216,36 @@ class BorrowingLifecycleSeeder extends Seeder
             'condition_before' => 'baik',
             'condition_after' => null,
             'is_damaged' => false,
-            'borrow_date' => now()->subDays(15),
-            'expected_return_date' => now()->subDays(5),
+            'borrow_date' => Carbon::parse('-15 days'),
+            'expected_return_date' => Carbon::parse('-5 days'),
             'actual_return_date' => null,
             'checked_by' => null,
             'checked_at' => null,
             'check_notes' => null,
-            'checked_out_by' => $admin->id,
+            'checked_out_by' => $laboran,
             'checked_in_by' => null,
         ]);
 
         AuditTrail::create([
-            'user_id' => $staff->id,
-            'auditable_type' => BorrowingRequest::class,
-            'auditable_id' => $request->id,
-            'action' => 'created',
-            'new_values' => $request->toArray(),
-        ]);
-
-        AuditTrail::create([
-            'user_id' => $admin->id,
-            'auditable_type' => BorrowingRequest::class,
-            'auditable_id' => $request->id,
-            'action' => 'approved',
-            'old_values' => ['status' => 'diajukan'],
-            'new_values' => ['status' => 'disetujui'],
-        ]);
-
-        AuditTrail::create([
-            'user_id' => $staff->id,
+            'user_id' => $laboran,
             'auditable_type' => BorrowingItem::class,
             'auditable_id' => $borrowingItem->id,
             'action' => 'checked_out',
-            'new_values' => [
-                'borrow_date' => $borrowingItem->borrow_date,
-                'expected_return_date' => $borrowingItem->expected_return_date,
-                'checked_out_by' => $admin->id,
-            ],
+            'new_values' => ['borrow_date' => $borrowingItem->borrow_date, 'expected_return_date' => $borrowingItem->expected_return_date],
         ]);
     }
 
-    /**
-     * Create a request that gets rejected
-     */
-    private function createRejectedRequest($alatItems, $admin, $staff)
+    private function rejected($item, $unit, int $laboran, int $peminjam): void
     {
-        $item = $alatItems->random();
-        $unit = $item->units()->where('condition', 'baik')->first();
-
-        if (! $unit) {
-            return;
-        }
-
-        $request = BorrowingRequest::create([
-            'request_number' => 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999)),
-            'requested_by' => $staff->id,
-            'approved_by' => $admin->id,
+        $request = $this->request('BR-2026-0004', [
+            'requested_by' => $peminjam,
             'status' => 'ditolak',
-            'purpose' => 'Pengujian dengan bahan berbahaya yang tidak diizinkan',
-            'requested_at' => now()->subDays(3),
-            'approved_at' => now()->subDays(2),
-            'rejected_at' => now()->subDays(2),
-            'rejection_reason' => 'Pengajuan ditolak karena bahan yang akan digunakan tergolong berbahaya dan memerlukan izin khusus yang belum ada.',
+            'purpose' => 'Pengujian dengan bahan berbahaya tanpa izin khusus',
+            'requested_at' => Carbon::parse('-4 days'),
+            'approved_at' => Carbon::parse('-3 days'),
+            'rejected_at' => Carbon::parse('-3 days'),
+            'approved_by' => $laboran,
+            'rejection_reason' => 'Penggunaan bahan berbahaya memerlukan izin khusus yang belum dilengkapi.',
         ]);
 
         BorrowingItem::create([
@@ -368,48 +265,26 @@ class BorrowingLifecycleSeeder extends Seeder
         ]);
 
         AuditTrail::create([
-            'user_id' => $staff->id,
-            'auditable_type' => BorrowingRequest::class,
-            'auditable_id' => $request->id,
-            'action' => 'created',
-            'new_values' => $request->toArray(),
-        ]);
-
-        AuditTrail::create([
-            'user_id' => $admin->id,
+            'user_id' => $laboran,
             'auditable_type' => BorrowingRequest::class,
             'auditable_id' => $request->id,
             'action' => 'rejected',
             'old_values' => ['status' => 'diajukan'],
             'new_values' => ['status' => 'ditolak', 'rejection_reason' => $request->rejection_reason],
         ]);
-
-        $this->command->info('Created rejected borrowing request');
     }
 
-    /**
-     * Create a request that was just submitted and never processed
-     * (for demoing the Approve/Reject buttons).
-     */
-    private function createPendingRequest($alatItems, $admin, $staff)
+    private function pending($item, $unit, int $peminjam): void
     {
-        $item = $alatItems->random();
-        $unit = $item->units()->where('condition', 'baik')->first();
-
-        if (! $unit) {
-            return;
-        }
-
-        $request = BorrowingRequest::create([
-            'request_number' => 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999)),
-            'requested_by' => $staff->id,
+        $this->request('BR-2026-0005', [
+            'requested_by' => $peminjam,
             'status' => 'diajukan',
             'purpose' => 'Pengujian sampel air untuk praktikum lingkungan',
-            'requested_at' => now()->subHours(3),
+            'requested_at' => Carbon::parse('-1 day'),
         ]);
 
         BorrowingItem::create([
-            'borrowing_request_id' => $request->id,
+            'borrowing_request_id' => BorrowingRequest::where('request_number', 'BR-2026-0005')->value('id'),
             'item_id' => $item->id,
             'item_unit_id' => $unit->id,
             'quantity' => 1,
@@ -423,39 +298,17 @@ class BorrowingLifecycleSeeder extends Seeder
             'checked_at' => null,
             'check_notes' => null,
         ]);
-
-        AuditTrail::create([
-            'user_id' => $staff->id,
-            'auditable_type' => BorrowingRequest::class,
-            'auditable_id' => $request->id,
-            'action' => 'created',
-            'new_values' => $request->toArray(),
-        ]);
-
-        $this->command->info('Created pending borrowing request');
     }
 
-    /**
-     * Create an approved request whose items are not yet checked out
-     * (for demoing the Checkout button).
-     */
-    private function createApprovedNotCheckedOutRequest($alatItems, $admin, $staff)
+    private function approvedNotCheckedOut($item, $unit, int $laboran, int $peminjam): void
     {
-        $item = $alatItems->random();
-        $unit = $item->units()->where('condition', 'baik')->first();
-
-        if (! $unit) {
-            return;
-        }
-
-        $request = BorrowingRequest::create([
-            'request_number' => 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999)),
-            'requested_by' => $staff->id,
-            'approved_by' => $admin->id,
+        $request = $this->request('BR-2026-0006', [
+            'requested_by' => $peminjam,
             'status' => 'disetujui',
             'purpose' => 'Pengukuran spektrofotometri sampel laboratorium',
-            'requested_at' => now()->subDay(),
-            'approved_at' => now()->subHours(6),
+            'requested_at' => Carbon::parse('-3 days'),
+            'approved_at' => Carbon::parse('-2 days'),
+            'approved_by' => $laboran,
         ]);
 
         BorrowingItem::create([
@@ -473,24 +326,5 @@ class BorrowingLifecycleSeeder extends Seeder
             'checked_at' => null,
             'check_notes' => null,
         ]);
-
-        AuditTrail::create([
-            'user_id' => $staff->id,
-            'auditable_type' => BorrowingRequest::class,
-            'auditable_id' => $request->id,
-            'action' => 'created',
-            'new_values' => $request->toArray(),
-        ]);
-
-        AuditTrail::create([
-            'user_id' => $admin->id,
-            'auditable_type' => BorrowingRequest::class,
-            'auditable_id' => $request->id,
-            'action' => 'approved',
-            'old_values' => ['status' => 'diajukan'],
-            'new_values' => ['status' => 'disetujui'],
-        ]);
-
-        $this->command->info('Created approved borrowing request awaiting checkout');
     }
 }

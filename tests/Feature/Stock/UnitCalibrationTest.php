@@ -74,8 +74,8 @@ class UnitCalibrationTest extends TestCase
         );
 
         // Prove that the item's stock_quantity is not affected by unit-level tracking
-        // (for alat items, stock_quantity should remain 0 as tracking is done per unit)
-        $this->assertEquals(0, $item->fresh()->stock_quantity,
+        // (for alat items, stock_quantity harus NULL — jumlah unit berasal dari ItemUnit)
+        $this->assertNull($item->fresh()->stock_quantity,
             'For alat items, stock tracking should be done per unit, not in item stock_quantity');
 
         // The item unit tracking allows different calibration schedules per physical unit

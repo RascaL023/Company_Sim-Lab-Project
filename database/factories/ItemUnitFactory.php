@@ -21,7 +21,7 @@ class ItemUnitFactory extends Factory
     public function definition(): array
     {
         return [
-            'item_id' => Item::factory(),
+            'item_id' => Item::factory()->alat(),
             'serial_number' => fake()->unique()->bothify('SN-########'),
             'asset_tag' => fake()->unique()->bothify('AT-#####'),
             'condition' => fake()->randomElement(['baik', 'rusak_ringan', 'rusak_berat', 'hilang']),
