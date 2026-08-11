@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\StockMovementResource;
 use App\Models\Item;
 use App\Models\StockMovement;
+use App\Services\StockService;
 use Illuminate\Http\Request;
 
 class StockMovementController extends Controller
@@ -39,18 +40,11 @@ class StockMovementController extends Controller
         ]);
 
         $item = Item::findOrFail($validated['item_id']);
-        $quantityBefore = $item->stock_quantity;
 
-        $isIncoming = in_array($validated['type'], ['in_purchase', 'in_return', 'in_adjustment', 'transfer_in'], true);
-        $quantityAfter = $isIncoming
-            ? $quantityBefore + $validated['quantity']
-            : max(0, $quantityBefore - $validated['quantity']);
-
-        $movement = StockMovement::create([
-            ...$validated,
-            'quantity_before' => $quantityBefore,
-            'quantity_after' => $quantityAfter,
+        $movement = app(StockService::class)->record($item, $validated['type'], (float) $validated['quantity'], [
+            'item_unit_id' => $validated['item_unit_id'] ?? null,
             'performed_by' => $request->user()->id,
+            'notes' => $validated['notes'] ?? null,
             'occurred_at' => now(),
         ]);
 

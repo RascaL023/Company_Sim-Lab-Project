@@ -47,6 +47,51 @@ class Item extends Model
     }
 
     /**
+     * Boot the model.
+     */
+    protected static function booted()
+    {
+        static::creating(function ($item) {
+            $item->enforceDomainRules();
+        });
+
+        static::updating(function ($item) {
+            $item->enforceDomainRules();
+        });
+    }
+
+    /**
+     * Enforce domain rules based on item type.
+     */
+    protected function enforceDomainRules()
+    {
+        // If category is not loaded, load it
+        if (! $this->relationLoaded('category')) {
+            $this->load('category');
+        }
+
+        if ($this->category) {
+            if ($this->category->type === 'alat') {
+                // For alat, stock_quantity, minimum_stock, and location_id must be null
+                $this->stock_quantity = null;
+                $this->minimum_stock = null;
+                $this->location_id = null;
+            } elseif ($this->category->type === 'bahan') {
+                // For bahan, ensure stock_quantity and minimum_stock are not null and >=0
+                // Note: validation should have ensured they are present and numeric, but we double-check
+                if ($this->stock_quantity === null) {
+                    $this->stock_quantity = 0; // or throw an exception? We'll set to 0 as fallback, but validation should prevent null
+                }
+                if ($this->minimum_stock === null) {
+                    $this->minimum_stock = 0;
+                }
+                // location_id should already be set by validation, but if not, we cannot set it because we don't know the location
+                // We'll leave it as is and let validation catch it
+            }
+        }
+    }
+
+    /**
      * Get the category that owns the item.
      */
     public function category(): BelongsTo

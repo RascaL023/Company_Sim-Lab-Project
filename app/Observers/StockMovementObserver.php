@@ -11,8 +11,12 @@ class StockMovementObserver
      */
     public function created(StockMovement $stockMovement): void
     {
-        $stockMovement->item?->update([
-            'stock_quantity' => $stockMovement->quantity_after,
-        ]);
+        // Only update stock_quantity for bahan items; for alat, stock_quantity remains NULL
+        $item = $stockMovement->item;
+        if ($item && ! $item->isAlat()) {
+            $item->update([
+                'stock_quantity' => $stockMovement->quantity_after,
+            ]);
+        }
     }
 }

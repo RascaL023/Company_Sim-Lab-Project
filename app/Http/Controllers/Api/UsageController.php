@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UsageResource;
 use App\Models\Item;
-use App\Models\StockMovement;
 use App\Models\Usage;
+use App\Services\StockService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class UsageController extends Controller
 {
@@ -47,30 +49,58 @@ class UsageController extends Controller
         ]);
 
         $item = Item::findOrFail($validated['item_id']);
-        $quantityBefore = $item->stock_quantity;
-        $quantityAfter = max(0, $quantityBefore - $validated['quantity_used']);
+
+        if ($item->isBahan()) {
+            // Bahan NEVER uses a physical unit.
+            if (! empty($validated['item_unit_id'])) {
+                return response()->json([
+                    'message' => 'Item bahan tidak menggunakan unit fisik.',
+                    'errors' => ['item_unit_id' => ['Item bahan tidak menggunakan unit fisik.']],
+                ], 422);
+            }
+            $validated['item_unit_id'] = null;
+        } else {
+            // Alat has no numeric stock; usage is recorded without stock mutation.
+            $validated['item_unit_id'] = null;
+        }
 
         $validated['user_id'] = $request->user()->id;
-        $validated['quantity_before'] = $quantityBefore;
-        $validated['quantity_after'] = $quantityAfter;
         $validated['status'] = 'dicatat';
         $validated['usage_date'] = now();
 
-        $usage = Usage::create($validated);
+        try {
+            $usage = DB::transaction(function () use ($item, $validated, $request) {
+                $usage = Usage::create($validated);
 
-        StockMovement::create([
-            'item_id' => $usage->item_id,
-            'item_unit_id' => $usage->item_unit_id,
-            'type' => 'out_usage',
-            'quantity' => $validated['quantity_used'],
-            'quantity_before' => $quantityBefore,
-            'quantity_after' => $quantityAfter,
-            'reference_type' => Usage::class,
-            'reference_id' => $usage->id,
-            'performed_by' => $request->user()->id,
-            'notes' => $validated['purpose'],
-            'occurred_at' => now(),
-        ]);
+                $movement = app(StockService::class)->record($item, 'out_usage', (float) $validated['quantity_used'], [
+                    'item_unit_id' => $validated['item_unit_id'] ?? null,
+                    'reference_type' => Usage::class,
+                    'reference_id' => $usage->id,
+                    'performed_by' => $request->user()->id,
+                    'notes' => $validated['purpose'],
+                    'occurred_at' => now(),
+                ]);
+
+                $usage->update([
+                    'quantity_before' => $movement->quantity_before,
+                    'quantity_after' => $movement->quantity_after,
+                ]);
+
+                return $usage;
+            });
+        } catch (ValidationException $e) {
+            // Map the service's generic `quantity` key to the request field name.
+            $errors = $e->errors();
+            if (isset($errors['quantity'])) {
+                $errors['quantity_used'] = $errors['quantity'];
+                unset($errors['quantity']);
+            }
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
 
         return (new UsageResource($usage))->response()->setStatusCode(201);
     }

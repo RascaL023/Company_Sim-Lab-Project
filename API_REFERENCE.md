@@ -327,8 +327,9 @@ Perubahan status ke `disetujui`/`ditolak`/`diproses`/`selesai` memicu notifikasi
 }
 ```
 
-- `item_unit_id` **wajib** untuk item **alat** (`422` `"Pilih unit fisik yang akan di-checkout."`); diabaikan untuk bahan
+- `item_unit_id` **wajib** untuk item **alat** (`422` `"Pilih unit fisik yang akan di-checkout."`); untuk **bahan** field ini **dilarang** (`prohibited` → `422` `"Item bahan tidak menggunakan unit fisik."`)
 - Validasi `item_unit_id`: harus unit dari item yang sama, `condition` bukan `hilang`/`dihapus`, dan tidak sedang aktif dipinjam pada `borrowing_items` lain (`422` sesuai kasus)
+- **Bahan**: saat checkout, `quantity` harus `>= 1` dan `<= stock_quantity`. Jika melebihi stok → `422` `errors.quantity` (`"Tersedia: X, diminta: Y."`). Transaksi tidak dibuat dan stok tidak berubah. Stok bahan baru benar-benar berkurang pada checkout (bukan saat request).
 
 Setelah **semua** item checkout → parent `diproses`.
 
@@ -357,12 +358,19 @@ Ledger append-only.
 | Method | Path | Catatan |
 |--------|------|---------|
 | `GET` | `/stock-movements` | filter `type`, `item_id`, `per_page` |
-| `POST` | `/stock-movements` | membuat movement; stock di-update observer |
+| `POST` | `/stock-movements` | membuat movement; stock di-update observer (lihat aturan di bawah) |
 | `GET` | `/stock-movements/{id}` | |
 | `PATCH`/`PUT` | `/stock-movements/{id}` | hanya `notes` / `occurred_at`; ubah quantity → `422` |
 | `DELETE` | `/stock-movements/{id}` | selalu `405` |
 
 `type`: `in_purchase`, `in_return`, `in_adjustment`, `out_borrow`, `out_usage`, `out_disposal`, `out_adjustment`, `transfer_in`, `transfer_out`.
+
+Aturan ledger (berlaku untuk item **bahan**; item **alat** mencatat movement dengan `quantity_before`/`quantity_after` = `NULL` dan tidak mengubah `stock_quantity`):
+
+- Incoming (`in_*`, `transfer_in`): `quantity_after = quantity_before + quantity`.
+- Outgoing (`out_*`, `transfer_out`): `quantity_after = quantity_before - quantity`, **wajib** `quantity_before >= quantity`.
+- Transaksi outgoing yang melebihi stok → `422` `errors.quantity` (`"Tersedia: X, diminta: Y."`); transaksi tidak dibuat, stok tidak berubah. **Tidak ada** `max(0, …)` yang menyembunyikan stok negatif.
+- Seluruh mutasi stok bahan melalui service terpusat (`StockService`) dengan `DB::transaction` + `lockForUpdate` agar tidak ada race condition yang membuat stok negatif.
 
 ---
 
@@ -398,12 +406,18 @@ Body:
 | Method | Path | Role |
 |--------|------|------|
 | `GET` | `/usages` | peminjam: milik sendiri; laboran/kepala_lab/admin_sistem: semua |
-| `POST` | `/usages` | membuat usage + `StockMovement` `out_usage` |
+| `POST` | `/usages` | membuat usage + `StockMovement` `out_usage` (lihat aturan di bawah) |
 | `GET` | `/usages/{id}` | |
 | `PATCH` | `/usages/{id}/verify` | **laboran** |
 | `PATCH` | `/usages/{id}/reject` | **laboran**; body `{ "rejection_reason" }` |
 
 Status usage: `dicatat` → `diverifikasi` | `ditolak`.
+
+Aturan pemakaian bahan:
+
+- `quantity_used` **wajib** `>= 0.01` dan untuk item **bahan** tidak boleh melebihi `stock_quantity`. Jika melebihi → `422` `errors.quantity_used` (`"Tersedia: X, diminta: Y."`); usage **dan** `StockMovement` tidak dibuat, stok tidak berubah.
+- Item **bahan** tidak boleh mengirim `item_unit_id` (`422`).
+- Item **alat** mencatat usage tanpa mengubah `stock_quantity` (tidak ada stok numerik).
 
 ---
 
