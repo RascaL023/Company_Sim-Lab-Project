@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BorrowingRequestResource;
 use App\Models\BorrowingRequest;
+use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 
 class BorrowingRequestController extends Controller
 {
@@ -24,19 +26,58 @@ class BorrowingRequestController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'requested_by' => 'required|exists:users,id',
             'purpose' => 'required|string',
             'items' => 'required|array',
             'items.*.item_id' => 'required|exists:items,id',
             'items.*.quantity' => 'required|numeric|min:1',
+            'items.*.item_unit_id' => 'prohibited',
         ]);
+
+        $validator->after(function ($validator) {
+            $data = $validator->getData();
+            $items = $data['items'] ?? [];
+
+            if (! is_array($items)) {
+                return;
+            }
+
+            foreach ($items as $index => $row) {
+                if (! isset($row['item_id'])) {
+                    continue;
+                }
+
+                $item = Item::find($row['item_id']);
+                if (! $item) {
+                    continue;
+                }
+
+                // Contract: alat dipinjam per unit (quantity harus 1); unit fisik dipilih
+                // saat checkout, bukan saat request. Bahan cukup item_id + quantity.
+                if ($item->isAlat() && (float) ($row['quantity'] ?? 0) !== 1.0) {
+                    $validator->errors()->add(
+                        "items.{$index}.quantity",
+                        'Alat dipinjam per unit; quantity harus tepat 1.'
+                    );
+                }
+            }
+        });
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $validator->errors()->toArray(),
+            ], 422);
+        }
+
+        $validated = $validator->validated();
 
         Gate::authorize('create', [BorrowingRequest::class, (int) $validated['requested_by']]);
 
         $requestNumber = 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999));
 
-        $request = BorrowingRequest::create([
+        $borrowingRequest = BorrowingRequest::create([
             'request_number' => $requestNumber,
             'requested_by' => $validated['requested_by'],
             'purpose' => $validated['purpose'],
@@ -45,7 +86,7 @@ class BorrowingRequestController extends Controller
         ]);
 
         foreach ($validated['items'] as $itemData) {
-            $request->items()->create([
+            $borrowingRequest->items()->create([
                 'item_id' => $itemData['item_id'],
                 'quantity' => $itemData['quantity'],
                 'condition_before' => 'baik',
@@ -53,7 +94,7 @@ class BorrowingRequestController extends Controller
         }
 
         return (new BorrowingRequestResource(
-            $request->load(['requestedBy', 'items.item'])
+            $borrowingRequest->load(['requestedBy', 'items.item'])
         ))->response()->setStatusCode(201);
     }
 
