@@ -28,10 +28,10 @@
             </div>
 
             <div class="relative">
-                <div class="flex items-center justify-center gap-4">
-                    <img src="{{ asset('images/login-1.jpeg') }}" alt="Foto laboratorium" class="h-40 w-44 rounded-2xl object-cover shadow-xl ring-1 ring-white/15" />
-                    <img src="{{ asset('images/login-3.jpeg') }}" alt="Foto laboratorium" class="h-40 w-44 rounded-2xl object-cover shadow-xl ring-1 ring-white/15" />
-                    <img src="{{ asset('images/login-2.jpeg') }}" alt="Foto laboratorium" class="h-40 w-44 rounded-2xl object-cover shadow-xl ring-1 ring-white/15" />
+                <div class="flex items-center justify-center">
+                    <img src="{{ asset('images/login-1.jpeg') }}" alt="Foto laboratorium" class="relative z-0 h-40 w-44 -mr-20 rounded-2xl object-cover shadow-xl ring-1 ring-white/15" />
+                    <img src="{{ asset('images/login-3.jpeg') }}" alt="Foto laboratorium" class="relative z-10 h-48 w-52 rounded-2xl object-cover shadow-2xl ring-4 ring-brand-950/50" />
+                    <img src="{{ asset('images/login-2.jpeg') }}" alt="Foto laboratorium" class="relative z-0 h-40 w-44 -ml-20 rounded-2xl object-cover shadow-xl ring-1 ring-white/15" />
                 </div>
 
                 <div class="mt-10">
