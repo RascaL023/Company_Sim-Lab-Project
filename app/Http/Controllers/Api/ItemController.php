@@ -33,7 +33,15 @@ class ItemController extends Controller
     {
         // Get query parameters for filtering
         $query = Item::query()
-            ->with(['category', 'creator', 'location'])->withCount(['units', 'calibrations', 'maintenances', 'borrowings', 'usages']) // Prevent N+1 queries
+            ->with(['category', 'creator', 'location'])
+            ->withCount([
+                'units',
+                'units as available_units_count' => fn ($q) => $q->available(),
+                'calibrations',
+                'maintenances',
+                'borrowings',
+                'usages',
+            ])
             ->when($request->query('type'), function ($q, string $type) {
                 return $q->whereHas('category', fn ($category) => $category->where('type', $type));
             })
@@ -107,7 +115,14 @@ class ItemController extends Controller
      */
     public function show(Item $item)
     {
-        $item->load(['category', 'creator', 'location'])->loadCount(['units', 'calibrations', 'maintenances', 'borrowings', 'usages']);
+        $item->load(['category', 'creator', 'location'])->loadCount([
+            'units',
+            'units as available_units_count' => fn ($q) => $q->available(),
+            'calibrations',
+            'maintenances',
+            'borrowings',
+            'usages',
+        ]);
 
         return new ItemResource($item);
     }
@@ -219,14 +234,7 @@ class ItemController extends Controller
         $units = $item->units()
             ->with(['item', 'location'])
             ->withExists('activeBorrowing as is_borrowed')
-            ->when($request->boolean('available'), function ($q) {
-                $q->whereNotIn('id', BorrowingItem::query()
-                    ->select('item_unit_id')
-                    ->whereNotNull('item_unit_id')
-                    ->whereNotNull('borrow_date')
-                    ->whereNull('actual_return_date'))
-                    ->whereNotIn('condition', ['hilang', 'dihapus']);
-            })
+            ->when($request->boolean('available'), fn ($q) => $q->available())
             ->orderBy('created_at', 'desc')
             ->paginate($request->query('per_page', 15));
 

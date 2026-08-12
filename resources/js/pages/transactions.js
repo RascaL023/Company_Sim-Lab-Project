@@ -193,11 +193,95 @@ export function borrowingCreatePage() {
                 this.itemsLoading = false;
             }
         },
+        itemOptionLabel(item) {
+            const base = `${item.code} — ${item.name}`;
+            if (item.is_alat) {
+                const n = item.available_units_count ?? item.units_count ?? 0;
+                return `${base} · Alat · ${n} unit tersedia`;
+            }
+            const stock = item.stock_quantity ?? 0;
+            const unit = item.unit ? ` ${item.unit}` : '';
+            return `${base} · Bahan · stok ${stock}${unit}`;
+        },
+        availabilityHint(line) {
+            const item = line?.item;
+            if (!item) return '';
+            if (item.is_alat) {
+                const n = item.available_units_count ?? 0;
+                return `${n} unit tersedia (bukan stok katalog)`;
+            }
+            const stock = item.stock_quantity ?? 0;
+            const unit = item.unit ? ` ${item.unit}` : '';
+            return `Stok tersedia: ${stock}${unit}`;
+        },
+        softWarn(line) {
+            const item = line?.item;
+            if (!item) return '';
+            const qty = Number(line.quantity || 0);
+            if (!(qty > 0)) return '';
+            if (item.is_alat) {
+                const available = Number(item.available_units_count ?? 0);
+                if (qty > available) {
+                    return `Jumlah melebihi unit tersedia (${available}). Server akan menolak jika dikirim.`;
+                }
+                return '';
+            }
+            if (item.is_bahan) {
+                const stock = Number(item.stock_quantity ?? 0);
+                if (qty > stock) {
+                    return `Jumlah melebihi stok (${stock}). Server akan menolak jika dikirim.`;
+                }
+            }
+            return '';
+        },
+        lineError(index, field) {
+            const key = `items.${index}.${field}`;
+            const msgs = this.errors?.[key];
+            return Array.isArray(msgs) ? msgs[0] : (typeof msgs === 'string' ? msgs : '');
+        },
+        formErrorList() {
+            const errs = this.errors || {};
+            const out = [];
+            for (const [key, val] of Object.entries(errs)) {
+                const msgs = Array.isArray(val) ? val : [val];
+                for (const m of msgs) {
+                    if (!m) continue;
+                    const match = String(key).match(/^items\.(\d+)\.(.+)$/);
+                    if (match) {
+                        const idx = Number(match[1]);
+                        const field = match[2];
+                        const name = this.selected[idx]?.item?.name ?? `Baris ${idx + 1}`;
+                        out.push(`${name} (${field}): ${m}`);
+                        continue;
+                    }
+                    if (key === 'items') {
+                        out.push(String(m));
+                        continue;
+                    }
+                    if (key === 'purpose') {
+                        out.push(`Tujuan: ${m}`);
+                        continue;
+                    }
+                    out.push(String(m));
+                }
+            }
+            return out;
+        },
+        /**
+         * Payload API: item_id + quantity saja. Tanpa item_unit_id —
+         * unit fisik alat ditentukan laboran saat checkout.
+         */
+        buildPayloadItems() {
+            return this.selected.map((line) => ({
+                item_id: line.item_id,
+                quantity: Number(line.quantity || 0),
+            }));
+        },
         addItem(itemId) {
             if (!itemId) return;
             const id = Number(itemId);
             if (this.selected.some((l) => l.item_id === id)) {
-                toast('Item sudah ada di daftar.', 'info');
+                toast('Item sudah ada di daftar. Ubah jumlah pada baris yang ada.', 'info');
                 return;
             }
             const item = this.items.find((i) => i.id === id);
@@ -218,13 +302,18 @@ export function borrowingCreatePage() {
                 toast('Tambahkan minimal satu item.', 'info');
                 return;
             }
+            const items = this.buildPayloadItems();
+            if (!items.length) {
+                toast('Jumlah item tidak valid.', 'info');
+                return;
+            }
             this.submitting = true;
             this.errors = {};
             try {
                 const res = await api.post('/borrowing-requests', {
                     requested_by: currentUserId(),
                     purpose: this.purpose,
-                    items: this.selected.map((l) => ({ item_id: l.item_id, quantity: l.quantity })),
+                    items,
                 });
                 const created = res.data?.data ?? null;
                 if (this.attachmentFile && created?.id) {
@@ -250,7 +339,8 @@ export function borrowingCreatePage() {
             } catch (e) {
                 const data = e.response?.data;
                 if (data?.errors) this.errors = data.errors;
-                toast(errorMessage(e), 'error');
+                const detail = this.formErrorList()[0] || errorMessage(e);
+                toast(detail, 'error');
             } finally {
                 this.submitting = false;
             }

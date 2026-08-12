@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\BorrowingRequestResource;
 use App\Models\BorrowingRequest;
 use App\Models\Item;
+use App\Models\ItemUnit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
@@ -35,35 +36,6 @@ class BorrowingRequestController extends Controller
             'items.*.item_unit_id' => 'prohibited',
         ]);
 
-        $validator->after(function ($validator) {
-            $data = $validator->getData();
-            $items = $data['items'] ?? [];
-
-            if (! is_array($items)) {
-                return;
-            }
-
-            foreach ($items as $index => $row) {
-                if (! isset($row['item_id'])) {
-                    continue;
-                }
-
-                $item = Item::find($row['item_id']);
-                if (! $item) {
-                    continue;
-                }
-
-                // Contract: alat dipinjam per unit (quantity harus 1); unit fisik dipilih
-                // saat checkout, bukan saat request. Bahan cukup item_id + quantity.
-                if ($item->isAlat() && (float) ($row['quantity'] ?? 0) !== 1.0) {
-                    $validator->errors()->add(
-                        "items.{$index}.quantity",
-                        'Alat dipinjam per unit; quantity harus tepat 1.'
-                    );
-                }
-            }
-        });
-
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'The given data was invalid.',
@@ -74,6 +46,51 @@ class BorrowingRequestController extends Controller
         $validated = $validator->validated();
 
         Gate::authorize('create', [BorrowingRequest::class, (int) $validated['requested_by']]);
+
+        $domainErrors = [];
+        foreach ($validated['items'] as $index => $row) {
+            $item = Item::find($row['item_id']);
+            if (! $item) {
+                continue;
+            }
+
+            $qty = (float) ($row['quantity'] ?? 0);
+
+            // Alat: jumlah = berapa unit diminta. Unit fisik dipilih laboran saat checkout.
+            // Disimpan sebagai N baris quantity=1 (satu unit per baris).
+            if ($item->isAlat()) {
+                if ($qty < 1 || floor($qty) !== $qty) {
+                    $domainErrors["items.{$index}.quantity"][] = 'Jumlah alat harus bilangan bulat minimal 1.';
+
+                    continue;
+                }
+
+                $available = ItemUnit::query()
+                    ->where('item_id', $item->id)
+                    ->available()
+                    ->count();
+
+                if ($qty > $available) {
+                    $domainErrors["items.{$index}.quantity"][] =
+                        "Unit tersedia tidak mencukupi. Tersedia: {$available}, diminta: {$qty}.";
+                }
+            }
+
+            if ($item->isBahan()) {
+                $stock = (float) ($item->stock_quantity ?? 0);
+                if ($qty > $stock) {
+                    $domainErrors["items.{$index}.quantity"][] =
+                        "Stok tidak mencukupi. Tersedia: {$stock}, diminta: {$qty}.";
+                }
+            }
+        }
+
+        if ($domainErrors !== []) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $domainErrors,
+            ], 422);
+        }
 
         $requestNumber = 'BR-'.now()->format('Y').sprintf('%04d', rand(1000, 9999));
 
@@ -86,6 +103,22 @@ class BorrowingRequestController extends Controller
         ]);
 
         foreach ($validated['items'] as $itemData) {
+            $item = Item::find($itemData['item_id']);
+            $qty = (float) $itemData['quantity'];
+
+            if ($item && $item->isAlat()) {
+                $count = (int) $qty;
+                for ($i = 0; $i < $count; $i++) {
+                    $borrowingRequest->items()->create([
+                        'item_id' => $itemData['item_id'],
+                        'quantity' => 1,
+                        'condition_before' => 'baik',
+                    ]);
+                }
+
+                continue;
+            }
+
             $borrowingRequest->items()->create([
                 'item_id' => $itemData['item_id'],
                 'quantity' => $itemData['quantity'],

@@ -45,6 +45,7 @@ class ItemResource extends JsonResource
 
             // Counts for collections (optional, can be heavy)
             'units_count' => $this->whenCounted('units'),
+            'available_units_count' => $this->when(isset($this->available_units_count), (int) $this->available_units_count),
             'calibrations_count' => $this->whenCounted('calibrations'),
             'maintenances_count' => $this->whenCounted('maintenances'),
             'borrowings_count' => $this->whenCounted('borrowings'),

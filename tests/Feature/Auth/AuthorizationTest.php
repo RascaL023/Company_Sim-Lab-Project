@@ -126,7 +126,7 @@ class AuthorizationTest extends TestCase
     {
         $staff = User::factory()->peminjam()->create();
         $otherStaff = User::factory()->peminjam()->create();
-        $item = Item::factory()->create();
+        $item = Item::factory()->bahan()->create(['stock_quantity' => 10]);
 
         $this->withToken($this->bearerTokenFor($staff))
             ->postJson('/api/borrowing-requests', [

@@ -97,8 +97,9 @@
                         <div class="flex flex-wrap items-center gap-4 px-5 py-4">
                             <div class="min-w-0 flex-1">
                                 <p class="truncate text-sm font-semibold text-zinc-900" x-text="bi.item?.name ?? '—'"></p>
-                                <p class="mt-0.5 text-xs text-zinc-400" x-text="`${bi.item?.code ?? ''} · Qty ${fmt.fmtNum(bi.quantity)}`"></p>
+                                <p class="mt-0.5 text-xs text-zinc-400" x-text="`${bi.item?.code ?? ''} · Qty ${fmt.fmtNum(bi.quantity)}${bi.item?.is_alat ? ' · Alat' : (bi.item?.is_bahan ? ' · Bahan' : '')}`"></p>
                                 <p x-show="bi.item_unit?.serial_number" class="mt-0.5 font-mono text-xs text-zinc-500" x-text="`Unit: ${bi.item_unit.serial_number}`"></p>
+                                <p x-show="bi.item?.is_alat && !bi.item_unit" class="mt-0.5 text-xs text-zinc-400">Unit fisik belum ditentukan (checkout laboran).</p>
                             </div>
                             <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500">
                                 <span x-show="bi.borrow_date" x-text="`Dipinjam ${fmt.fmtDateTime(bi.borrow_date)}`"></span>

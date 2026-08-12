@@ -11,11 +11,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * Phase 5: tegaskan contract borrowing alat vs bahan.
+ * Phase 5/6: contract borrowing alat vs bahan.
  *
- * Alat : request -> item_id, unit fisik (ItemUnit) baru ditentukan saat checkout.
- * Bahan: request -> item_id + quantity, TANPA ItemUnit. Stock turun saat checkout,
- *        dan hanya jika stock aktual mencukupi.
+ * Alat : request -> item_id + quantity (jumlah unit); disimpan sebagai N baris qty=1.
+ *        Unit fisik (ItemUnit) baru ditentukan saat checkout.
+ * Bahan: request -> item_id + quantity, TANPA ItemUnit. Stock dicek saat request
+ *        dan lagi saat checkout; stok turun saat checkout.
  */
 class BorrowingAlatBahanContractTest extends TestCase
 {
@@ -42,7 +43,7 @@ class BorrowingAlatBahanContractTest extends TestCase
         ]);
     }
 
-    private function checkoutBody(ItemUnit $unit = null, string $type = 'alat'): array
+    private function checkoutBody(?ItemUnit $unit = null, string $type = 'alat'): array
     {
         $body = ['expected_return_date' => now()->addDays(3)->toIso8601String()];
         if ($type === 'alat' && $unit) {
@@ -196,12 +197,13 @@ class BorrowingAlatBahanContractTest extends TestCase
             ->assertJsonValidationErrors(['items.0.item_unit_id']);
     }
 
-    public function test_create_request_alat_requires_quantity_one(): void
+    public function test_create_request_alat_expands_quantity_into_unit_rows(): void
     {
         $peminjam = User::factory()->peminjam()->create();
         $item = Item::factory()->alat()->create();
+        ItemUnit::factory()->for($item)->baik()->count(3)->create();
 
-        $this->withToken($this->tokenFor($peminjam))
+        $response = $this->withToken($this->tokenFor($peminjam))
             ->postJson('/api/borrowing-requests', [
                 'requested_by' => $peminjam->id,
                 'purpose' => 'Praktikum',
@@ -209,9 +211,70 @@ class BorrowingAlatBahanContractTest extends TestCase
                     ['item_id' => $item->id, 'quantity' => 3],
                 ],
             ])
+            ->assertCreated();
+
+        $id = $response->json('data.id');
+        $this->assertDatabaseCount('borrowing_items', 3);
+        $this->assertSame(3, BorrowingItem::where('borrowing_request_id', $id)->where('quantity', 1)->count());
+        $this->assertSame(3, BorrowingItem::where('borrowing_request_id', $id)->whereNull('item_unit_id')->count());
+    }
+
+    public function test_create_request_alat_rejects_when_exceeding_available_units(): void
+    {
+        $peminjam = User::factory()->peminjam()->create();
+        $item = Item::factory()->alat()->create();
+        ItemUnit::factory()->for($item)->baik()->count(1)->create();
+
+        $response = $this->withToken($this->tokenFor($peminjam))
+            ->postJson('/api/borrowing-requests', [
+                'requested_by' => $peminjam->id,
+                'purpose' => 'Praktikum',
+                'items' => [
+                    ['item_id' => $item->id, 'quantity' => 2],
+                ],
+            ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors([
-                'items.0.quantity' => 'Alat dipinjam per unit; quantity harus tepat 1.',
-            ]);
+            ->assertJsonValidationErrors(['items.0.quantity']);
+
+        $this->assertStringContainsString('Tersedia: 1', $response->json('errors')['items.0.quantity'][0]);
+    }
+
+    public function test_create_request_bahan_rejects_when_exceeding_stock(): void
+    {
+        $peminjam = User::factory()->peminjam()->create();
+        $item = Item::factory()->bahan()->create(['stock_quantity' => 5]);
+
+        $response = $this->withToken($this->tokenFor($peminjam))
+            ->postJson('/api/borrowing-requests', [
+                'requested_by' => $peminjam->id,
+                'purpose' => 'Praktikum',
+                'items' => [
+                    ['item_id' => $item->id, 'quantity' => 10],
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['items.0.quantity']);
+
+        $this->assertStringContainsString('Tersedia: 5', $response->json('errors')['items.0.quantity'][0]);
+        $this->assertSame(5.0, (float) $item->fresh()->stock_quantity);
+        $this->assertDatabaseCount('borrowing_requests', 0);
+    }
+
+    public function test_create_request_alat_rejects_fractional_quantity(): void
+    {
+        $peminjam = User::factory()->peminjam()->create();
+        $item = Item::factory()->alat()->create();
+        ItemUnit::factory()->for($item)->baik()->create();
+
+        $this->withToken($this->tokenFor($peminjam))
+            ->postJson('/api/borrowing-requests', [
+                'requested_by' => $peminjam->id,
+                'purpose' => 'Praktikum',
+                'items' => [
+                    ['item_id' => $item->id, 'quantity' => 1.5],
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['items.0.quantity']);
     }
 }

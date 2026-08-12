@@ -138,6 +138,17 @@ class ItemUnit extends Model
     }
 
     /**
+     * Units that can be checked out: not lost/deleted and not on active loan.
+     * Matches GET /items/{id}/units?available=1.
+     */
+    public function scopeAvailable($query)
+    {
+        return $query
+            ->whereNotIn('condition', ['hilang', 'dihapus'])
+            ->whereDoesntHave('activeBorrowing');
+    }
+
+    /**
      * Scope a query to only units in good condition.
      */
     public function scopeBaik($query)
