@@ -206,7 +206,7 @@ Auth: Bearer.
 
 | Method | Path | Keterangan |
 |--------|------|------------|
-| `GET` | `/items` | Filter: `type`, `condition_status`, `low_stock`, `needs_calibration`, `expired`, `search`, `sort_by`, `sort_order`, `per_page` |
+| `GET` | `/items` | Filter: `type`, `condition_status`, `low_stock`, `needs_calibration`, `search`, `sort_by`, `sort_order`, `per_page` |
 | `POST` | `/items` | Lihat `StoreItemRequest` |
 | `GET` | `/items/{id}` | |
 | `PATCH`/`PUT` | `/items/{id}` | |
@@ -248,7 +248,6 @@ Query `index`: `condition`, `location_id`, `needs_calibration`, `per_page`.
   "condition": "baik",
   "location_id": 14,
   "purchase_date": "2025-06-01",
-  "expiry_date": null,
   "last_calibration_date": null,
   "next_calibration_date": "2027-01-01",
   "notes": "Unit baru"
@@ -260,7 +259,7 @@ Query `index`: `condition`, `location_id`, `needs_calibration`, `per_page`.
 - `asset_tag` opsional + unik
 - `condition`: `baik`|`rusak_ringan`|`rusak_berat`|`hilang`|`dihapus`
 - `location_id` opsional; lokasi tidak valid → `422` `"Lokasi yang dipilih tidak valid."`
-- `expiry_date` harus `after_or_equal:purchase_date`; `next_calibration_date` harus `after_or_equal:last_calibration_date`
+- Kalibrasi **opsional**: `next_calibration_date` harus `after_or_equal:last_calibration_date`. Unit tanpa tanggal kalibrasi valid (tidak semua alat wajib dikalibrasi).
 - `created_by` diisi otomatis dari user yang login
 - Response `201`: `ItemUnitResource`
 

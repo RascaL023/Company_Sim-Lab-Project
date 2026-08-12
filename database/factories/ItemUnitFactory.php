@@ -27,7 +27,6 @@ class ItemUnitFactory extends Factory
             'condition' => fake()->randomElement(['baik', 'rusak_ringan', 'rusak_berat', 'hilang']),
             'location_id' => Location::factory(),
             'purchase_date' => fake()->dateTimeBetween('-5 years', 'now'),
-            'expiry_date' => fake()->optional(0.3)->dateTimeBetween('now', '+3 years'),
             'next_calibration_date' => fake()->optional(0.7)->dateTimeBetween('now', '+1 year'),
             'last_calibration_date' => fake()->optional(0.5)->dateTimeBetween('-1 year', 'now'),
             'notes' => fake()->optional(0.3)->sentence(),
@@ -82,16 +81,6 @@ class ItemUnitFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'next_calibration_date' => fake()->dateTimeBetween('-1 month', 'now'),
-        ]);
-    }
-
-    /**
-     * Indicate that the unit is expired.
-     */
-    public function expired(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'expiry_date' => fake()->dateTimeBetween('-1 month', 'now'),
         ]);
     }
 }

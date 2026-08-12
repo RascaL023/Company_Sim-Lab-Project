@@ -5,6 +5,25 @@ Dokumen ini menjelaskan perubahan yang telah dilakukan pada skema database SIMLa
 
 ## Daftar Perubahan
 
+### I. Pemisahan Expiry vs Kalibrasi pada ItemUnit — Phase 9 Cleanup
+**Masalah**: `item_units` memuat `expiry_date` dan tanggal kalibrasi yang tampak seperti semua alat wajib memilikinya. Padahal kalibrasi bersifat opsional per alat, dan `expiry_date` secara konseptual milik bahan/batch, bukan unit alat.
+
+**Solusi**:
+- **Dihapus** `item_units.expiry_date` (model, migration, resource, validasi API, factory, frontend).
+  - Alasan domain: `item_units` hanya ada untuk **alat** (bahan dilacak sebagai stok tanpa unit fisik), dan tidak ada sistem batch pada aplikasi. Alat tidak "kedaluwarsa" dalam workflow ini; `expiry_date` pada unit tidak punya konsumen nyata (tidak menghalangi peminjaman, tidak dipakai usage/maintenance). `Item::isExpired()` sebelumnya membaca `items.expiry_date`—kolom yang tidak ada—sehingga fitur kedaluwarsa pada level item hanyalah kode mati/broken.
+  - Ketika sistem batch untuk bahan ditambahkan di fase mendatang, `expiry_date` sebaiknya diletakkan pada tabel batch bahan (per lot), bukan pada item_units.
+- **Dipertahankan** `item_units.last_calibration_date` / `next_calibration_date` sebagai **opsional** dan denormalisasi status kalibrasi (tanpa tanggal = unit tidak dijadwalkan kalibrasi, bukan invalid). Riwayat detail tetap di `item_calibrations` (certificate, result, dst.).
+  - `needsCalibration()` / `scopeNeedsCalibration()` hanya menandai unit yang benar-benar memiliki `next_calibration_date` yang jatuh tempo; unit tanpa jadwal kalibrasi tidak boleh diflag.
+- Filter API `GET /items?expired=1`, `is_expired` pada `ItemResource`/`ItemUnitResource`, dan `scopeExpired`/`isExpired()` pada model dihapus.
+
+**Pola data final**:
+```
+item_units = atribut fisik umum (serial, asset_tag, condition, location_id, purchase_date, notes)
+             + status kalibrasi opsional (last/next_calibration_date, nullable)
+item_calibrations = riwayat kalibrasi (relaks optional; hanya untuk alat yang memerlukan)
+expiry          = (fase selanjutnya) batch bahan, bukan item_units
+```
+
 ### H. Lokasi Katalog Item & Stok Berbasis Tipe (Struktural) — Phase 1 Cleanup
 **Masalah**: `items.location` berupa string bebas sehingga tidak konsisten dengan `locations`, dan `stock_quantity`/`minimum_stock` dianggap berlaku untuk semua item padahal alat dilacak lewat `item_units`.
 

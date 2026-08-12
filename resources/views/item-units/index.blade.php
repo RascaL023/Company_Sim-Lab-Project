@@ -73,8 +73,7 @@
                             <td class="table-td">
                                 <div class="flex flex-wrap gap-1">
                                     <span x-show="unit.needs_calibration" class="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 ring-1 ring-inset ring-violet-600/20">Kalibrasi</span>
-                                    <span x-show="unit.is_expired" class="rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">Expired</span>
-                                    <span x-show="!unit.needs_calibration && !unit.is_expired" class="text-xs text-zinc-400">Normal</span>
+                                    <span x-show="!unit.needs_calibration" class="text-xs text-zinc-400">Normal</span>
                                 </div>
                             </td>
                             <td class="table-td text-right">
@@ -144,13 +143,6 @@
                     <label class="mb-1.5 block text-sm font-medium text-zinc-700">Tanggal pembelian</label>
                     <input type="date" x-model="form.purchase_date" :class="errors.purchase_date ? 'input input-error' : 'input'" />
                     <p x-show="errors.purchase_date" class="mt-1 text-xs text-rose-600" x-text="errors.purchase_date?.[0]"></p>
-                </div>
-            </template>
-            <template x-if="!editId">
-                <div>
-                    <label class="mb-1.5 block text-sm font-medium text-zinc-700">Tanggal kedaluwarsa</label>
-                    <input type="date" x-model="form.expiry_date" :class="errors.expiry_date ? 'input input-error' : 'input'" />
-                    <p x-show="errors.expiry_date" class="mt-1 text-xs text-rose-600" x-text="errors.expiry_date?.[0]"></p>
                 </div>
             </template>
             <template x-if="!editId">

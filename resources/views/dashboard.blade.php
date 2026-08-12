@@ -47,14 +47,6 @@
 
         <div class="card p-5 transition hover:shadow-card-hover">
             <div class="flex items-center justify-between gap-2">
-                <p class="truncate text-[13px] font-medium text-zinc-500">Kedaluwarsa</p>
-                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600"><x-icon name="clock" class="h-4 w-4" /></div>
-            </div>
-            <p class="mt-2 font-display text-3xl font-bold tracking-tight text-zinc-900" x-text="fmt.fmtNum(stats.expired)"></p>
-        </div>
-
-        <div class="card p-5 transition hover:shadow-card-hover">
-            <div class="flex items-center justify-between gap-2">
                 <p class="truncate text-[13px] font-medium text-zinc-500">Peminjaman Diajukan</p>
                 <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600"><x-icon name="clipboard-list" class="h-4 w-4" /></div>
             </div>

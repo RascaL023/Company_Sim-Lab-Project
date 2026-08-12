@@ -25,7 +25,9 @@ class ItemUnit extends Model
         'condition',
         'location_id',
         'purchase_date',
-        'expiry_date',
+        // Kalibrasi bersifat opsional — hanya diisi untuk alat yang memang
+        // memerlukan kalibrasi. ItemUnit tanpa tanggal kalibrasi bukan unit
+        // yang invalid.
         'next_calibration_date',
         'last_calibration_date',
         'notes',
@@ -43,7 +45,6 @@ class ItemUnit extends Model
             'condition' => 'string',
             'location_id' => 'integer',
             'purchase_date' => 'date',
-            'expiry_date' => 'date',
             'next_calibration_date' => 'date',
             'last_calibration_date' => 'date',
             'created_by' => 'integer',
@@ -182,20 +183,13 @@ class ItemUnit extends Model
 
     /**
      * Scope a query to only units needing calibration.
+     * A unit without a calibration schedule (null next_calibration_date) is
+     * simply not tracked for calibration and is never flagged here.
      */
     public function scopeNeedsCalibration($query)
     {
         return $query->whereNotNull('next_calibration_date')
             ->where('next_calibration_date', '<', now()->toDateString());
-    }
-
-    /**
-     * Scope a query to only expired units.
-     */
-    public function scopeExpired($query)
-    {
-        return $query->whereNotNull('expiry_date')
-            ->where('expiry_date', '<', now()->toDateString());
     }
 
     /**
@@ -205,15 +199,6 @@ class ItemUnit extends Model
     {
         return ! is_null($this->next_calibration_date) &&
                $this->next_calibration_date < now()->toDateString();
-    }
-
-    /**
-     * Check if the unit is expired.
-     */
-    public function isExpired(): bool
-    {
-        return ! is_null($this->expiry_date) &&
-               $this->expiry_date < now()->toDateString();
     }
 
     /**

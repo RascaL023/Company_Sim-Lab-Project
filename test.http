@@ -35,10 +35,6 @@ Accept: application/json
 GET {{baseUrl}}/items?needs_calibration=true
 Accept: application/json
 
-### Get expired items
-GET {{baseUrl}}/items?expired=true
-Accept: application/json
-
 ### Create a new item
 # You'll need to create a category and user first for foreign keys
 POST {{baseUrl}}/items
@@ -58,7 +54,6 @@ Accept: application/json
     "manufacturer": "Dell",
     "serial_number": "DL123456789",
     "purchase_date": "2023-01-15",
-    "expiry_date": "2026-01-15",
     "next_calibration_date": "2024-01-15",
     "description": "Laptop untuk keperluan pengembangan",
     "created_by": 1
@@ -115,7 +110,6 @@ Accept: application/json
     "manufacturer": "HP",
     "serial_number": "HP987654321",
     "purchase_date": "2023-02-01",
-    "expiry_date": "2026-02-01",
     "next_calibration_date": "2024-02-01",
     "description": "Laptop untuk keperluan kantor",
     "created_by": 1

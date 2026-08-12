@@ -57,12 +57,6 @@ class ItemController extends Controller
                         ->where('next_calibration_date', '<', now()->toDateString());
                 });
             })
-            ->when($request->boolean('expired'), function ($q) {
-                return $q->whereHas('units', function ($units) {
-                    $units->whereNotNull('expiry_date')
-                        ->where('expiry_date', '<', now()->toDateString());
-                });
-            })
             ->when($request->query('search'), function ($q, string $search) {
                 return $q->where(function ($inner) use ($search) {
                     $inner->where('name', 'like', "%{$search}%")

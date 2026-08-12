@@ -9,6 +9,7 @@ use App\Models\ItemUnit;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class ItemUnitTest extends TestCase
@@ -51,6 +52,55 @@ class ItemUnitTest extends TestCase
             'location_id' => $location->id,
             'created_by' => $laboran->id,
         ]);
+    }
+
+    public function test_item_unit_without_calibration_or_expiry_is_valid(): void
+    {
+        $laboran = User::factory()->laboran()->create();
+        $item = Item::factory()->alat()->create();
+
+        $response = $this->withToken($this->tokenFor($laboran))
+            ->postJson('/api/item-units', [
+                'item_id' => $item->id,
+                'serial_number' => 'SN-NO-KAL',
+                'condition' => 'baik',
+            ])
+            ->assertCreated();
+
+        $response
+            ->assertJsonPath('data.serial_number', 'SN-NO-KAL')
+            ->assertJsonPath('data.needs_calibration', false)
+            ->assertJsonMissingPath('data.expiry_date')
+            ->assertJsonMissingPath('data.is_expired');
+
+        $unit = ItemUnit::where('serial_number', 'SN-NO-KAL')->first();
+        $this->assertNotNull($unit);
+        $this->assertNull($unit->last_calibration_date);
+        $this->assertNull($unit->next_calibration_date);
+        $this->assertFalse($unit->needsCalibration());
+        $this->assertCount(0, $unit->calibrations);
+    }
+
+    public function test_item_units_table_has_no_expiry_column_anymore(): void
+    {
+        $laboran = User::factory()->laboran()->create();
+        $item = Item::factory()->alat()->create();
+
+        $response = $this->withToken($this->tokenFor($laboran))
+            ->postJson('/api/item-units', [
+                'item_id' => $item->id,
+                'serial_number' => 'SN-EXPIRY-OK',
+                'condition' => 'baik',
+                'expiry_date' => '2027-01-01',
+            ])
+            ->assertCreated();
+
+        $this->assertFalse(Schema::hasColumn('item_units', 'expiry_date'));
+        $response->assertJsonMissingPath('data.expiry_date');
+
+        $unit = ItemUnit::where('serial_number', 'SN-EXPIRY-OK')->first();
+        $this->assertNotNull($unit);
+        $this->assertArrayNotHasKey('expiry_date', $unit->getAttributes());
     }
 
     public function test_admin_sistem_can_create_item_unit(): void

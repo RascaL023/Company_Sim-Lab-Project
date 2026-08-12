@@ -41,12 +41,6 @@
                 :class="filters.needs_calibration ? 'bg-violet-100 text-violet-700 ring-1 ring-inset ring-violet-600/20' : 'btn-secondary'"
                 @click="filters.needs_calibration = filters.needs_calibration ? '' : true; applyFilters()"
             >Perlu kalibrasi</button>
-            <button
-                type="button"
-                class="btn btn-sm"
-                :class="filters.expired ? 'bg-rose-100 text-rose-700 ring-1 ring-inset ring-rose-600/20' : 'btn-secondary'"
-                @click="filters.expired = filters.expired ? '' : true; applyFilters()"
-            >Kedaluwarsa</button>
         </div>
 
         <div class="overflow-x-auto">
@@ -93,9 +87,8 @@
                             <td class="table-td">
                                 <div class="flex flex-wrap gap-1">
                                     <span x-show="item.is_low_stock" class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">Stok menipis</span>
-                                    <span x-show="item.is_expired" class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">Kedaluwarsa</span>
                                     <span x-show="item.needs_calibration" class="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 ring-1 ring-inset ring-violet-600/20">Kalibrasi</span>
-                                    <span x-show="!item.is_low_stock && !item.is_expired && !item.needs_calibration" class="text-xs text-zinc-400">Normal</span>
+                                    <span x-show="!item.is_low_stock && !item.needs_calibration" class="text-xs text-zinc-400">Normal</span>
                                 </div>
                             </td>
                             <td class="table-td text-right">

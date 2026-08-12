@@ -19,8 +19,8 @@ return new class extends Migration
             $table->enum('condition', ['baik', 'rusak_ringan', 'rusak_berat', 'hilang'])->default('baik');
             $table->string('location', 100)->nullable(); // current location (room, shelf, etc.)
             $table->date('purchase_date')->nullable();
-            $table->date('expiry_date')->nullable(); // for consumables that expire
-            $table->date('next_calibration_date')->nullable(); // per-unit calibration schedule
+            $table->date('expiry_date')->nullable(); // dihapus di Phase 9 (lihat 2026_08_12_000001)
+            $table->date('next_calibration_date')->nullable(); // kalibrasi opsional, per unit
             $table->date('last_calibration_date')->nullable();
             $table->text('notes')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete()->cascadeOnUpdate();

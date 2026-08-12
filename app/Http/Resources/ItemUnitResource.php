@@ -18,13 +18,11 @@ class ItemUnitResource extends JsonResource
             'location_id' => $this->location_id,
             'location' => new LocationResource($this->whenLoaded('location')),
             'purchase_date' => $this->purchase_date,
-            'expiry_date' => $this->expiry_date,
             'last_calibration_date' => $this->last_calibration_date,
             'next_calibration_date' => $this->next_calibration_date,
             'notes' => $this->notes,
             'is_good' => $this->condition === 'baik',
             'needs_calibration' => $this->needsCalibration(),
-            'is_expired' => $this->expiry_date?->isPast(),
             'is_borrowed' => $this->is_borrowed,
         ];
     }

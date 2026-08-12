@@ -56,7 +56,7 @@ class ItemUnitController extends Controller
             'condition' => 'required|in:baik,rusak_ringan,rusak_berat,hilang,dihapus',
             'location_id' => 'nullable|exists:locations,id',
             'purchase_date' => 'nullable|date',
-            'expiry_date' => 'nullable|date|after_or_equal:purchase_date',
+            // Kalibrasi bersifat opsional: unit tanpa tanggal kalibrasi valid.
             'last_calibration_date' => 'nullable|date',
             'next_calibration_date' => 'nullable|date|after_or_equal:last_calibration_date',
             'notes' => 'nullable|string',
@@ -68,7 +68,6 @@ class ItemUnitController extends Controller
             'asset_tag.unique' => 'Asset tag sudah digunakan.',
             'condition.in' => 'Kondisi yang dipilih tidak valid.',
             'location_id.exists' => 'Lokasi yang dipilih tidak valid.',
-            'expiry_date.after_or_equal' => 'Tanggal kedaluwarsa tidak boleh sebelum tanggal pembelian.',
             'next_calibration_date.after_or_equal' => 'Tanggal kalibrasi berikutnya tidak boleh sebelum tanggal kalibrasi terakhir.',
         ]);
 

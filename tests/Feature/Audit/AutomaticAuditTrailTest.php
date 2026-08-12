@@ -6,6 +6,7 @@ use App\Models\AuditTrail;
 use App\Models\BorrowingItem;
 use App\Models\BorrowingRequest;
 use App\Models\Item;
+use App\Models\ItemUnit;
 use App\Models\StockMovement;
 use App\Models\Usage;
 use App\Models\User;
@@ -29,6 +30,7 @@ class AutomaticAuditTrailTest extends TestCase
         $staff = User::factory()->peminjam()->create();
         $admin = User::factory()->laboran()->create();
         $alat = Item::factory()->alat()->create();
+        ItemUnit::factory()->for($alat)->baik()->create();
         $bahan = Item::factory()->bahan()->create(['stock_quantity' => 100]);
 
         $createResponse = $this->actingAsUser($staff)

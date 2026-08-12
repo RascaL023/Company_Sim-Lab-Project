@@ -10,7 +10,6 @@ export function dashboardPage() {
             items: 0,
             lowStock: 0,
             needsCalibration: 0,
-            expired: 0,
             pendingBorrowings: 0,
             overdueBorrowings: 0,
             unread: 0,
@@ -22,11 +21,10 @@ export function dashboardPage() {
             this.loading = true;
             this.error = null;
             try {
-                const [items, lowStock, calib, expired, pending, diproses, unread, audits, borrowings, usages] = await Promise.all([
+                const [items, lowStock, calib, pending, diproses, unread, audits, borrowings, usages] = await Promise.all([
                     api.get('/items', { params: { per_page: 1 } }),
                     api.get('/items', { params: { low_stock: true, per_page: 1 } }),
                     api.get('/items', { params: { needs_calibration: true, per_page: 1 } }),
-                    api.get('/items', { params: { expired: true, per_page: 1 } }),
                     api.get('/borrowing-requests', { params: { status: 'diajukan', per_page: 1 } }),
                     api.get('/borrowing-requests', { params: { status: 'diproses', per_page: 100 } }),
                     api.get('/notifications/unread-count'),
@@ -45,7 +43,6 @@ export function dashboardPage() {
                     items: items.data?.meta?.total ?? 0,
                     lowStock: lowStock.data?.meta?.total ?? 0,
                     needsCalibration: calib.data?.meta?.total ?? 0,
-                    expired: expired.data?.meta?.total ?? 0,
                     pendingBorrowings: pending.data?.meta?.total ?? 0,
                     overdueBorrowings: overdue,
                     unread: unread.data?.data?.unread_count ?? 0,

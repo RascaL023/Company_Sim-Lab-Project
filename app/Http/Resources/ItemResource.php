@@ -33,7 +33,6 @@ class ItemResource extends JsonResource
             'is_bahan' => $this->isBahan(),
             'is_low_stock' => $this->isLowStock(),
             'needs_calibration' => $this->needsCalibration(),
-            'is_expired' => $this->isExpired(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'deleted_at' => $this->deleted_at,

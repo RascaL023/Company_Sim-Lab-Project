@@ -233,14 +233,6 @@ class Item extends Model
     }
 
     /**
-     * Check if the item (e.g. a consumable) is expired.
-     */
-    public function isExpired(): bool
-    {
-        return $this->expiry_date !== null && $this->expiry_date->isPast();
-    }
-
-    /**
      * An item needs calibration if it is alat and at least one of its units
      * has a calibration due within the next 30 days (or overdue).
      */

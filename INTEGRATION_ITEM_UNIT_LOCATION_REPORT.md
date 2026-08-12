@@ -124,8 +124,7 @@ public/build/assets/app-BRRSn2jF.js   137.66 kB │ gzip: 44.18 kB
         "next_calibration_date": "2027-01-01T00:00:00.000000Z",
         "notes": "Smoke test",
         "is_good": true,
-        "needs_calibration": false,
-        "is_expired": null
+        "needs_calibration": false
     }
 }
 ```

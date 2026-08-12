@@ -32,7 +32,6 @@
                                 <span x-text="fmt.typeLabel(item.type)"></span>
                             </span>
                             <span x-show="item.is_low_stock" class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">Stok menipis</span>
-                            <span x-show="item.is_expired" class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">Kedaluwarsa</span>
                             <span x-show="item.is_alat && item.needs_calibration" class="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 ring-1 ring-inset ring-violet-600/20">Perlu kalibrasi</span>
                         </div>
                         <h1 class="mt-3 font-display text-2xl font-bold tracking-tight text-zinc-900" x-text="item.name"></h1>
@@ -157,8 +156,7 @@
                                             <div class="flex flex-wrap gap-1">
                                                 <span x-show="u.is_borrowed" class="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">Dipinjam</span>
                                                 <span x-show="u.needs_calibration" class="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 ring-1 ring-inset ring-violet-600/20">Kalibrasi</span>
-                                                <span x-show="u.is_expired" class="rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">Expired</span>
-                                                <span x-show="!u.is_borrowed && !u.needs_calibration && !u.is_expired" class="text-xs text-zinc-400">Tersedia</span>
+                                                <span x-show="!u.is_borrowed && !u.needs_calibration" class="text-xs text-zinc-400">Tersedia</span>
                                             </div>
                                         </td>
                                         <td class="table-td text-right">
@@ -375,11 +373,6 @@
                 <label class="mb-1.5 block text-sm font-medium text-zinc-700">Tanggal pembelian</label>
                 <input type="date" x-model="unitForm.purchase_date" :class="unitErrors.purchase_date ? 'input input-error' : 'input'" />
                 <p x-show="unitErrors.purchase_date" class="mt-1 text-xs text-rose-600" x-text="unitErrors.purchase_date?.[0]"></p>
-            </div>
-            <div>
-                <label class="mb-1.5 block text-sm font-medium text-zinc-700">Tanggal kedaluwarsa</label>
-                <input type="date" x-model="unitForm.expiry_date" :class="unitErrors.expiry_date ? 'input input-error' : 'input'" />
-                <p x-show="unitErrors.expiry_date" class="mt-1 text-xs text-rose-600" x-text="unitErrors.expiry_date?.[0]"></p>
             </div>
             <div>
                 <label class="mb-1.5 block text-sm font-medium text-zinc-700">Kalibrasi terakhir</label>

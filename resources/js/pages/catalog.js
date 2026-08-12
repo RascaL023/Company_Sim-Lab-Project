@@ -23,7 +23,6 @@ const blankUnitForm = {
     condition: 'baik',
     location_id: '',
     purchase_date: '',
-    expiry_date: '',
     last_calibration_date: '',
     next_calibration_date: '',
     notes: '',
@@ -32,7 +31,7 @@ const blankUnitForm = {
 export function itemsPage() {
     return {
         ...pagedList({ endpoint: '/items', perPage: 15 }),
-        filters: { search: '', type: '', category_id: '', low_stock: '', needs_calibration: '', expired: '' },
+        filters: { search: '', type: '', category_id: '', low_stock: '', needs_calibration: '' },
         categories: [],
         locations: [],
         formOpen: false,
@@ -61,7 +60,7 @@ export function itemsPage() {
             this.load();
         },
         resetFilters() {
-            this.filters = { search: '', type: '', category_id: '', low_stock: '', needs_calibration: '', expired: '' };
+            this.filters = { search: '', type: '', category_id: '', low_stock: '', needs_calibration: '' };
             this.query = { page: 1 };
             this.load();
         },
@@ -227,7 +226,6 @@ export function itemDetailPage(opts = {}) {
                     condition: this.unitForm.condition,
                     location_id: this.unitForm.location_id || null,
                     purchase_date: this.unitForm.purchase_date || null,
-                    expiry_date: this.unitForm.expiry_date || null,
                     last_calibration_date: this.unitForm.last_calibration_date || null,
                     next_calibration_date: this.unitForm.next_calibration_date || null,
                     notes: this.unitForm.notes || null,
@@ -508,7 +506,6 @@ export function itemUnitsPage() {
                 condition: unit.condition ?? 'baik',
                 location_id: unit.location_id ?? '',
                 purchase_date: unit.purchase_date ?? '',
-                expiry_date: unit.expiry_date ?? '',
                 last_calibration_date: unit.last_calibration_date ?? '',
                 next_calibration_date: unit.next_calibration_date ?? '',
                 notes: unit.notes ?? '',
@@ -534,7 +531,6 @@ export function itemUnitsPage() {
                         condition: this.form.condition,
                         location_id: this.form.location_id || null,
                         purchase_date: this.form.purchase_date || null,
-                        expiry_date: this.form.expiry_date || null,
                         last_calibration_date: this.form.last_calibration_date || null,
                         next_calibration_date: this.form.next_calibration_date || null,
                         notes: this.form.notes || null,
